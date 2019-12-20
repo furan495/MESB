@@ -16,22 +16,61 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 
 class RoleSerializer(serializers.ModelSerializer):
+    key = serializers.SerializerMethodField()
+
+    def get_key(self, obj):
+        return str(obj.id)
+
     class Meta:
         model = Role
-        fields = ('id', 'name', 'authority')
+        fields = ('id', 'key', 'name', 'authority')
 
 
 class UserSerializer(serializers.ModelSerializer):
+
+    key = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    authority = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+    gender = serializers.ChoiceField(
+        choices=User.USER_GENDER, source='get_gender_display', read_only=True)
+
+    def get_key(self, obj):
+        return str(obj.id)
+
+    def get_role(self, obj):
+        return obj.role.name if obj.role else ''
+
+    def get_authority(self, obj):
+        return obj.role.authority if obj.role else ''
+
+    def get_department(self, obj):
+        return obj.department.name if obj.department else ''
+
     class Meta:
         model = User
-        fields = ('id', 'department', 'role',
+        fields = ('id', 'key', 'department', 'authority', 'role',
                   'name', 'gender', 'password', 'phone', 'company')
 
 
 class OrderSerializer(serializers.ModelSerializer):
+
+    key = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
+    orderType = serializers.ChoiceField(
+        choices=Order.ORDER_STATUS, source='get_orderType_display', read_only=True)
+    status = serializers.ChoiceField(
+        choices=Order.ORDER_STATUS, source='get_status_display', read_only=True)
+
+    def get_key(self, obj):
+        return str(obj.id)
+
+    def get_user(self, obj):
+        return str(obj.user.name)
+
     class Meta:
         model = Order
-        fields = ('id', 'user', 'number',
+        fields = ('id', 'key', 'user', 'number',
                   'createTime', 'status', 'orderType', 'description')
 
 

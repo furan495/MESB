@@ -37,8 +37,10 @@ class Department(models.Model):
 
 
 class Role(models.Model):
-    name = models.CharField(max_length=10, verbose_name='角色名')
-    authority = models.CharField(max_length=200, verbose_name='权限')
+    name = models.CharField(
+        max_length=10, verbose_name='角色名', blank=True, null=True)
+    authority = models.CharField(
+        max_length=500, verbose_name='权限', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -55,15 +57,19 @@ class User(models.Model):
     )
 
     department = models.ForeignKey(
-        Department, related_name='members', on_delete=models.CASCADE, verbose_name='部门')
+        Department, related_name='members', on_delete=models.CASCADE, verbose_name='部门', blank=True, null=True)
     role = models.ForeignKey(Role, related_name='users',
-                             on_delete=models.CASCADE, verbose_name='角色')
-    name = models.CharField(max_length=20, verbose_name='姓名')
-    password = models.CharField(max_length=20, verbose_name='密码')
+                             on_delete=models.CASCADE, verbose_name='角色', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='姓名', blank=True, null=True)
+    password = models.CharField(
+        max_length=20, verbose_name='密码', blank=True, null=True)
     gender = models.CharField(
-        max_length=2, verbose_name='性别', choices=USER_GENDER)
-    phone = models.CharField(max_length=20, verbose_name='电话')
-    company = models.CharField(max_length=20, verbose_name='公司')
+        max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
+    phone = models.CharField(
+        max_length=20, verbose_name='电话', blank=True, null=True)
+    company = models.CharField(
+        max_length=20, verbose_name='公司', blank=True, null=True)
 
     def __str__(self):
         return self.name

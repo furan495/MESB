@@ -32,5 +32,6 @@ router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/querySelect/',  views.querySelect),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
