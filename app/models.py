@@ -27,7 +27,8 @@ class WorkShop(models.Model):
 
 
 class Department(models.Model):
-    name = models.CharField(max_length=10, verbose_name='部门')
+    name = models.CharField(
+        max_length=10, verbose_name='部门', blank=True, null=True)
 
     def __str__(self):
         return self.name

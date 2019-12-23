@@ -29,27 +29,24 @@ class RoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
 
     key = serializers.SerializerMethodField()
-    role = serializers.SerializerMethodField()
-    authority = serializers.SerializerMethodField()
-    department = serializers.SerializerMethodField()
-    gender = serializers.ChoiceField(
-        choices=User.USER_GENDER, source='get_gender_display', read_only=True)
+    authority = serializers.SerializerMethodField(read_only=True)
+    role = serializers.SlugRelatedField(
+        queryset=Role.objects.all(), label='角色', slug_field='name', required=False)
+    department = serializers.SlugRelatedField(
+        queryset=Department.objects.all(), label='部门', slug_field='name', required=False)
 
     def get_key(self, obj):
         return str(obj.id)
 
-    def get_role(self, obj):
-        return obj.role.name if obj.role else ''
-
     def get_authority(self, obj):
-        return obj.role.authority if obj.role else ''
-
-    def get_department(self, obj):
-        return obj.department.name if obj.department else ''
+        try:
+            return obj.role.authority
+        except:
+            return
 
     class Meta:
         model = User
-        fields = ('id', 'key', 'department', 'authority', 'role',
+        fields = ('id', 'key', 'role', 'department', 'authority',
                   'name', 'gender', 'password', 'phone', 'company')
 
 
