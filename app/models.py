@@ -79,32 +79,44 @@ class User(models.Model):
         verbose_name = '用户'
 
 
-class Order(models.Model):
-
-    ORDER_STATUS = (
-        ('1', '等待中'),
-        ('2', '进行中'),
-        ('3', '已完成'),
-    )
-
-    ORDER_TYPE = (
-        ('1', '灌装'),
-        ('2', '机加'),
-        ('3', '电子装配'),
-    )
-
-    user = models.ForeignKey(User, related_name='orders',
-                             on_delete=models.CASCADE, verbose_name='创建人')
-    number = models.CharField(max_length=20, verbose_name='订单编号')
-    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    status = models.CharField(
-        max_length=2, verbose_name='订单状态', choices=ORDER_STATUS)
-    orderType = models.CharField(
-        max_length=2, verbose_name='订单类型', choices=ORDER_TYPE)
-    description = models.CharField(max_length=200, verbose_name='订单描述')
+class OrderStatus(models.Model):
+    name = models.CharField(
+        max_length=20, verbose_name='订单状态', blank=True, null=True)
 
     def __str__(self):
-        return self.number
+        return self.name
+
+    class Meta:
+        verbose_name = '订单状态'
+
+
+class OrderType(models.Model):
+    name = models.CharField(
+        max_length=20, verbose_name='订单类型', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '订单类型'
+
+
+class Order(models.Model):
+    status = models.ForeignKey(OrderStatus, related_name='status',
+                               on_delete=models.CASCADE, verbose_name='订单状态', blank=True, null=True)
+    orderType = models.ForeignKey(OrderType, related_name='types',
+                                  on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
+    creator = models.CharField(
+        max_length=20, verbose_name='创建人', blank=True, null=True)
+    number = models.DateTimeField(
+        auto_now_add=True, verbose_name='订单编号', blank=True, null=True)
+    createTime = models.DateTimeField(
+        auto_now_add=True, verbose_name='创建时间', blank=True, null=True)
+    description = models.CharField(
+        max_length=200, verbose_name='订单描述', blank=True, null=True)
+
+    def __str__(self):
+        return self.orderType
 
     class Meta:
         verbose_name = '订单'

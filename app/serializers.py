@@ -1,4 +1,6 @@
+import time
 from app.models import *
+from django.db.models import Q
 from rest_framework import serializers
 
 
@@ -24,6 +26,18 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ('id', 'key', 'name', 'authority')
+
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderStatus
+        fields = ('id', 'name')
+
+
+class OrderTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderType
+        fields = ('id', 'name')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,21 +67,25 @@ class UserSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
 
     key = serializers.SerializerMethodField()
-    user = serializers.SerializerMethodField()
-    orderType = serializers.ChoiceField(
-        choices=Order.ORDER_STATUS, source='get_orderType_display', read_only=True)
-    status = serializers.ChoiceField(
-        choices=Order.ORDER_STATUS, source='get_status_display', read_only=True)
+    number = serializers.SerializerMethodField()
+    createTime = serializers.SerializerMethodField()
+    status = serializers.SlugRelatedField(
+        queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
+    orderType = serializers.SlugRelatedField(
+        queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
 
     def get_key(self, obj):
         return str(obj.id)
 
-    def get_user(self, obj):
-        return str(obj.user.name)
+    def get_number(self, obj):
+        return int(time.mktime(obj.number.timetuple())*1000)
+
+    def get_createTime(self, obj):
+        return str(obj.createTime)
 
     class Meta:
         model = Order
-        fields = ('id', 'key', 'user', 'number',
+        fields = ('id', 'key', 'creator', 'number',
                   'createTime', 'status', 'orderType', 'description')
 
 

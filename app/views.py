@@ -14,8 +14,8 @@ def querySelect(request):
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order':
-        selectList = {'orderType': list(map(lambda obj: obj[1], Order.ORDER_TYPE)),
-                      'status': list(map(lambda obj: obj[1], Order.ORDER_STATUS))}
+        selectList = {'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
+                      'status': list(map(lambda obj: obj.name, OrderStatus.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
