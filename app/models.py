@@ -210,9 +210,13 @@ class WorkOrder(models.Model):
     status = models.ForeignKey(WorkOrderStatus, related_name='status',
                                on_delete=models.CASCADE, verbose_name='工单状态', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='工单编号')
+    bottle = models.CharField(
+        max_length=20, verbose_name='工单瓶号', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    startTime = models.DateTimeField(verbose_name='开始时间')
-    endTime = models.DateTimeField(auto_now=True, verbose_name='完成时间')
+    startTime = models.CharField(
+        max_length=20, verbose_name='开始时间', blank=True, null=True)
+    endTime = models.CharField(
+        max_length=20, verbose_name='结束时间', blank=True, null=True)
     description = models.CharField(max_length=200, verbose_name='工单描述')
 
     def __str__(self):

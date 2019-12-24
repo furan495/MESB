@@ -31,13 +31,16 @@ def orderSplit(request):
     params = json.loads(request.body)
     orderDesc = params['description'].split(';')
     for order in orderDesc:
-        workOrder = WorkOrder()
-        workOrder.order = Order.objects.get(key=params['key'])
-        workOrder.route = ProcessRoute.objects.get(key=1)
-        workOrder.number = str(time.time()*1000)
-        workOrder.startTime = datetime.datetime.now()
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(key=1)
-        workOrder.description = order
-        workOrder.save()
+        if len(order.split(',')) > 1:
+            for desc in range(int(order.split(',')[-1].split(':')[1])):
+                workOrder = WorkOrder()
+                workOrder.order = Order.objects.get(key=params['key'])
+                workOrder.route = ProcessRoute.objects.get(key=1)
+                workOrder.bottle = ''
+                workOrder.endTime = ''
+                workOrder.startTime = ''
+                workOrder.number = str(time.time()*1000)
+                workOrder.status = WorkOrderStatus.objects.get(key=1)
+                workOrder.description = ','.join(order.split(',')[:4])
+                workOrder.save()
     return JsonResponse({'res': 'succ'})
