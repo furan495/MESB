@@ -26,6 +26,11 @@ class OrderStatusViewSet(viewsets.ModelViewSet):
     serializer_class = OrderStatusSerializer
 
 
+class WorkOrderStatusViewSet(viewsets.ModelViewSet):
+    queryset = WorkOrderStatus.objects.all()
+    serializer_class = WorkOrderStatusSerializer
+
+
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer

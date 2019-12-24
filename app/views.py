@@ -1,5 +1,7 @@
 import os
 import json
+import time
+import datetime
 from app.models import *
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -22,3 +24,20 @@ def querySelect(request):
         selectList = {'gender': ['男', '女'],
                       'role': list(map(lambda obj: obj.name, roles)), 'department': list(map(lambda obj: obj.name, departments))}
     return JsonResponse({'res': selectList})
+
+
+@csrf_exempt
+def orderSplit(request):
+    params = json.loads(request.body)
+    orderDesc = params['description'].split(';')
+    for order in orderDesc:
+        workOrder = WorkOrder()
+        workOrder.order = Order.objects.get(key=params['key'])
+        workOrder.route = ProcessRoute.objects.get(key=1)
+        workOrder.number = str(time.time()*1000)
+        workOrder.startTime = datetime.datetime.now()
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(key=1)
+        workOrder.description = order
+        workOrder.save()
+    return JsonResponse({'res': 'succ'})

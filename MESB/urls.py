@@ -28,12 +28,14 @@ router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
 router.register(r'api/stroePositions', viewSet.StroePositionViewSet)
 router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
+router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 
 # API URL现在由路由器自动确定。
 # 另外，我们还要包含可浏览的API的登录URL。
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/orderSplit/',  views.orderSplit),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
