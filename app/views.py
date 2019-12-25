@@ -27,15 +27,6 @@ def querySelect(request):
 
 
 @csrf_exempt
-def queryWIP(request):
-    params = json.loads(request.body)
-    workOrder = WorkOrder.objects.get(number=params['val'])
-    events = list(map(lambda obj: '%s/%s' %
-                      (obj.title, obj.time), workOrder.events.all()))
-    return JsonResponse({'res': events})
-
-
-@csrf_exempt
 def orderSplit(request):
     params = json.loads(request.body)
     orderDesc = params['description'].split(';')

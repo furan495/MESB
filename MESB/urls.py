@@ -23,7 +23,8 @@ router.register(r'api/materials', viewSet.MaterialViewSet)
 router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
 router.register(r'api/orderTypes', viewSet.OrderTypeViewSet)
 router.register(r'api/departments', viewSet.DepartmentViewSet)
-router.register(r'api/processLines', viewSet.ProcessLineViewSet)
+router.register(r'api/productLines', viewSet.ProductLineViewSet)
+router.register(r'api/workPostions', viewSet.WorkPositionViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
 router.register(r'api/stroePositions', viewSet.StroePositionViewSet)
@@ -35,7 +36,6 @@ router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
-    url(r'^api/queryWIP/',  views.queryWIP),
     url(r'^api/orderSplit/',  views.orderSplit),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))

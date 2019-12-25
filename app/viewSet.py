@@ -2,6 +2,7 @@ from app.models import *
 from app.serializers import *
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
 
@@ -46,9 +47,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
 
-class ProcessLineViewSet(viewsets.ModelViewSet):
-    queryset = ProcessLine.objects.all()
-    serializer_class = ProcessLineSerializer
+class ProductLineViewSet(viewsets.ModelViewSet):
+    queryset = ProductLine.objects.all()
+    serializer_class = ProductLineSerializer
+
+
+class WorkPositionViewSet(viewsets.ModelViewSet):
+    queryset = WorkPosition.objects.all()
+    serializer_class = WorkPositionSerializer
 
 
 class ProcessRouteViewSet(viewsets.ModelViewSet):
@@ -64,6 +70,9 @@ class ProcessViewSet(viewsets.ModelViewSet):
 class WorkOrderViewSet(viewsets.ModelViewSet):
     queryset = WorkOrder.objects.all()
     serializer_class = WorkOrderSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['number', 'status', 'bottle']
 
 
 class BOMViewSet(viewsets.ModelViewSet):

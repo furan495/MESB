@@ -81,18 +81,28 @@ class OrderSerializer(serializers.ModelSerializer):
                   'createTime', 'status', 'orderType', 'description')
 
 
-class ProcessLineSerializer(serializers.ModelSerializer):
+class ProductLineSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = ProcessLine
+        model = ProductLine
         fields = ('key', 'workShop', 'name',
                   'number', 'description')
 
 
+class WorkPositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkPosition
+        fields = ('key', 'productLine', 'name')
+
+
 class ProcessRouteSerializer(serializers.ModelSerializer):
+
+    processes = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = ProcessRoute
         fields = ('key', 'name', 'description',
-                  'status', 'createTime', 'creator')
+                  'status', 'createTime', 'creator', 'processes')
 
 
 class ProcessSerializer(serializers.ModelSerializer):
@@ -105,6 +115,7 @@ class ProcessSerializer(serializers.ModelSerializer):
 class WorkOrderSerializer(serializers.ModelSerializer):
 
     orderNum = serializers.SerializerMethodField()
+    events = serializers.StringRelatedField(many=True, read_only=True)
     status = serializers.SlugRelatedField(
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
@@ -114,7 +125,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkOrder
         fields = ('key', 'orderNum', 'route', 'bottle', 'number', 'createTime',
-                  'startTime', 'endTime', 'status', 'description')
+                  'startTime', 'endTime', 'status', 'description', 'events')
 
 
 class BOMSerializer(serializers.ModelSerializer):
@@ -166,6 +177,12 @@ class ProductStandardSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
+
+    bottle = serializers.SerializerMethodField()
+
+    def get_bottle(self, obj):
+        return obj.workOrder.bottle
+
     class Meta:
         model = Event
-        fields = ('key', 'title', 'source', 'time', 'workOrder')
+        fields = ('key', 'title', 'source', 'bottle', 'time', 'workOrder')

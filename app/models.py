@@ -128,9 +128,9 @@ class Order(models.Model):
         verbose_name = '订单'
 
 
-class ProcessLine(models.Model):
+class ProductLine(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    workShop = models.ForeignKey(WorkShop, related_name='processLines',
+    workShop = models.ForeignKey(WorkShop, related_name='productLines',
                                  on_delete=models.CASCADE, verbose_name='隶属车间')
     name = models.CharField(max_length=20, verbose_name='产线名称')
     number = models.CharField(max_length=20, verbose_name='产线编号')
@@ -141,6 +141,19 @@ class ProcessLine(models.Model):
 
     class Meta:
         verbose_name = '产线'
+
+
+class WorkPosition(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    productLine = models.ForeignKey(ProductLine, related_name='workPositions',
+                                    on_delete=models.CASCADE, verbose_name='隶属产线')
+    name = models.CharField(max_length=20, verbose_name='工位名')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '工位'
 
 
 class ProcessRoute(models.Model):
@@ -414,9 +427,11 @@ class ProductStandard(models.Model):
 class Event(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.ForeignKey(WorkOrder, related_name='events',
-                                  on_delete=models.CASCADE, verbose_name='隶属工单', blank=True, null=True)
+                                  on_delete=models.CASCADE, verbose_name='隶属工单')
+    source = models.ForeignKey(WorkPosition, related_name='events',
+                               on_delete=models.CASCADE, verbose_name='事件来源')
+    bottle = models.CharField(max_length=20, verbose_name='瓶号')
     title = models.CharField(max_length=20, verbose_name='事件标题')
-    source = models.CharField(max_length=20, verbose_name='事件来源')
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):
