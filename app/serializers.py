@@ -168,4 +168,4 @@ class ProductStandardSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ('key', 'title', 'source', 'time')
+        fields = ('key', 'title', 'source', 'time', 'workOrder')

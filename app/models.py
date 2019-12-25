@@ -109,7 +109,7 @@ class OrderType(models.Model):
 class Order(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     status = models.ForeignKey(OrderStatus, related_name='status',
-                               on_delete=models.CASCADE, verbose_name='订单状态', blank=True, null=True)
+                               on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='types',
                                   on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
     creator = models.CharField(
@@ -413,12 +413,14 @@ class ProductStandard(models.Model):
 
 class Event(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    workOrder = models.ForeignKey(WorkOrder, related_name='events',
+                                  on_delete=models.CASCADE, verbose_name='隶属工单', blank=True, null=True)
     title = models.CharField(max_length=20, verbose_name='事件标题')
     source = models.CharField(max_length=20, verbose_name='事件来源')
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):
-        return self.title
+        return self.title+'/'+str(self.time)
 
     class Meta:
         verbose_name = '事件'
