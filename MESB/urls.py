@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 创建路由器并注册我们的视图。
 router = DefaultRouter()
-router.register(r'api/boms', viewSet.BOMViewSet)
+#router.register(r'api/boms', viewSet.BOMViewSet)
 router.register(r'api/roles', viewSet.RoleViewSet)
 router.register(r'api/users', viewSet.UserViewSet)
 router.register(r'api/orders', viewSet.OrderViewSet)
@@ -19,7 +19,7 @@ router.register(r'api/pallets', viewSet.PalletViewSet)
 router.register(r'api/products', viewSet.ProductViewSet)
 router.register(r'api/processes', viewSet.ProcessViewSet)
 router.register(r'api/workShops', viewSet.WorkShopViewSet)
-router.register(r'api/materials', viewSet.MaterialViewSet)
+#router.register(r'api/materials', viewSet.MaterialViewSet)
 router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
 router.register(r'api/orderTypes', viewSet.OrderTypeViewSet)
 router.register(r'api/departments', viewSet.DepartmentViewSet)
@@ -38,5 +38,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/orderSplit/',  views.orderSplit),
     url(r'^api/querySelect/',  views.querySelect),
+    url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

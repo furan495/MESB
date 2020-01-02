@@ -1,3 +1,4 @@
+import json
 from app.models import *
 from app.serializers import *
 from rest_framework import viewsets
@@ -61,7 +62,6 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     queryset = ProcessRoute.objects.all()
     serializer_class = ProcessRouteSerializer
 
-
 class ProcessViewSet(viewsets.ModelViewSet):
     queryset = Process.objects.all()
     serializer_class = ProcessSerializer
@@ -73,11 +73,6 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['number', 'status', 'bottle']
-
-
-class BOMViewSet(viewsets.ModelViewSet):
-    queryset = BOM.objects.all()
-    serializer_class = BOMSerializer
 
 
 class StoreViewSet(viewsets.ModelViewSet):
@@ -93,11 +88,6 @@ class StroePositionViewSet(viewsets.ModelViewSet):
 class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
-
-
-class MaterialViewSet(viewsets.ModelViewSet):
-    queryset = Material.objects.all()
-    serializer_class = MaterialSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):

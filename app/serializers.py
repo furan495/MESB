@@ -101,15 +101,14 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcessRoute
-        fields = ('key', 'name', 'description',
-                  'status', 'createTime', 'creator', 'processes')
+        fields = ('key', 'name', 'data', 'description',
+                  'createTime', 'creator', 'processes')
 
 
 class ProcessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Process
-        fields = ('key', 'route', 'name',
-                  'number', 'description', 'status')
+        fields = ('key', 'route', 'name')
 
 
 class WorkOrderSerializer(serializers.ModelSerializer):
@@ -126,13 +125,6 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         model = WorkOrder
         fields = ('key', 'orderNum', 'route', 'bottle', 'number', 'createTime',
                   'startTime', 'endTime', 'status', 'description', 'events')
-
-
-class BOMSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BOM
-        fields = ('key', 'user', 'name',
-                  'number', 'description', 'bomType', 'createTime')
 
 
 class StoreSerializer(serializers.ModelSerializer):
@@ -153,13 +145,6 @@ class PalletSerializer(serializers.ModelSerializer):
         model = Pallet
         fields = ('key', 'store', 'position', 'number',
                   'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9')
-
-
-class MaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Material
-        fields = ('key', 'bom', 'user',
-                  'store', 'position', 'workOrder', 'name', 'number', 'description', 'mateType', 'operate', 'operateTime')
 
 
 class ProductSerializer(serializers.ModelSerializer):

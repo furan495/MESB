@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 
-# 暂无工具、设备相关表
+# 暂无工具、设备,bom,物料相关表
 
 
 class WorkShop(models.Model):
@@ -158,18 +158,16 @@ class WorkPosition(models.Model):
 
 class ProcessRoute(models.Model):
 
-    PROCESS_ROUTE_STATUS = (
-        ('1', '使用中'),
-        ('2', '已弃用'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(max_length=20, verbose_name='工艺名称')
-    description = models.CharField(max_length=500, verbose_name='工艺描述')
-    status = models.CharField(
-        max_length=2, verbose_name='工艺状态', choices=PROCESS_ROUTE_STATUS)
+    name = models.CharField(
+        max_length=20, verbose_name='工艺名称', blank=True, null=True)
+    data = models.CharField(
+        max_length=5000, verbose_name='工艺内容', blank=True, null=True)
+    description = models.CharField(
+        max_length=200, verbose_name='工艺描述', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    creator = models.CharField(max_length=20, verbose_name='创建人')
+    creator = models.CharField(
+        max_length=20, verbose_name='创建人', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -180,19 +178,11 @@ class ProcessRoute(models.Model):
 
 class Process(models.Model):
 
-    PROCESS_STATUS = (
-        ('1', '正常'),
-        ('2', '故障'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
     route = models.ForeignKey(ProcessRoute, related_name='processes',
                               on_delete=models.CASCADE, verbose_name='隶属工艺')
     name = models.CharField(max_length=20, verbose_name='工序名称')
-    number = models.CharField(max_length=20, verbose_name='工序编号')
-    description = models.CharField(max_length=200, verbose_name='工序描述')
-    status = models.CharField(
-        max_length=2, verbose_name='工序状态', choices=PROCESS_STATUS)
+    order = models.CharField(max_length=20, verbose_name='工序顺序')
 
     def __str__(self):
         return self.name
@@ -239,30 +229,6 @@ class WorkOrder(models.Model):
         verbose_name = '工单'
 
 
-class BOM(models.Model):
-
-    BOM_TYPE = (
-        ('1', '机械'),
-        ('2', '电气'),
-    )
-
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    user = models.ForeignKey(User, related_name='boms',
-                             on_delete=models.CASCADE, verbose_name='创建人')
-    name = models.CharField(max_length=20, verbose_name='BOM名称')
-    number = models.CharField(max_length=20, verbose_name='BOM编号')
-    description = models.CharField(max_length=200, verbose_name='BOM描述')
-    bomType = models.CharField(
-        max_length=2, verbose_name='BOM类型', choices=BOM_TYPE)
-    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'BOM'
-
-
 class Store(models.Model):
 
     STORE_TYPE = (
@@ -301,104 +267,50 @@ class StroePosition(models.Model):
 
 class Pallet(models.Model):
 
-    HOLE_TYPE = (
-        ('1', '有料'),
-        ('2', '无料'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    store = models.ForeignKey(Store, related_name='pallets',
-                              on_delete=models.CASCADE, verbose_name='存放仓库')
     position = models.OneToOneField(StroePosition, related_name='positions',
                                     on_delete=models.CASCADE, verbose_name='隶属仓位')
     number = models.CharField(max_length=20, verbose_name='托盘编号')
-    hole1 = models.CharField(
-        max_length=2, verbose_name='孔位1状态', choices=HOLE_TYPE)
-    hole2 = models.CharField(
-        max_length=2, verbose_name='孔位2状态', choices=HOLE_TYPE)
-    hole3 = models.CharField(
-        max_length=2, verbose_name='孔位3状态', choices=HOLE_TYPE)
-    hole4 = models.CharField(
-        max_length=2, verbose_name='孔位4状态', choices=HOLE_TYPE)
-    hole5 = models.CharField(
-        max_length=2, verbose_name='孔位5状态', choices=HOLE_TYPE)
-    hole6 = models.CharField(
-        max_length=2, verbose_name='孔位6状态', choices=HOLE_TYPE)
-    hole7 = models.CharField(
-        max_length=2, verbose_name='孔位7状态', choices=HOLE_TYPE)
-    hole8 = models.CharField(
-        max_length=2, verbose_name='孔位8状态', choices=HOLE_TYPE)
-    hole9 = models.CharField(
-        max_length=2, verbose_name='孔位9状态', choices=HOLE_TYPE)
-
-
-class Material(models.Model):
-
-    MATERIAL_TYPE = (
-        ('1', '自制'),
-        ('2', '外采'),
-    )
-
-    MATERIAL_OPERATE = (
-        ('1', '入库'),
-        ('2', '出库'),
-    )
-
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    bom = models.ForeignKey(BOM, related_name='materials',
-                            on_delete=models.CASCADE, verbose_name='隶属BOM')
-    user = models.ForeignKey(User, related_name='materials',
-                             on_delete=models.CASCADE, verbose_name='操作人')
-    store = models.ForeignKey(Store, related_name='materials',
-                              on_delete=models.CASCADE, verbose_name='存放仓库')
-    position = models.ForeignKey(StroePosition, related_name='materials',
-                                 on_delete=models.CASCADE, verbose_name='存放仓位')
-    workOrder = models.ForeignKey(WorkOrder, related_name='materials',
-                                  on_delete=models.CASCADE, verbose_name='隶属工单')
-    name = models.CharField(max_length=20, verbose_name='物料名称')
-    number = models.CharField(max_length=20, verbose_name='物料编号')
-    description = models.CharField(max_length=200, verbose_name='物料描述')
-    mateType = models.CharField(
-        max_length=2, verbose_name='物料类型', choices=MATERIAL_TYPE)
-    operate = models.CharField(
-        max_length=2, verbose_name='物料操作', choices=MATERIAL_OPERATE)
-    operateTime = models.DateTimeField(auto_now=True, verbose_name='操作时间')
+    hole1 = models.BooleanField(verbose_name='孔位1状态')
+    hole2 = models.BooleanField(verbose_name='孔位2状态')
+    hole3 = models.BooleanField(verbose_name='孔位3状态')
+    hole4 = models.BooleanField(verbose_name='孔位4状态')
+    hole5 = models.BooleanField(verbose_name='孔位5状态')
+    hole6 = models.BooleanField(verbose_name='孔位6状态')
+    hole7 = models.BooleanField(verbose_name='孔位7状态')
+    hole8 = models.BooleanField(verbose_name='孔位8状态')
+    hole9 = models.BooleanField(verbose_name='孔位9状态')
+    hole1Content = models.CharField(max_length=20, verbose_name='孔位1内容')
+    hole2Content = models.CharField(max_length=20, verbose_name='孔位2内容')
+    hole3Content = models.CharField(max_length=20, verbose_name='孔位3内容')
+    hole4Content = models.CharField(max_length=20, verbose_name='孔位4内容')
+    hole5Content = models.CharField(max_length=20, verbose_name='孔位5内容')
+    hole6Content = models.CharField(max_length=20, verbose_name='孔位6内容')
+    hole7Content = models.CharField(max_length=20, verbose_name='孔位7内容')
+    hole8Content = models.CharField(max_length=20, verbose_name='孔位8内容')
+    hole9Content = models.CharField(max_length=20, verbose_name='孔位9内容')
 
     def __str__(self):
-        return self.name
+        return self.number
 
     class Meta:
-        verbose_name = '物料'
+        verbose_name = '托盘'
 
 
 class Product(models.Model):
 
-    PRODUCT_TYPE = (
-        ('1', '合格'),
-        ('2', '不合格'),
-    )
-
-    PRODUCT_OPERATE = (
-        ('1', '入库'),
-        ('2', '出库'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    user = models.ForeignKey(User, related_name='products',
-                             on_delete=models.CASCADE, verbose_name='操作人')
-    store = models.ForeignKey(Store, related_name='products',
-                              on_delete=models.CASCADE, verbose_name='存放仓库')
-    position = models.ForeignKey(StroePosition, related_name='products',
-                                 on_delete=models.CASCADE, verbose_name='存放仓位')
+    pallet = models.ForeignKey(Pallet, related_name='products',
+                               on_delete=models.CASCADE, verbose_name='存放托盘')
     name = models.CharField(max_length=20, verbose_name='产品名称')
+    user = models.CharField(
+        max_length=20, verbose_name='操作人', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='产品编号')
     description = models.CharField(max_length=200, verbose_name='产品描述')
     prodType = models.CharField(
-        max_length=2, verbose_name='产品类型', choices=PRODUCT_TYPE)
+        max_length=20, verbose_name='产品类型', blank=True, null=True)
     batch = models.CharField(max_length=20, verbose_name='产品批次')
     pic = models.FileField(upload_to='static/product', verbose_name='产品图片')
-    operate = models.CharField(
-        max_length=2, verbose_name='产品操作', choices=PRODUCT_OPERATE)
     operateTime = models.DateTimeField(auto_now=True, verbose_name='操作时间')
 
     def __str__(self):

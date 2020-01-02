@@ -27,6 +27,31 @@ def querySelect(request):
 
 
 @csrf_exempt
+def updateProcessByRoute(request):
+    params = json.loads(request.body)
+    Process.objects.filter(
+        route=ProcessRoute.objects.get(key=params['key'])).delete()
+    orders = json.loads(params['value'])['linkDataArray']
+    processes = json.loads(params['value'])['nodeDataArray']
+
+    for i in range(len(processes)):
+        process = Process()
+        process.route = ProcessRoute.objects.get(key=params['key'])
+        if i == len(processes)-1:
+            proc = list(
+                filter(lambda obj: obj['key'] == orders[-1]['to'], processes))
+            process.name = proc[0]['text']
+            process.order = int(orders[-1]['to'])*-1
+        else:
+            proc = list(
+                filter(lambda obj: obj['key'] == orders[i]['from'], processes))
+            process.name = proc[0]['text']
+            process.order = int(orders[i]['from'])*-1
+        process.save()
+    return JsonResponse({'res': ''})
+
+
+@csrf_exempt
 def orderSplit(request):
     params = json.loads(request.body)
     orderDesc = params['description'].split(';')
