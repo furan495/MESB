@@ -12,9 +12,12 @@ class WorkShopSerializer(serializers.ModelSerializer):
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+
+    members = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = Department
-        fields = ('key', 'name')
+        fields = ('key', 'name','members')
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -38,6 +41,12 @@ class WorkOrderStatusSerializer(serializers.ModelSerializer):
 class OrderTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderType
+        fields = ('key', 'name')
+
+
+class StoreTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreType
         fields = ('key', 'name')
 
 

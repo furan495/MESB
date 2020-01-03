@@ -76,7 +76,7 @@ class User(models.Model):
         max_length=20, verbose_name='公司', blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return '%s/%s/%s/%s/%s'%(str(self.key),self.name,self.gender,self.role,self.phone)
 
     class Meta:
         verbose_name = '用户'
@@ -228,21 +228,27 @@ class WorkOrder(models.Model):
         verbose_name = '工单'
 
 
-class Store(models.Model):
+class StoreType(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='仓库类型', blank=True, null=True)
 
-    STORE_TYPE = (
-        ('1', '成品库'),
-        ('2', '废品库'),
-        ('3', '原料库'),
-    )
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '仓库类型'
+
+
+class Store(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workShop = models.ForeignKey(WorkShop, related_name='stores',
                                  on_delete=models.CASCADE, verbose_name='隶属车间')
+    storeType = models.ForeignKey(StoreType, related_name='stores',
+                                  on_delete=models.CASCADE, verbose_name='仓库类型')
     name = models.CharField(max_length=20, verbose_name='仓库名称')
     number = models.CharField(max_length=20, verbose_name='仓库编号')
-    storeType = models.CharField(
-        max_length=2, verbose_name='仓库类型', choices=STORE_TYPE)
 
     def __str__(self):
         return self.name
