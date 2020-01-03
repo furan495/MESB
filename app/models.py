@@ -182,7 +182,6 @@ class Process(models.Model):
     route = models.ForeignKey(ProcessRoute, related_name='processes',
                               on_delete=models.CASCADE, verbose_name='隶属工艺')
     name = models.CharField(max_length=20, verbose_name='工序名称')
-    order = models.CharField(max_length=20, verbose_name='工序顺序')
 
     def __str__(self):
         return self.name
@@ -339,9 +338,8 @@ class ProductStandard(models.Model):
 class Event(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.ForeignKey(WorkOrder, related_name='events',
-                                  on_delete=models.CASCADE, verbose_name='隶属工单')
-    source = models.ForeignKey(WorkPosition, related_name='events',
-                               on_delete=models.CASCADE, verbose_name='事件来源')
+                                  on_delete=models.CASCADE, verbose_name='隶属工单', blank=True, null=True)
+    source = models.CharField(max_length=20, verbose_name='事件来源')
     bottle = models.CharField(max_length=20, verbose_name='瓶号')
     title = models.CharField(max_length=20, verbose_name='事件标题')
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')

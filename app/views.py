@@ -41,12 +41,10 @@ def updateProcessByRoute(request):
             proc = list(
                 filter(lambda obj: obj['key'] == orders[-1]['to'], processes))
             process.name = proc[0]['text']
-            process.order = int(orders[-1]['to'])*-1
         else:
             proc = list(
                 filter(lambda obj: obj['key'] == orders[i]['from'], processes))
             process.name = proc[0]['text']
-            process.order = int(orders[i]['from'])*-1
         process.save()
     return JsonResponse({'res': ''})
 
