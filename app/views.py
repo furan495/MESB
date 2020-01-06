@@ -18,7 +18,7 @@ def querySelect(request):
     if params['model'] == 'order':
         selectList = {'orderType': list(
             map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
-            map(lambda obj: [obj.name,obj.key], ProcessRoute.objects.all()))}
+            map(lambda obj: [obj.name, obj.key], ProcessRoute.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -70,3 +70,18 @@ def orderSplit(request):
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
     return JsonResponse({'res': 'succ'})
+
+
+@csrf_exempt
+def addBottle(request):
+    params = json.loads(request.body)
+    for count in range(params['counts']):
+        bottle = Bottle()
+        bottle.order = Order.objects.get(key=params['key'])
+        bottle.number = ''
+        bottle.color = params['color']
+        bottle.red = params['red']
+        bottle.green = params['green']
+        bottle.blue = params['blue']
+        bottle.save()
+    return JsonResponse({'ok': 'ok'})

@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'app.myMiddleware.EventTrigger',
+    # 'app.myMiddleware.EventTrigger',
 ]
 
 REST_FRAMEWORK = {
@@ -85,24 +85,50 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 """ 
+
 'default': {
-        'ENGINE': 'django.db.backends.mysql',
+    'ENGINE': 'django.db.backends.mysql',
+    'NAME': 'mes',
+    'USER': 'root',
+    'PASSWORD': '1234',
+    'HOST': 'localhost',
+    'PORT': '3306',
+    'TEST': {
+            'CHARSET': 'utf8',
+            'COLLATION': 'utf8_general_ci',
+    }
+}
+
+'default': {
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': 'mes',
-        'USER': 'root',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'TEST': {
-                'CHARSET': 'utf8',
-                'COLLATION': 'utf8_general_ci',
+        'HOST': '192.168.1.184',
+        'PORT': '1433',
+        'USER': 'sa',
+        'PASSWORD': 'sa',
+        'OPTIONS': {
+            'driver': 'SQL Server Native Client 11.0',
+            'MARS_Connection': True,
         }
+    }
+'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 """
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'sql_server.pyodbc',
+        'NAME': 'mes',
+        'HOST': '192.168.0.101',
+        'PORT': '1433',
+        'USER': 'sa',
+        'PASSWORD': 'sa',
+        'OPTIONS': {
+            'driver': 'SQL Server Native Client 11.0',
+            'MARS_Connection': True,
+        }
     }
 }
 

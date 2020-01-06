@@ -17,7 +17,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Department
-        fields = ('key', 'name','members')
+        fields = ('key', 'name', 'members')
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -86,7 +86,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number','route',
+        fields = ('key', 'creator', 'number', 'route', 'batch', 'scheduling',
                   'createTime', 'status', 'orderType', 'description')
 
 
@@ -96,6 +96,13 @@ class ProductLineSerializer(serializers.ModelSerializer):
         model = ProductLine
         fields = ('key', 'workShop', 'name',
                   'number', 'description')
+
+
+class BottleStateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BottleState
+        fields = ('key', 'name')
 
 
 class WorkPositionSerializer(serializers.ModelSerializer):
@@ -120,6 +127,12 @@ class ProcessSerializer(serializers.ModelSerializer):
         fields = ('key', 'route', 'name')
 
 
+class BottleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bottle
+        fields = ('key', 'order', 'number', 'color', 'red', 'green', 'blue')
+
+
 class WorkOrderSerializer(serializers.ModelSerializer):
 
     orderNum = serializers.SerializerMethodField()
@@ -128,7 +141,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
     def get_orderNum(self, obj):
-        return obj.order.number
+        return int(time.mktime(obj.order.number.timetuple())*1000)
 
     class Meta:
         model = WorkOrder

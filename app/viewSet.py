@@ -67,6 +67,16 @@ class ProcessViewSet(viewsets.ModelViewSet):
     serializer_class = ProcessSerializer
 
 
+class BottleViewSet(viewsets.ModelViewSet):
+    queryset = Bottle.objects.all()
+    serializer_class = BottleSerializer
+
+
+class BottleStateViewSet(viewsets.ModelViewSet):
+    queryset = BottleState.objects.all()
+    serializer_class = BottleStateSerializer
+
+
 class WorkOrderViewSet(viewsets.ModelViewSet):
     queryset = WorkOrder.objects.all()
     serializer_class = WorkOrderSerializer

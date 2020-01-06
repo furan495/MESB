@@ -15,6 +15,7 @@ router.register(r'api/users', viewSet.UserViewSet)
 router.register(r'api/orders', viewSet.OrderViewSet)
 router.register(r'api/stores', viewSet.StoreViewSet)
 router.register(r'api/events', viewSet.EventViewSet)
+router.register(r'api/bottles', viewSet.BottleViewSet)
 router.register(r'api/pallets', viewSet.PalletViewSet)
 router.register(r'api/products', viewSet.ProductViewSet)
 router.register(r'api/processes', viewSet.ProcessViewSet)
@@ -24,6 +25,7 @@ router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
 router.register(r'api/orderTypes', viewSet.OrderTypeViewSet)
 router.register(r'api/departments', viewSet.DepartmentViewSet)
 router.register(r'api/productLines', viewSet.ProductLineViewSet)
+router.register(r'api/bottleStates', viewSet.BottleStateViewSet)
 router.register(r'api/workPostions', viewSet.WorkPositionViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
@@ -36,6 +38,7 @@ router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/addBottle/',  views.addBottle),
     url(r'^api/orderSplit/',  views.orderSplit),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),

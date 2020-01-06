@@ -32,7 +32,7 @@ class ProcessRoute(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='工艺名称', blank=True, null=True)
     data = models.CharField(
-        max_length=5000, verbose_name='工艺内容', blank=True, null=True)
+        max_length=4000, verbose_name='工艺内容', blank=True, null=True)
     description = models.CharField(
         max_length=200, verbose_name='工艺描述', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -136,8 +136,12 @@ class Order(models.Model):
                               on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
     creator = models.CharField(
         max_length=20, verbose_name='创建人', blank=True, null=True)
-    number = models.DateTimeField(
-        auto_now_add=True, verbose_name='订单编号', blank=True, null=True)
+    batch = models.CharField(
+        max_length=20, verbose_name='订单批次', blank=True, null=True)
+    scheduling = models.CharField(max_length=50,
+                                  verbose_name='订单排产', blank=True, null=True)
+    number = models.DateTimeField(auto_now_add=True,
+                                  verbose_name='订单编号', blank=True, null=True)
     createTime = models.DateTimeField(
         auto_now_add=True, verbose_name='创建时间', blank=True, null=True)
     description = models.CharField(
@@ -148,6 +152,39 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = '订单'
+
+
+class BottleState(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='瓶子状态', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '瓶子状态'
+
+
+class Bottle(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    order = models.ForeignKey(Order, related_name='bottles',
+                              on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
+    status = models.ForeignKey(BottleState, related_name='bottles',
+                               on_delete=models.CASCADE, verbose_name='瓶子状态', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='瓶号', blank=True, null=True)
+    color = models.CharField(
+        max_length=20, verbose_name='颜色', blank=True, null=True)
+    red = models.IntegerField(verbose_name='红粒个数', blank=True, null=True)
+    green = models.IntegerField(verbose_name='绿粒个数', blank=True, null=True)
+    blue = models.IntegerField(verbose_name='蓝粒个数', blank=True, null=True)
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = '瓶子'
 
 
 class ProductLine(models.Model):
@@ -345,8 +382,9 @@ class Event(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.ForeignKey(WorkOrder, related_name='events',
                                   on_delete=models.CASCADE, verbose_name='隶属工单', blank=True, null=True)
+    bottle = models.ForeignKey(Bottle, related_name='events',
+                               on_delete=models.CASCADE, verbose_name='事件瓶子', blank=True, null=True)
     source = models.CharField(max_length=20, verbose_name='事件来源')
-    bottle = models.CharField(max_length=20, verbose_name='瓶号')
     title = models.CharField(max_length=20, verbose_name='事件标题')
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 

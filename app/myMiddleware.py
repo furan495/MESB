@@ -26,9 +26,9 @@ class EventTrigger(MiddlewareMixin):
             if url[2] == 'workOrders':
                 event = Event()
                 event.workOrder = WorkOrder.objects.get(key=url[3])
+                event.bottle = Bottle.objects.get(number=params['bottle'])
                 event.source = json.loads(params['cookie'])[
                     'username'] if 'username' in json.loads(params['cookie']) else '某个工位'
-                event.bottle = params['bottle'] if params['bottle'] else ''
                 event.title = selectTitle(params)
                 event.save()
         if request.method == 'DELETE':
