@@ -17,7 +17,8 @@ def querySelect(request):
     selectList = {}
     if params['model'] == 'order':
         selectList = {'orderType': list(
-            map(lambda obj: obj.name, OrderType.objects.all()))}
+            map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
+            map(lambda obj: [obj.name,obj.key], ProcessRoute.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -61,7 +62,6 @@ def orderSplit(request):
             for desc in range(int(description.split(',')[-1].split(':')[1])):
                 workOrder = WorkOrder()
                 workOrder.order = Order.objects.get(key=params['key'])
-                workOrder.route = ProcessRoute.objects.get(key=1)
                 workOrder.bottle = ''
                 workOrder.endTime = ''
                 workOrder.startTime = ''

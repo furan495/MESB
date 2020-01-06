@@ -86,7 +86,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number',
+        fields = ('key', 'creator', 'number','route',
                   'createTime', 'status', 'orderType', 'description')
 
 
@@ -132,7 +132,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkOrder
-        fields = ('key', 'orderNum', 'route', 'bottle', 'number', 'createTime',
+        fields = ('key', 'orderNum', 'bottle', 'number', 'createTime',
                   'startTime', 'endTime', 'status', 'description', 'events')
 
 

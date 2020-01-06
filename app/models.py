@@ -26,6 +26,26 @@ class WorkShop(models.Model):
         verbose_name = '车间'
 
 
+class ProcessRoute(models.Model):
+
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='工艺名称', blank=True, null=True)
+    data = models.CharField(
+        max_length=5000, verbose_name='工艺内容', blank=True, null=True)
+    description = models.CharField(
+        max_length=200, verbose_name='工艺描述', blank=True, null=True)
+    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    creator = models.CharField(
+        max_length=20, verbose_name='创建人', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '工艺路线'
+
+
 class Department(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
@@ -76,7 +96,7 @@ class User(models.Model):
         max_length=20, verbose_name='公司', blank=True, null=True)
 
     def __str__(self):
-        return '%s/%s/%s/%s/%s'%(str(self.key),self.name,self.gender,self.role,self.phone)
+        return '%s/%s/%s/%s/%s' % (str(self.key), self.name, self.gender, self.role, self.phone)
 
     class Meta:
         verbose_name = '用户'
@@ -112,6 +132,8 @@ class Order(models.Model):
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='types',
                                   on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
+    route = models.ForeignKey(ProcessRoute, related_name='orders',
+                              on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
     creator = models.CharField(
         max_length=20, verbose_name='创建人', blank=True, null=True)
     number = models.DateTimeField(
@@ -156,26 +178,6 @@ class WorkPosition(models.Model):
         verbose_name = '工位'
 
 
-class ProcessRoute(models.Model):
-
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=20, verbose_name='工艺名称', blank=True, null=True)
-    data = models.CharField(
-        max_length=5000, verbose_name='工艺内容', blank=True, null=True)
-    description = models.CharField(
-        max_length=200, verbose_name='工艺描述', blank=True, null=True)
-    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    creator = models.CharField(
-        max_length=20, verbose_name='创建人', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '工艺路线'
-
-
 class Process(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
@@ -207,8 +209,6 @@ class WorkOrder(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     order = models.ForeignKey(Order, related_name='workOrders',
                               on_delete=models.CASCADE, verbose_name='隶属订单')
-    route = models.ForeignKey(ProcessRoute, related_name='workOrders',
-                              on_delete=models.CASCADE, verbose_name='选用工艺')
     status = models.ForeignKey(WorkOrderStatus, related_name='status',
                                on_delete=models.CASCADE, verbose_name='工单状态', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='工单编号')
