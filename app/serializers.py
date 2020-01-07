@@ -82,7 +82,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return int(time.mktime(obj.number.timetuple())*1000)
 
     def get_createTime(self, obj):
-        return str(obj.createTime)
+        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = Order
@@ -112,8 +112,11 @@ class WorkPositionSerializer(serializers.ModelSerializer):
 
 
 class ProcessRouteSerializer(serializers.ModelSerializer):
-
+    createTime = serializers.SerializerMethodField()
     processes = serializers.StringRelatedField(many=True, read_only=True)
+
+    def get_createTime(self, obj):
+        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = ProcessRoute
@@ -136,12 +139,16 @@ class BottleSerializer(serializers.ModelSerializer):
 class WorkOrderSerializer(serializers.ModelSerializer):
 
     orderNum = serializers.SerializerMethodField()
+    createTime = serializers.SerializerMethodField()
     events = serializers.StringRelatedField(many=True, read_only=True)
     status = serializers.SlugRelatedField(
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
     def get_orderNum(self, obj):
         return int(time.mktime(obj.order.number.timetuple())*1000)
+
+    def get_createTime(self, obj):
+        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = WorkOrder

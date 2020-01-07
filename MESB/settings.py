@@ -111,24 +111,12 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
             'MARS_Connection': True,
         }
     }
-'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
 """
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sql_server.pyodbc',
-        'NAME': 'mes',
-        'HOST': '192.168.0.101',
-        'PORT': '1433',
-        'USER': 'sa',
-        'PASSWORD': 'sa',
-        'OPTIONS': {
-            'driver': 'SQL Server Native Client 11.0',
-            'MARS_Connection': True,
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
