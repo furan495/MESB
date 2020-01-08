@@ -281,11 +281,15 @@ class Store(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workShop = models.ForeignKey(WorkShop, related_name='stores',
-                                 on_delete=models.CASCADE, verbose_name='隶属车间')
+                                 on_delete=models.CASCADE, verbose_name='隶属车间', blank=True, null=True)
     storeType = models.ForeignKey(StoreType, related_name='stores',
-                                  on_delete=models.CASCADE, verbose_name='仓库类型')
-    name = models.CharField(max_length=20, verbose_name='仓库名称')
-    number = models.CharField(max_length=20, verbose_name='仓库编号')
+                                  on_delete=models.CASCADE, verbose_name='仓库类型', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='仓库名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='仓库编号', blank=True, null=True)
+    dimensions = models.CharField(
+        max_length=20, verbose_name='仓库规模',  blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -295,13 +299,19 @@ class Store(models.Model):
 
 
 class StroePosition(models.Model):
+    POSITION_STATUS = (
+        ('1', '有盘'),
+        ('2', '无盘'),
+    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     store = models.ForeignKey(Store, related_name='positions',
                               on_delete=models.CASCADE, verbose_name='隶属仓库')
+    status = models.CharField(
+        max_length=2, verbose_name='仓位状态', choices=POSITION_STATUS, blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='仓位编号')
 
     def __str__(self):
-        return self.number
+        return self.number+'/'+self.status+'/'+str(self.key)
 
     class Meta:
         verbose_name = '仓位'
@@ -322,15 +332,24 @@ class Pallet(models.Model):
     hole7 = models.BooleanField(verbose_name='孔位7状态')
     hole8 = models.BooleanField(verbose_name='孔位8状态')
     hole9 = models.BooleanField(verbose_name='孔位9状态')
-    hole1Content = models.CharField(max_length=20, verbose_name='孔位1内容')
-    hole2Content = models.CharField(max_length=20, verbose_name='孔位2内容')
-    hole3Content = models.CharField(max_length=20, verbose_name='孔位3内容')
-    hole4Content = models.CharField(max_length=20, verbose_name='孔位4内容')
-    hole5Content = models.CharField(max_length=20, verbose_name='孔位5内容')
-    hole6Content = models.CharField(max_length=20, verbose_name='孔位6内容')
-    hole7Content = models.CharField(max_length=20, verbose_name='孔位7内容')
-    hole8Content = models.CharField(max_length=20, verbose_name='孔位8内容')
-    hole9Content = models.CharField(max_length=20, verbose_name='孔位9内容')
+    hole1Content = models.CharField(
+        max_length=20, verbose_name='孔位1内容', blank=True, null=True)
+    hole2Content = models.CharField(
+        max_length=20, verbose_name='孔位2内容', blank=True, null=True)
+    hole3Content = models.CharField(
+        max_length=20, verbose_name='孔位3内容', blank=True, null=True)
+    hole4Content = models.CharField(
+        max_length=20, verbose_name='孔位4内容', blank=True, null=True)
+    hole5Content = models.CharField(
+        max_length=20, verbose_name='孔位5内容', blank=True, null=True)
+    hole6Content = models.CharField(
+        max_length=20, verbose_name='孔位6内容', blank=True, null=True)
+    hole7Content = models.CharField(
+        max_length=20, verbose_name='孔位7内容', blank=True, null=True)
+    hole8Content = models.CharField(
+        max_length=20, verbose_name='孔位8内容', blank=True, null=True)
+    hole9Content = models.CharField(
+        max_length=20, verbose_name='孔位9内容', blank=True, null=True)
 
     def __str__(self):
         return self.number

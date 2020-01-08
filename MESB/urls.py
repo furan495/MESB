@@ -38,8 +38,10 @@ router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/wincc/',  views.wincc),
     url(r'^api/addBottle/',  views.addBottle),
     url(r'^api/orderSplit/',  views.orderSplit),
+    url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))

@@ -52,7 +52,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'app.myMiddleware.EventTrigger',
 ]
 
 REST_FRAMEWORK = {
@@ -98,11 +97,19 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
             'COLLATION': 'utf8_general_ci',
     }
 }
-
 'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+
+"""
+
+DATABASES = {
+
+    'default': {
         'ENGINE': 'sql_server.pyodbc',
         'NAME': 'mes',
-        'HOST': '192.168.1.184',
+        'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
         'PASSWORD': 'sa',
@@ -110,13 +117,6 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
             'driver': 'SQL Server Native Client 11.0',
             'MARS_Connection': True,
         }
-    }
-"""
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 

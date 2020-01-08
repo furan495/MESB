@@ -157,23 +157,31 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
 
 class StoreSerializer(serializers.ModelSerializer):
+
+    workShop = serializers.SlugRelatedField(
+        queryset=WorkShop.objects.all(), label='隶属车间', slug_field='name', required=False)
+    storeType = serializers.SlugRelatedField(
+        queryset=StoreType.objects.all(), label='仓库类型', slug_field='name', required=False)
+    positions = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = Store
-        fields = ('key', 'workShop', 'name',
-                  'number', 'storeType')
+        fields = ('key', 'workShop', 'name', 'dimensions',
+                  'number', 'storeType', 'positions')
 
 
 class StroePositionSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = StroePosition
-        fields = ('key', 'store', 'number')
+        fields = ('key', 'store', 'number', 'status')
 
 
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'store', 'position', 'number',
-                  'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9')
+        fields = ('key', 'position', 'number',
+                  'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9', 'hole1Content', 'hole2Content', 'hole3Content', 'hole4Content', 'hole5Content', 'hole6Content', 'hole7Content', 'hole8Content', 'hole9Content')
 
 
 class ProductSerializer(serializers.ModelSerializer):

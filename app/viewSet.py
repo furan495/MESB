@@ -62,6 +62,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     queryset = ProcessRoute.objects.all()
     serializer_class = ProcessRouteSerializer
 
+
 class ProcessViewSet(viewsets.ModelViewSet):
     queryset = Process.objects.all()
     serializer_class = ProcessSerializer
@@ -103,6 +104,9 @@ class StroePositionViewSet(viewsets.ModelViewSet):
 class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['position']
 
 
 class ProductViewSet(viewsets.ModelViewSet):

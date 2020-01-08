@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import random
 import datetime
 from app.models import *
 from django.http import JsonResponse
@@ -12,6 +13,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @csrf_exempt
+def wincc(request):
+    try:
+        print(json.loads(str(request.body, 'utf8').replace('\'', '\"')), 'ok')
+    except:
+        print(request.body, 'err')
+    return JsonResponse({'res': 'res'})
+
+
+@csrf_exempt
 def querySelect(request):
     params = json.loads(request.body)
     selectList = {}
@@ -19,6 +29,10 @@ def querySelect(request):
         selectList = {'orderType': list(
             map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
             map(lambda obj: [obj.name, obj.key], ProcessRoute.objects.all()))}
+    if params['model'] == 'store':
+        selectList = {'storeType': list(
+            map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
+            map(lambda obj: obj.name, WorkShop.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -85,3 +99,16 @@ def addBottle(request):
         bottle.blue = params['blue']
         bottle.save()
     return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
+def createStore(request):
+    params = json.loads(request.body)
+    count = params['row']*params['column']
+    for i in range(count):
+        position = StroePosition()
+        position.store = Store.objects.get(key=params['key'])
+        position.number = i+1
+        position.status = random.choice(['1', '2'])
+        position.save()
+    return JsonResponse({'res': 'ok'})
