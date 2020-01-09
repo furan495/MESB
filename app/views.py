@@ -79,7 +79,7 @@ def orderSplit(request):
                 workOrder.bottle = ''
                 workOrder.endTime = ''
                 workOrder.startTime = ''
-                workOrder.number = str(time.time()*1000)[:12]
+                workOrder.number = str(time.time()*1000)[:13]
                 workOrder.status = WorkOrderStatus.objects.get(key=1)
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()

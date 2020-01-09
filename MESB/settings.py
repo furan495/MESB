@@ -153,8 +153,7 @@ USE_L10N = False
 
 USE_TZ = False
 
-DATE_FORMAT = 'Y-m-d'
-DATETIME_FORMAT = 'Y-m-d H:i:s'
+
 
 
 # Static files (CSS, JavaScript, Images)

@@ -142,8 +142,8 @@ class Order(models.Model):
                                   verbose_name='订单排产', blank=True, null=True)
     number = models.DateTimeField(auto_now_add=True,
                                   verbose_name='订单编号', blank=True, null=True)
-    createTime = models.DateTimeField(
-        auto_now_add=True, verbose_name='创建时间', blank=True, null=True)
+    createTime = models.CharField(
+        max_length=20, verbose_name='创建时间', blank=True, null=True)
     description = models.CharField(
         max_length=200, verbose_name='订单描述', blank=True, null=True)
 
