@@ -101,6 +101,11 @@ class StroePositionViewSet(viewsets.ModelViewSet):
     serializer_class = StroePositionSerializer
 
 
+class OperateViewSet(viewsets.ModelViewSet):
+    queryset = Operate.objects.all()
+    serializer_class = OperateSerializer
+
+
 class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer

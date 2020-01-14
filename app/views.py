@@ -16,12 +16,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def wincc(request):
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     position = {'LP': '理瓶', 'XG': '旋盖', 'SLA': '数粒A',
-                'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架'}
+                'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架', 'RK': '入库', 'CK': '出库'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
     print(params)
-
 
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
@@ -30,6 +29,12 @@ def wincc(request):
         workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         workOrder.status = WorkOrderStatus.objects.get(key=2)
         workOrder.save()
+
+    if position[params[0]] == '入库' or position[params[0]] == '出库':
+        operate = Operate()
+        operate.name = position[params[0]]
+        operate.pallet = Pallet.objects.get(number=params[4])
+        operate.save()
 
     event = Event()
     event.workOrder = WorkOrder.objects.get(

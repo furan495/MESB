@@ -318,7 +318,6 @@ class StroePosition(models.Model):
 
 
 class Pallet(models.Model):
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
     position = models.OneToOneField(StroePosition, related_name='positions',
                                     on_delete=models.CASCADE, verbose_name='隶属仓位')
@@ -357,6 +356,21 @@ class Pallet(models.Model):
 
     class Meta:
         verbose_name = '托盘'
+
+
+class Operate(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    pallet = models.ForeignKey(Pallet, related_name='operations',
+                               on_delete=models.CASCADE, verbose_name='目标托盘', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='操作名称', blank=True, null=True)
+    time = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '操作'
 
 
 class Product(models.Model):

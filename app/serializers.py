@@ -142,7 +142,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
-    
+
     def get_orderNum(self, obj):
         return obj.order.number
 
@@ -173,10 +173,17 @@ class StroePositionSerializer(serializers.ModelSerializer):
         fields = ('key', 'store', 'number', 'status')
 
 
+class OperateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Operate
+        fields = ('key', 'name', 'time', 'pallet')
+
+
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'position', 'number','rate',
+        fields = ('key', 'position', 'number', 'rate',
                   'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9', 'hole1Content', 'hole2Content', 'hole3Content', 'hole4Content', 'hole5Content', 'hole6Content', 'hole7Content', 'hole8Content', 'hole9Content')
 
 
