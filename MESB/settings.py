@@ -84,31 +84,17 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 """ 
-
-'default': {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'mes',
-    'USER': 'root',
-    'PASSWORD': '1234',
-    'HOST': 'localhost',
-    'PORT': '3306',
-    'TEST': {
-            'CHARSET': 'utf8',
-            'COLLATION': 'utf8_general_ci',
-    }
-}
 'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-
 """
 
 DATABASES = {
 
     'default': {
         'ENGINE': 'sql_server.pyodbc',
-        'NAME': 'mes',
+        'NAME': 'mes2',
         'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',

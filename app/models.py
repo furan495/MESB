@@ -140,10 +140,10 @@ class Order(models.Model):
         max_length=20, verbose_name='订单批次', blank=True, null=True)
     scheduling = models.CharField(max_length=50,
                                   verbose_name='订单排产', blank=True, null=True)
-    number = models.DateTimeField(auto_now_add=True,
-                                  verbose_name='订单编号', blank=True, null=True)
-    createTime = models.CharField(
-        max_length=20, verbose_name='创建时间', blank=True, null=True)
+    number = models.CharField(max_length=20,
+                              verbose_name='订单编号', blank=True, null=True)
+    createTime = models.DateTimeField(auto_now_add=True,
+                                      verbose_name='创建时间', blank=True, null=True)
     description = models.CharField(
         max_length=200, verbose_name='订单描述', blank=True, null=True)
 
@@ -323,6 +323,7 @@ class Pallet(models.Model):
     position = models.OneToOneField(StroePosition, related_name='positions',
                                     on_delete=models.CASCADE, verbose_name='隶属仓位')
     number = models.CharField(max_length=20, verbose_name='托盘编号')
+    rate = models.FloatField(verbose_name='利用率', default=0.0)
     hole1 = models.BooleanField(verbose_name='孔位1状态')
     hole2 = models.BooleanField(verbose_name='孔位2状态')
     hole3 = models.BooleanField(verbose_name='孔位3状态')
@@ -401,14 +402,14 @@ class Event(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.ForeignKey(WorkOrder, related_name='events',
                                   on_delete=models.CASCADE, verbose_name='隶属工单', blank=True, null=True)
-    bottle = models.ForeignKey(Bottle, related_name='events',
-                               on_delete=models.CASCADE, verbose_name='事件瓶子', blank=True, null=True)
+    bottle = models.CharField(
+        max_length=20, verbose_name='事件瓶号', blank=True, null=True)
     source = models.CharField(max_length=20, verbose_name='事件来源')
     title = models.CharField(max_length=20, verbose_name='事件标题')
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):
-        return self.title+'/'+str(self.time)
+        return self.title+'/'+self.time.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         verbose_name = '事件'

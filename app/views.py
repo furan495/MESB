@@ -1,9 +1,9 @@
 import os
 import json
 import time
-import random
 import datetime
 from app.models import *
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -14,11 +14,44 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @csrf_exempt
 def wincc(request):
-    try:
-        print(json.loads(str(request.body, 'utf8').replace('\'', '\"')), 'ok')
-    except:
-        print(request.body, 'err')
+    color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
+    position = {'LP': '理瓶', 'XG': '旋盖', 'SLA': '数粒A',
+                'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架'}
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
+
+    print(params)
+
+
+    if position[params[0]] == '理瓶':
+        workOrder = WorkOrder.objects.filter(
+            Q(description__icontains=color[params[2]], bottle='', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
+        workOrder.bottle = params[1]
+        workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        workOrder.status = WorkOrderStatus.objects.get(key=2)
+        workOrder.save()
+
+    event = Event()
+    event.workOrder = WorkOrder.objects.get(
+        Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+    event.bottle = params[1]
+    event.source = position[params[0]]
+    event.title = '进入%s单元' % position[params[0]]
+    event.save()
+
     return JsonResponse({'res': 'res'})
+
+
+@csrf_exempt
+def queryPallet(request):
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
+    bottles = Bottle.objects.filter(
+        Q(order=Order.objects.get(number=params['number'])))
+    num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
+    pallets = ','.join(list(map(lambda obj: obj.position.number, list(
+        Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
+    print('%s,' % pallets)
+    return JsonResponse({'res': '%s,' % pallets})
 
 
 @csrf_exempt
@@ -79,7 +112,8 @@ def orderSplit(request):
                 workOrder.bottle = ''
                 workOrder.endTime = ''
                 workOrder.startTime = ''
-                workOrder.number = str(time.time()*1000)[:13]
+                time.sleep(0.01)
+                workOrder.number = str(time.time()*1000000)
                 workOrder.status = WorkOrderStatus.objects.get(key=1)
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
@@ -109,6 +143,6 @@ def createStore(request):
         position = StroePosition()
         position.store = Store.objects.get(key=params['key'])
         position.number = i+1
-        position.status = random.choice(['1', '2'])
+        position.status = '1'
         position.save()
     return JsonResponse({'res': 'ok'})

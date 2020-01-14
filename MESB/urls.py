@@ -41,6 +41,7 @@ urlpatterns = [
     url(r'^api/wincc/',  views.wincc),
     url(r'^api/addBottle/',  views.addBottle),
     url(r'^api/orderSplit/',  views.orderSplit),
+    url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),

@@ -71,18 +71,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    number = serializers.SerializerMethodField()
-    #createTime = serializers.SerializerMethodField()
+    createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
         queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
     orderType = serializers.SlugRelatedField(
         queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
 
-    def get_number(self, obj):
-        return int(time.mktime(obj.number.timetuple())*1000)
-
-    """ def get_createTime(self, obj):
-        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S') """
+    def get_createTime(self, obj):
+        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = Order
@@ -144,11 +140,11 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     status = serializers.SlugRelatedField(
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
-    def get_orderNum(self, obj):
-        return int(time.mktime(obj.order.number.timetuple())*1000)
-
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def get_orderNum(self, obj):
+        return obj.order.number
 
     class Meta:
         model = WorkOrder
@@ -180,7 +176,7 @@ class StroePositionSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'position', 'number',
+        fields = ('key', 'position', 'number','rate',
                   'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9', 'hole1Content', 'hole2Content', 'hole3Content', 'hole4Content', 'hole5Content', 'hole6Content', 'hole7Content', 'hole8Content', 'hole9Content')
 
 
