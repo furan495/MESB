@@ -60,6 +60,18 @@ def queryPallet(request):
 
 
 @csrf_exempt
+def loginCheck(request):
+    params = json.loads(request.body)
+    user = User.objects.get(phone=params['phone'])
+    res = ''
+    if user.password == params['password']:
+        res = {'name': user.name, 'authority': user.role.authority}
+    else:
+        res = 'err'
+    return JsonResponse({'res': res})
+
+
+@csrf_exempt
 def querySelect(request):
     params = json.loads(request.body)
     selectList = {}
