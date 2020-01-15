@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def wincc(request):
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     position = {'LP': '理瓶', 'XG': '旋盖', 'SLA': '数粒A',
-                'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架', 'RK': '入库', 'CK': '出库'}
+                'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
@@ -30,12 +30,6 @@ def wincc(request):
         workOrder.status = WorkOrderStatus.objects.get(key=2)
         workOrder.save()
 
-    if position[params[0]] == '入库' or position[params[0]] == '出库':
-        operate = Operate()
-        operate.name = position[params[0]]
-        operate.pallet = Pallet.objects.get(number=params[4])
-        operate.save()
-
     event = Event()
     event.workOrder = WorkOrder.objects.get(
         Q(bottle=params[1], order=Order.objects.get(number=params[3])))
@@ -45,6 +39,22 @@ def wincc(request):
     event.save()
 
     return JsonResponse({'res': 'res'})
+
+
+@csrf_exempt
+def storeOperate(request):
+    position = {'CK': '出库', 'RK': '入库'}
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
+
+    print(params)
+
+    operate = Operate()
+    operate.name = position[params[0]]
+    operate.pallet = Pallet.objects.get(number=params[2])
+    operate.save()
+
+    return JsonResponse({'ok': 'ok'})
 
 
 @csrf_exempt
@@ -162,4 +172,8 @@ def createStore(request):
         position.number = i+1
         position.status = '1'
         position.save()
+        pallet = Pallet()
+        pallet.position = StroePosition.objects.get(number=(i+1))
+        pallet.number = i+1
+        pallet.save()
     return JsonResponse({'res': 'ok'})

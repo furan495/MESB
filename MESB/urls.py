@@ -46,6 +46,7 @@ urlpatterns = [
     url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
+    url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
