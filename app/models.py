@@ -12,12 +12,13 @@ class WorkShop(models.Model):
         ('2', '已弃用'),
     )
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(max_length=20, verbose_name='车间名称')
-    number = models.CharField(max_length=20, verbose_name='车间编号')
-    descriptions = models.CharField(max_length=200, verbose_name='车间描述')
+    name = models.CharField(
+        max_length=20, verbose_name='车间名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='车间编号', blank=True, null=True)
+    descriptions = models.CharField(
+        max_length=200, verbose_name='车间描述', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    status = models.CharField(
-        max_length=2, verbose_name='车间状态', choices=WORKSHOP_STATUS)
 
     def __str__(self):
         return self.name
@@ -143,7 +144,7 @@ class Order(models.Model):
     number = models.CharField(max_length=20,
                               verbose_name='订单编号', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True,
-                                      verbose_name='创建时间', blank=True, null=True)
+                                      verbose_name='创建时间')
     description = models.CharField(
         max_length=200, verbose_name='订单描述', blank=True, null=True)
 
@@ -202,19 +203,6 @@ class ProductLine(models.Model):
         verbose_name = '产线'
 
 
-class WorkPosition(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    productLine = models.ForeignKey(ProductLine, related_name='workPositions',
-                                    on_delete=models.CASCADE, verbose_name='隶属产线')
-    name = models.CharField(max_length=20, verbose_name='工位名')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '工位'
-
-
 class Process(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
@@ -227,6 +215,94 @@ class Process(models.Model):
 
     class Meta:
         verbose_name = '工序'
+
+
+class WorkPosition(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    """ productLine = models.ForeignKey(ProductLine, related_name='workPositions',
+                                    on_delete=models.CASCADE, verbose_name='隶属产线') """
+    process = models.OneToOneField(Process, related_name='process',
+                                   on_delete=models.CASCADE, verbose_name='对应工序')
+    name = models.CharField(max_length=20, verbose_name='工位名')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '工位'
+
+
+class DeviceType(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='设备类型', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '设备类型'
+
+
+class Device(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    deviceType = models.ForeignKey(DeviceType, related_name='devices',
+                                   on_delete=models.CASCADE, verbose_name='设备类型', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='设备名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='设备编号', blank=True, null=True)
+    joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
+    exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
+    factory = models.CharField(
+        max_length=20, verbose_name='设备厂家', blank=True, null=True)
+    facTime = models.CharField(
+        max_length=20, verbose_name='出厂日期', blank=True, null=True)
+    facPeo = models.CharField(
+        max_length=20, verbose_name='厂家联系人', blank=True, null=True)
+    facPho = models.CharField(
+        max_length=20, verbose_name='厂家电话', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '设备'
+
+
+class DeviceState(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    device = models.ForeignKey(Device, related_name='states',
+                               on_delete=models.CASCADE, verbose_name='目标设备')
+    isOpen = models.BooleanField(verbose_name='是否开机', default=False)
+    openTime = models.CharField(
+        max_length=30, verbose_name='开机时间', blank=True, null=True)
+    closeTime = models.CharField(
+        max_length=30, verbose_name='关机时间', blank=True, null=True)
+    isWork = models.BooleanField(verbose_name='是否工作', default=False)
+    workStart = models.CharField(
+        max_length=30, verbose_name='开始工作时间', blank=True, null=True)
+    workEnd = models.CharField(
+        max_length=30, verbose_name='结束工作时间', blank=True, null=True)
+    isFault = models.BooleanField(verbose_name='是否故障', default=False)
+    faultTime = models.CharField(
+        max_length=30, verbose_name='故障时间', blank=True, null=True)
+    faultLevel = models.CharField(
+        max_length=20, verbose_name='故障等级', blank=True, null=True)
+    faultReason = models.CharField(
+        max_length=200, verbose_name='故障原因', blank=True, null=True)
+    isRepair = models.BooleanField(verbose_name='是否返修', default=False)
+    repairStart = models.CharField(
+        max_length=30, verbose_name='返修开始时间', blank=True, null=True)
+    repairEnd = models.CharField(
+        max_length=30, verbose_name='返修结束时间', blank=True, null=True)
+    repairResult = models.BooleanField(verbose_name='返修结果', default=False)
+
+    def __str__(self):
+        return self.device.name
+
+    class Meta:
+        verbose_name='设备状态'
 
 
 class WorkOrderStatus(models.Model):

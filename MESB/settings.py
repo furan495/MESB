@@ -88,11 +88,7 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-"""
-
-DATABASES = {
-
-    'default': {
+'default': {
         'ENGINE': 'sql_server.pyodbc',
         'NAME': 'mes2',
         'HOST': 'localhost',
@@ -103,6 +99,25 @@ DATABASES = {
             'driver': 'SQL Server Native Client 11.0',
             'MARS_Connection': True,
         }
+    }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'mes',
+        'USER': 'root',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'TEST': {
+                'CHARSET': 'utf8',
+                'COLLATION': 'utf8_general_ci',
+        }
+    }
+"""
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -138,8 +153,6 @@ USE_I18N = True
 USE_L10N = False
 
 USE_TZ = False
-
-
 
 
 # Static files (CSS, JavaScript, Images)

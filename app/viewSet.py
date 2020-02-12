@@ -106,6 +106,21 @@ class OperateViewSet(viewsets.ModelViewSet):
     serializer_class = OperateSerializer
 
 
+class DeviceViewSet(viewsets.ModelViewSet):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+
+
+class DeviceTypeViewSet(viewsets.ModelViewSet):
+    queryset = DeviceType.objects.all()
+    serializer_class = DeviceTypeSerializer
+
+
+class DeviceStateViewSet(viewsets.ModelViewSet):
+    queryset = DeviceState.objects.all()
+    serializer_class = DeviceStateSerializer
+
+
 class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer

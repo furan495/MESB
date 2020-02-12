@@ -1,6 +1,5 @@
 import time
 from app.models import *
-from django.db.models import Q
 from rest_framework import serializers
 
 
@@ -8,7 +7,7 @@ class WorkShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkShop
         fields = ('key', 'name', 'number',
-                  'descriptions', 'createTime', 'status')
+                  'descriptions', 'createTime')
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -48,6 +47,36 @@ class StoreTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StoreType
         fields = ('key', 'name')
+
+
+class DeviceTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceType
+        fields = ('key', 'name')
+
+
+class DeviceStateSerializer(serializers.ModelSerializer):
+    device = serializers.SlugRelatedField(
+        queryset=Device.objects.all(), label='设备名称', slug_field='name', required=False)
+
+    class Meta:
+        model = DeviceState
+        fields = ('key', 'device', 'isOpen', 'openTime', 'closeTime', 'isWork', 'workStart', 'workEnd', 'isFault',
+                  'faultTime', 'faultLevel', 'faultReason', 'isRepair', 'repairStart', 'repairEnd', 'repairResult')
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    joinTime = serializers.SerializerMethodField()
+    deviceType = serializers.SlugRelatedField(
+        queryset=DeviceType.objects.all(), label='订单类型', slug_field='name', required=False)
+
+    def get_joinTime(self, obj):
+        return obj.joinTime.strftime('%Y-%m-%d %H:%M:%S')
+
+    class Meta:
+        model = Device
+        fields = ('key', 'deviceType', 'name', 'number', 'joinTime',
+                  'exitTime', 'factory', 'facTime', 'facPeo', 'facPho')
 
 
 class UserSerializer(serializers.ModelSerializer):

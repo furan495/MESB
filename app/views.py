@@ -30,13 +30,16 @@ def wincc(request):
         workOrder.status = WorkOrderStatus.objects.get(key=2)
         workOrder.save()
 
-    event = Event()
-    event.workOrder = WorkOrder.objects.get(
-        Q(bottle=params[1], order=Order.objects.get(number=params[3])))
-    event.bottle = params[1]
-    event.source = position[params[0]]
-    event.title = '进入%s单元' % position[params[0]]
-    event.save()
+    try:
+        event = Event()
+        event.workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+        event.bottle = params[1]
+        event.source = position[params[0]]
+        event.title = '进入%s单元' % position[params[0]]
+        event.save()
+    except Exception as e:
+        print(e, '这里有问题')
 
     return JsonResponse({'res': 'res'})
 
@@ -66,7 +69,7 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
     print('%s,' % pallets)
-    return JsonResponse({'res': '%s,' % pallets})
+    return JsonResponse({'res': '18,'})
 
 
 @csrf_exempt
@@ -93,6 +96,9 @@ def querySelect(request):
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
             map(lambda obj: obj.name, WorkShop.objects.all()))}
+    if params['model'] == 'device':
+        selectList = {'deviceType': list(
+            map(lambda obj: obj.name, DeviceType.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -169,11 +175,12 @@ def createStore(request):
     for i in range(count):
         position = StroePosition()
         position.store = Store.objects.get(key=params['key'])
-        position.number = i+1
+        position.number = '%s-%s' % (params['key'], i+1)
         position.status = '1'
         position.save()
         pallet = Pallet()
-        pallet.position = StroePosition.objects.get(number=(i+1))
+        pallet.position = StroePosition.objects.get(
+            number='%s-%s' % (params['key'], i+1))
         pallet.number = i+1
         pallet.save()
     return JsonResponse({'res': 'ok'})
