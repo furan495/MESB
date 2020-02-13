@@ -55,6 +55,12 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
         fields = ('key', 'name')
 
 
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ('key', 'name', 'path')
+
+
 class DeviceStateSerializer(serializers.ModelSerializer):
     device = serializers.SlugRelatedField(
         queryset=Device.objects.all(), label='设备名称', slug_field='name', required=False)
@@ -68,14 +74,16 @@ class DeviceStateSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     joinTime = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
-        queryset=DeviceType.objects.all(), label='订单类型', slug_field='name', required=False)
+        queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
+    process = serializers.SlugRelatedField(
+        queryset=Process.objects.all(), label='所在工序', slug_field='name', required=False)
 
     def get_joinTime(self, obj):
         return obj.joinTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = Device
-        fields = ('key', 'deviceType', 'name', 'number', 'joinTime',
+        fields = ('key', 'deviceType', 'process', 'name', 'number', 'joinTime',
                   'exitTime', 'factory', 'facTime', 'facPeo', 'facPho')
 
 
@@ -150,9 +158,12 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
 
 
 class ProcessSerializer(serializers.ModelSerializer):
+
+    devices = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = Process
-        fields = ('key', 'route', 'name')
+        fields = ('key', 'route', 'name', 'skip', 'description', 'devices')
 
 
 class BottleSerializer(serializers.ModelSerializer):

@@ -5,12 +5,22 @@ from django.db import models
 # 暂无工具、设备,bom,物料相关表
 
 
+class Document(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=30, verbose_name='文档名称', blank=True, null=True)
+    path = models.CharField(
+        max_length=200, verbose_name='文档路径', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '文档'
+
+
 class WorkShop(models.Model):
 
-    WORKSHOP_STATUS = (
-        ('1', '使用中'),
-        ('2', '已弃用'),
-    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
         max_length=20, verbose_name='车间名称', blank=True, null=True)
@@ -206,9 +216,12 @@ class ProductLine(models.Model):
 class Process(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    skip = models.BooleanField(verbose_name='可否跳过', default=False)
     route = models.ForeignKey(ProcessRoute, related_name='processes',
                               on_delete=models.CASCADE, verbose_name='隶属工艺')
     name = models.CharField(max_length=20, verbose_name='工序名称')
+    description = models.CharField(
+        max_length=200, verbose_name='工序描述', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -246,6 +259,8 @@ class DeviceType(models.Model):
 
 class Device(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    process = models.ForeignKey(Process, related_name='devices',
+                                on_delete=models.CASCADE, verbose_name='所在工序', blank=True, null=True)
     deviceType = models.ForeignKey(DeviceType, related_name='devices',
                                    on_delete=models.CASCADE, verbose_name='设备类型', blank=True, null=True)
     name = models.CharField(
@@ -302,7 +317,7 @@ class DeviceState(models.Model):
         return self.device.name
 
     class Meta:
-        verbose_name='设备状态'
+        verbose_name = '设备状态'
 
 
 class WorkOrderStatus(models.Model):

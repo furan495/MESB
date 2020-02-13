@@ -67,6 +67,9 @@ class ProcessViewSet(viewsets.ModelViewSet):
     queryset = Process.objects.all()
     serializer_class = ProcessSerializer
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'route']
+
 
 class BottleViewSet(viewsets.ModelViewSet):
     queryset = Bottle.objects.all()
@@ -109,6 +112,11 @@ class OperateViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+
+
+class DocumentViewSet(viewsets.ModelViewSet):
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
 
 
 class DeviceTypeViewSet(viewsets.ModelViewSet):

@@ -169,6 +169,19 @@ def addBottle(request):
 
 
 @csrf_exempt
+def upload(request):
+    f = request.FILES['file']
+    with open(BASE_DIR+'/upload/'+f.name, 'wb') as uf:
+        for chunk in f.chunks():
+            uf.write(chunk)
+    document = Document()
+    document.name = f.name
+    document.path = 'http://127.0.0.1:8899/upload/%s' % f.name
+    document.save()
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
 def createStore(request):
     params = json.loads(request.body)
     count = params['row']*params['column']

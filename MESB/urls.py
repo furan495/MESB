@@ -22,6 +22,7 @@ router.register(r'api/operates', viewSet.OperateViewSet)
 router.register(r'api/products', viewSet.ProductViewSet)
 router.register(r'api/processes', viewSet.ProcessViewSet)
 router.register(r'api/workShops', viewSet.WorkShopViewSet)
+router.register(r'api/documents', viewSet.DocumentViewSet)
 router.register(r'api/storeTypes', viewSet.StoreTypeViewSet)
 router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
 router.register(r'api/orderTypes', viewSet.OrderTypeViewSet)
@@ -43,6 +44,7 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^admin/', admin.site.urls),
     url(r'^api/wincc/',  views.wincc),
+    url(r'^api/upload/',  views.upload),
     url(r'^api/addBottle/',  views.addBottle),
     url(r'^api/loginCheck/',  views.loginCheck),
     url(r'^api/orderSplit/',  views.orderSplit),
@@ -50,6 +52,8 @@ urlpatterns = [
     url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/storeOperate/',  views.storeOperate),
+    url(r'^static/(?P<path>.*)$', serve,
+        {'document_root': BASE_DIR+'/upload'}),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
