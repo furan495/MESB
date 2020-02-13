@@ -56,9 +56,14 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    upTime = serializers.SerializerMethodField()
+
+    def get_upTime(self, obj):
+        return obj.upTime.strftime('%Y-%m-%d %H:%M:%S')
+
     class Meta:
         model = Document
-        fields = ('key', 'name', 'path')
+        fields = ('key', 'name', 'path', 'upTime', 'count')
 
 
 class DeviceStateSerializer(serializers.ModelSerializer):

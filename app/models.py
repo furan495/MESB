@@ -11,6 +11,8 @@ class Document(models.Model):
         max_length=30, verbose_name='文档名称', blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='文档路径', blank=True, null=True)
+    upTime = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
+    count = models.IntegerField(verbose_name='浏览次数', default=0)
 
     def __str__(self):
         return self.name

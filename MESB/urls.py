@@ -49,6 +49,7 @@ urlpatterns = [
     url(r'^api/loginCheck/',  views.loginCheck),
     url(r'^api/orderSplit/',  views.orderSplit),
     url(r'^api/queryPallet/',  views.queryPallet),
+    url(r'^api/updateCount/',  views.updateCount),
     url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/storeOperate/',  views.storeOperate),

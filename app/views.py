@@ -169,6 +169,15 @@ def addBottle(request):
 
 
 @csrf_exempt
+def updateCount(request):
+    params = json.loads(request.body)
+    doc = Document.objects.get(key=params['key'])
+    doc.count = params['count']+1
+    doc.save()
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
 def upload(request):
     f = request.FILES['file']
     with open(BASE_DIR+'/upload/'+f.name, 'wb') as uf:
