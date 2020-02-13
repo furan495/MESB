@@ -1,8 +1,9 @@
+import time
 from django.db import models
 
 # Create your models here.
 
-# 暂无工具、设备,bom,物料相关表
+# 暂无工具,bom,物料相关表
 
 
 class Document(models.Model):
@@ -11,6 +12,7 @@ class Document(models.Model):
         max_length=30, verbose_name='文档名称', blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='文档路径', blank=True, null=True)
+    up = models.CharField(verbose_name='上传者', max_length=20)
     upTime = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
     count = models.IntegerField(verbose_name='浏览次数', default=0)
 
@@ -268,17 +270,17 @@ class Device(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='设备编号', blank=True, null=True)
+        max_length=20, verbose_name='设备编号', blank=True, null=True,default=str(time.time()*1000))
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
-        max_length=20, verbose_name='设备厂家', blank=True, null=True)
+        max_length=20, verbose_name='设备厂家', blank=True, null=True,default='XXX工厂')
     facTime = models.CharField(
-        max_length=20, verbose_name='出厂日期', blank=True, null=True)
+        max_length=20, verbose_name='出厂日期', blank=True, null=True,default='2020-02-13')
     facPeo = models.CharField(
-        max_length=20, verbose_name='厂家联系人', blank=True, null=True)
+        max_length=20, verbose_name='厂家联系人', blank=True, null=True,default='XXX先生')
     facPho = models.CharField(
-        max_length=20, verbose_name='厂家电话', blank=True, null=True)
+        max_length=20, verbose_name='厂家电话', blank=True, null=True,default='13312345678')
 
     def __str__(self):
         return self.name

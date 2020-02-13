@@ -98,7 +98,8 @@ def querySelect(request):
             map(lambda obj: obj.name, WorkShop.objects.all()))}
     if params['model'] == 'device':
         selectList = {'deviceType': list(
-            map(lambda obj: obj.name, DeviceType.objects.all()))}
+            map(lambda obj: obj.name, DeviceType.objects.all())), 'process': list(
+            map(lambda obj: obj.name, Process.objects.all()))}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -179,11 +180,13 @@ def updateCount(request):
 
 @csrf_exempt
 def upload(request):
+    up = request.POST['up']
     f = request.FILES['file']
     with open(BASE_DIR+'/upload/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
+    document.up = up
     document.name = f.name
     document.path = 'http://127.0.0.1:8899/upload/%s' % f.name
     document.save()
@@ -206,3 +209,4 @@ def createStore(request):
         pallet.number = i+1
         pallet.save()
     return JsonResponse({'res': 'ok'})
+

@@ -63,7 +63,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ('key', 'name', 'path', 'upTime', 'count')
+        fields = ('key', 'name', 'path', 'upTime', 'count','up')
 
 
 class DeviceStateSerializer(serializers.ModelSerializer):
