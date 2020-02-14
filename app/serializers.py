@@ -63,7 +63,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ('key', 'name', 'path', 'upTime', 'count','up')
+        fields = ('key', 'name', 'path', 'upTime', 'count', 'up')
 
 
 class DeviceStateSerializer(serializers.ModelSerializer):
@@ -150,16 +150,22 @@ class WorkPositionSerializer(serializers.ModelSerializer):
 
 
 class ProcessRouteSerializer(serializers.ModelSerializer):
+    devices = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     processes = serializers.StringRelatedField(many=True, read_only=True)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
+    def get_devices(self, obj):
+        deviceList = Device.objects.all()
+        serializer = DeviceSerializer(deviceList, many=True)
+        return serializer.data
+
     class Meta:
         model = ProcessRoute
         fields = ('key', 'name', 'data', 'description',
-                  'createTime', 'creator', 'processes')
+                  'createTime', 'creator', 'processes', 'devices')
 
 
 class ProcessSerializer(serializers.ModelSerializer):

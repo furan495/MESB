@@ -182,6 +182,17 @@ def updateCount(request):
 
 
 @csrf_exempt
+def updateDevice(request):
+    params = json.loads(request.body)
+    device = Device.objects.get(key=params['key'])
+    process = Process.objects.get(
+        Q(name=params['process'], route__key=params['route']))
+    device.process = process
+    device.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def upload(request):
     up = request.POST['up']
     f = request.FILES['file']
