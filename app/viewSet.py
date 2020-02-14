@@ -118,7 +118,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
 
-
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects.all()
     serializer_class = DeviceTypeSerializer

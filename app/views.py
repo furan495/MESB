@@ -182,13 +182,13 @@ def updateCount(request):
 def upload(request):
     up = request.POST['up']
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/static/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://127.0.0.1:8899/upload/%s' % f.name
+    document.path = 'http://127.0.0.1:8899/static/%s' % f.name
     document.save()
     return JsonResponse({'ok': 'ok'})
 
