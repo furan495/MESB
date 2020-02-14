@@ -49,9 +49,6 @@ def storeOperate(request):
     position = {'CK': '出库', 'RK': '入库'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
-
-    print(params)
-
     operate = Operate()
     operate.name = position[params[0]]
     operate.pallet = Pallet.objects.get(number=params[2])
@@ -110,7 +107,13 @@ def querySelect(request):
 
 @csrf_exempt
 def updateProcessByRoute(request):
+
+    def updateDevice(obj):
+        obj.process = None
+        obj.save()
     params = json.loads(request.body)
+    list(map(lambda obj: updateDevice(obj), Device.objects.filter(
+        Q(process__route__key=params['key']))))
     Process.objects.filter(
         route=ProcessRoute.objects.get(key=params['key'])).delete()
     orders = json.loads(params['value'])['linkDataArray']
@@ -209,4 +212,3 @@ def createStore(request):
         pallet.number = i+1
         pallet.save()
     return JsonResponse({'res': 'ok'})
-
