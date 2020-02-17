@@ -147,8 +147,6 @@ class Order(models.Model):
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='types',
                                   on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
-    route = models.ForeignKey(ProcessRoute, related_name='orders',
-                              on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
     creator = models.CharField(
         max_length=20, verbose_name='创建人', blank=True, null=True)
     batch = models.CharField(
@@ -270,17 +268,17 @@ class Device(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='设备编号', blank=True, null=True,default=str(time.time()*1000))
+        max_length=20, verbose_name='设备编号', blank=True, null=True, default=str(time.time()*1000))
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
-        max_length=20, verbose_name='设备厂家', blank=True, null=True,default='XXX工厂')
+        max_length=20, verbose_name='设备厂家', blank=True, null=True, default='XXX工厂')
     facTime = models.CharField(
-        max_length=20, verbose_name='出厂日期', blank=True, null=True,default='2020-02-13')
+        max_length=20, verbose_name='出厂日期', blank=True, null=True, default='2020-02-13')
     facPeo = models.CharField(
-        max_length=20, verbose_name='厂家联系人', blank=True, null=True,default='XXX先生')
+        max_length=20, verbose_name='厂家联系人', blank=True, null=True, default='XXX先生')
     facPho = models.CharField(
-        max_length=20, verbose_name='厂家电话', blank=True, null=True,default='13312345678')
+        max_length=20, verbose_name='厂家电话', blank=True, null=True, default='13312345678')
 
     def __str__(self):
         return self.name
@@ -468,21 +466,31 @@ class Operate(models.Model):
         verbose_name = '操作'
 
 
+class ProductType(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='产品类型', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '产品类型'
+
+
 class Product(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    workOrder = models.OneToOneField(WorkOrder, related_name='workOrder',
+                                     on_delete=models.CASCADE, verbose_name='对应工单')
     pallet = models.ForeignKey(Pallet, related_name='products',
                                on_delete=models.CASCADE, verbose_name='存放托盘')
+    prodType = models.ForeignKey(ProductType, related_name='products',
+                                 on_delete=models.CASCADE, verbose_name='产品类型')
     name = models.CharField(max_length=20, verbose_name='产品名称')
-    user = models.CharField(
-        max_length=20, verbose_name='操作人', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='产品编号')
     description = models.CharField(max_length=200, verbose_name='产品描述')
-    prodType = models.CharField(
-        max_length=20, verbose_name='产品类型', blank=True, null=True)
-    batch = models.CharField(max_length=20, verbose_name='产品批次')
-    pic = models.FileField(upload_to='static/product', verbose_name='产品图片')
-    operateTime = models.DateTimeField(auto_now=True, verbose_name='操作时间')
+    batch = models.DateTimeField(auto_now_add=True, verbose_name='产品批次')
 
     def __str__(self):
         return self.name

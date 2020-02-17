@@ -161,6 +161,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
 
 
+class ProductTypeViewSet(viewsets.ModelViewSet):
+    queryset = ProductType.objects.all()
+    serializer_class = ProductTypeSerializer
+
+
 class ProductStandardViewSet(viewsets.ModelViewSet):
     queryset = ProductStandard.objects.all()
     serializer_class = ProductStandardSerializer

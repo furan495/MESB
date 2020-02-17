@@ -87,8 +87,7 @@ def querySelect(request):
     selectList = {}
     if params['model'] == 'order':
         selectList = {'orderType': list(
-            map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
-            map(lambda obj: [obj.name, obj.key], ProcessRoute.objects.all()))}
+            map(lambda obj: obj.name, OrderType.objects.all()))}
     if params['model'] == 'store':
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
@@ -231,12 +230,12 @@ def createStore(request):
     for i in range(count):
         position = StroePosition()
         position.store = Store.objects.get(key=params['key'])
-        position.number = '%s-%s' % (params['key'], i+1)
+        position.number = '%s' % str(i+1)
         position.status = '1'
         position.save()
         pallet = Pallet()
         pallet.position = StroePosition.objects.get(
-            number='%s-%s' % (params['key'], i+1))
-        pallet.number = i+1
+            number='%s' % str(i+1))
+        pallet.number = str(i+1)
         pallet.save()
     return JsonResponse({'res': 'ok'})

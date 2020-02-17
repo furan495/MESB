@@ -124,7 +124,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number', 'route', 'batch', 'scheduling',
+        fields = ('key', 'creator', 'number', 'batch', 'scheduling',
                   'createTime', 'status', 'orderType', 'description')
 
 
@@ -239,10 +239,45 @@ class PalletSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    pallet = serializers.SerializerMethodField()
+    prodType = serializers.SlugRelatedField(
+        queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
+
+    workOrder = serializers.SlugRelatedField(
+        queryset=WorkOrder.objects.all(), label='对应工单', slug_field='number', required=False)
+
+    def get_pallet(self, obj):
+        res = ''
+        if obj.pallet.hole1Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '1')
+        if obj.pallet.hole2Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '2')
+        if obj.pallet.hole3Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '3')
+        if obj.pallet.hole4Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '4')
+        if obj.pallet.hole5Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '5')
+        if obj.pallet.hole6Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '6')
+        if obj.pallet.hole7Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '7')
+        if obj.pallet.hole8Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '8')
+        if obj.pallet.hole9Content == obj.name:
+            res = '%s号盘-%s号位' % (obj.pallet.number, '9')
+        return res
+
     class Meta:
         model = Product
-        fields = ('key', 'user', 'store',
-                  'position', 'name', 'number', 'description', 'prodType', 'batch', 'pic', 'operate', 'operateTime')
+        fields = ('key', 'pallet', 'prodType', 'workOrder',
+                  'name', 'number', 'description',  'batch')
+
+
+class ProductTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductType
+        fields = ('key', 'name')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
