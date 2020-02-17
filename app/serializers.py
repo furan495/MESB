@@ -226,9 +226,15 @@ class StroePositionSerializer(serializers.ModelSerializer):
 
 class OperateSerializer(serializers.ModelSerializer):
 
+    time = serializers.SerializerMethodField()
+
+    def get_time(self, obj):
+        return obj.time.strftime('%Y-%m-%d %H:%M:%S')
+
     class Meta:
         model = Operate
-        fields = ('key', 'name', 'time', 'pallet')
+        fields = ('key', 'operator', 'name', 'time', 'pallet',
+                  'device', 'order', 'processRuote', 'store', 'document')
 
 
 class PalletSerializer(serializers.ModelSerializer):

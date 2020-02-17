@@ -457,8 +457,20 @@ class Operate(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     pallet = models.ForeignKey(Pallet, related_name='operations',
                                on_delete=models.CASCADE, verbose_name='目标托盘', blank=True, null=True)
+    device = models.ForeignKey(Device, related_name='operations',
+                               on_delete=models.CASCADE, verbose_name='目标设备', blank=True, null=True)
+    order = models.ForeignKey(Order, related_name='operations',
+                              on_delete=models.CASCADE, verbose_name='目标订单', blank=True, null=True)
+    processRuote = models.ForeignKey(ProcessRoute, related_name='operations',
+                              on_delete=models.CASCADE, verbose_name='目标工艺', blank=True, null=True)
+    store = models.ForeignKey(Store, related_name='operations',
+                              on_delete=models.CASCADE, verbose_name='目标仓库', blank=True, null=True)
+    document = models.ForeignKey(Document, related_name='operations',
+                                 on_delete=models.CASCADE, verbose_name='目标文档', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='操作名称', blank=True, null=True)
+    operator = models.CharField(
+        max_length=20, verbose_name='操作人', blank=True, null=True)
     time = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
 
     def __str__(self):
