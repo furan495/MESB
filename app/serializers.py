@@ -174,7 +174,7 @@ class ProcessSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Process
-        fields = ('key', 'route', 'name', 'skip', 'description', 'devices')
+        fields = ('key', 'route', 'name', 'skip', 'path', 'devices')
 
 
 class BottleSerializer(serializers.ModelSerializer):

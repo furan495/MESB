@@ -224,8 +224,8 @@ class Process(models.Model):
     route = models.ForeignKey(ProcessRoute, related_name='processes',
                               on_delete=models.CASCADE, verbose_name='隶属工艺')
     name = models.CharField(max_length=20, verbose_name='工序名称')
-    description = models.CharField(
-        max_length=200, verbose_name='工序描述', blank=True, null=True)
+    path = models.CharField(
+        max_length=200, verbose_name='工序图片', blank=True, null=True)
 
     def __str__(self):
         return self.name

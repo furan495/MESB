@@ -185,9 +185,12 @@ def updateCount(request):
 def updateDevice(request):
     params = json.loads(request.body)
     device = Device.objects.get(key=params['key'])
-    process = Process.objects.get(
-        Q(name=params['process'], route__key=params['route']))
-    device.process = process
+    if params['process'] != '':
+        process = Process.objects.get(
+            Q(name=params['process'], route__key=params['route']))
+        device.process = process
+    else:
+        device.process = None
     device.save()
     return JsonResponse({'res': 'ok'})
 
@@ -196,14 +199,28 @@ def updateDevice(request):
 def upload(request):
     up = request.POST['up']
     f = request.FILES['file']
-    with open(BASE_DIR+'/static/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/static/document/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://127.0.0.1:8899/static/%s' % f.name
+    document.path = 'http://127.0.0.1:8899/static/document/%s' % f.name
     document.save()
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
+def uploadPic(request):
+    route = request.POST['route']
+    process = request.POST['process']
+    pro = Process.objects.get(Q(name=process, route__key=route))
+    f = request.FILES['file']
+    with open(BASE_DIR+'/static/picture/'+f.name, 'wb') as uf:
+        for chunk in f.chunks():
+            uf.write(chunk)
+    pro.path = 'http://127.0.0.1:8899/static/picture/%s' % f.name
+    pro.save()
     return JsonResponse({'ok': 'ok'})
 
 
