@@ -395,6 +395,8 @@ class StroePosition(models.Model):
     POSITION_STATUS = (
         ('1', '有盘'),
         ('2', '无盘'),
+        ('3', '有料'),
+        ('4', '无料'),
     )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     store = models.ForeignKey(Store, related_name='positions',

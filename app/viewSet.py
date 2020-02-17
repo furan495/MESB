@@ -1,6 +1,7 @@
 import json
 from app.models import *
 from app.serializers import *
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -118,6 +119,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
 
+
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects.all()
     serializer_class = DeviceTypeSerializer
@@ -143,6 +145,12 @@ class PalletViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['rate'] = round(
             len(list(filter(lambda obj: obj != '', content)))/9, 2)
+        position = instance.position
+        if data['rate'] > 0:
+            position.status = '3'
+        if data['rate'] == 0.0:
+            position.status = '4'
+        position.save()
         serializer = self.get_serializer(
             instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
