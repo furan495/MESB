@@ -245,6 +245,7 @@ class PalletSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    standards = serializers.StringRelatedField(many=True, read_only=True)
     palletStr = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
@@ -293,7 +294,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('key', 'pallet', 'prodType', 'workOrder',
-                  'name', 'number', 'description',  'batch', 'palletStr', 'reason')
+                  'name', 'number',  'batch', 'palletStr', 'reason', 'standards')
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
@@ -303,20 +304,13 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
-    description = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
-
-    def get_description(self, obj):
-        description = ''
-        if obj.product:
-            description = obj.product.description
-        return description
 
     class Meta:
         model = ProductStandard
         fields = ('key', 'product', 'name',
-                  'expectValue', 'realValue', 'result', 'description')
+                  'expectValue', 'realValue', 'result')
 
 
 class EventSerializer(serializers.ModelSerializer):

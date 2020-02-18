@@ -506,8 +506,6 @@ class Product(models.Model):
     name = models.CharField(max_length=20, verbose_name='产品名称')
     number = models.CharField(max_length=20, verbose_name='产品编号')
     batch = models.DateTimeField(auto_now_add=True, verbose_name='产品批次')
-    description = models.CharField(
-        max_length=200, verbose_name='产品描述', blank=True, null=True)
     reason = models.CharField(
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
 
@@ -521,15 +519,17 @@ class Product(models.Model):
 class ProductStandard(models.Model):
     STANDARD_RESULT = (
         ('1', '合格'),
-        ('2', '不合格')
+        ('2', '不合格'),
     )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     product = models.ForeignKey(Product, related_name='standards',
                                 on_delete=models.CASCADE, verbose_name='目标产品', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='标准名称', blank=True, null=True)
-    expectValue = models.FloatField(verbose_name='预期值', blank=True, null=True)
-    realValue = models.FloatField(verbose_name='实际值', blank=True, null=True)
+    expectValue = models.CharField(
+        max_length=20, verbose_name='预期值', blank=True, null=True)
+    realValue = models.CharField(
+        max_length=20, verbose_name='实际值', blank=True, null=True)
     result = models.CharField(choices=STANDARD_RESULT,
                               max_length=2, verbose_name='检测结果', blank=True, null=True)
 

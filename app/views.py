@@ -1,6 +1,8 @@
 import os
+import re
 import json
 import time
+import random
 import datetime
 import numpy as np
 from app.models import *
@@ -29,6 +31,23 @@ def wincc(request):
         workOrder.status = WorkOrderStatus.objects.get(key=2)
         workOrder.save()
 
+    if position[params[0]] == '称重':
+        workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+        product = Product.objects.get(workOrder=workOrder)
+        standard = ProductStandard.objects.get(
+            Q(name='重量(单位/g)', product=product))
+        err = random.randint(-2, 2)
+        standard.realValue = str(float(standard.expectValue)+err)
+        if err >= 0:
+            standard.result = '1'
+            product.prodType = ProductType.objects.get(key=1)
+        else:
+            standard.result = '2'
+            product.prodType = ProductType.objects.get(key=2)
+            product.reason = '重量不足'
+        standard.save()
+        product.save()
     try:
         event = Event()
         event.workOrder = WorkOrder.objects.get(
@@ -50,6 +69,9 @@ def storeOperate(request):
         'str'].split(',')
     workOrder = WorkOrder.objects.get(
         Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+    workOrder.status = WorkOrderStatus.objects.get(key=3)
+    workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    workOrder.save()
     event = Event()
     event.workOrder = workOrder
     event.bottle = params[1]
@@ -97,7 +119,7 @@ def storeOperate(request):
     storePosition = pallet.position
     storePosition.status = '3'
     storePosition.save()
-    return JsonResponse({'ok': 'ok'})
+    return JsonResponse({'res': 'res'})
 
 
 @csrf_exempt
@@ -141,7 +163,7 @@ def querySelect(request):
             map(lambda obj: obj.name, Process.objects.all()))}
     if params['model'] == 'productStandard':
         selectList = {'product': list(
-            map(lambda obj: obj.name, Product.objects.all())), 'result': ['合格', '不合格']}
+            map(lambda obj: obj.name, Product.objects.filter(Q(prodType__key=1)))), 'result': ['合格', '不合格']}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -188,7 +210,7 @@ def orderSplit(request):
     order.save()
     for description in orderDesc:
         if len(description.split(',')) > 1:
-            for desc in range(int(description.split(',')[-1].split(':')[1])):
+            for i in range(int(description.split(',')[-1].split(':')[1])):
                 workOrder = WorkOrder()
                 workOrder.order = order
                 workOrder.bottle = ''
@@ -199,13 +221,20 @@ def orderSplit(request):
                 workOrder.status = WorkOrderStatus.objects.get(key=1)
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
+
                 product = Product()
                 product.name = '%s/%s' % (workOrder.description.split(',')[
                     0].split(':')[1], workOrder.number)
                 product.number = str(time.time()*1000000)
-                product.description = ','.join(description.split(',')[:4])
                 product.workOrder = workOrder
                 product.save()
+
+                standard = ProductStandard()
+                standard.name = '重量(单位/g)'
+                standard.expectValue = str(np.sum(list(map(lambda obj: int(obj), re.findall(
+                    '\d+', description[:description.index('份数')])))))
+                standard.product = product
+                standard.save()
     return JsonResponse({'res': 'ok'})
 
 
