@@ -178,6 +178,29 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
     queryset = ProductStandard.objects.all()
     serializer_class = ProductStandardSerializer
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        product = Product.objects.get(
+            Q(workOrder__number=request.data['product'].split('/')[1]))
+        product.prodType = ProductType.objects.get(key=request.data['result'])
+        product.reason = '%s未达到%s的预期结果' % (
+            request.data['name'], request.data['expectValue'])
+        product.save()
+
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
