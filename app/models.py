@@ -500,13 +500,16 @@ class Product(models.Model):
     workOrder = models.OneToOneField(WorkOrder, related_name='workOrder',
                                      on_delete=models.CASCADE, verbose_name='对应工单')
     pallet = models.ForeignKey(Pallet, related_name='products',
-                               on_delete=models.CASCADE, verbose_name='存放托盘')
+                               on_delete=models.CASCADE, verbose_name='存放托盘', blank=True, null=True)
     prodType = models.ForeignKey(ProductType, related_name='products',
-                                 on_delete=models.CASCADE, verbose_name='产品类型')
+                                 on_delete=models.CASCADE, verbose_name='产品类型', blank=True, null=True)
     name = models.CharField(max_length=20, verbose_name='产品名称')
     number = models.CharField(max_length=20, verbose_name='产品编号')
-    description = models.CharField(max_length=200, verbose_name='产品描述')
     batch = models.DateTimeField(auto_now_add=True, verbose_name='产品批次')
+    description = models.CharField(
+        max_length=200, verbose_name='产品描述', blank=True, null=True)
+    reason = models.CharField(
+        max_length=200, verbose_name='不合格原因', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -516,13 +519,19 @@ class Product(models.Model):
 
 
 class ProductStandard(models.Model):
+    STANDARD_RESULT = (
+        ('1', '合格'),
+        ('2', '不合格')
+    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     product = models.ForeignKey(Product, related_name='standards',
-                                on_delete=models.CASCADE, verbose_name='操作人')
-    name = models.CharField(max_length=20, verbose_name='标准名称')
-    expectValue = models.FloatField(verbose_name='预期值')
-    realValue = models.FloatField(verbose_name='实际值')
-    result = models.CharField(max_length=20, verbose_name='检测结果')
+                                on_delete=models.CASCADE, verbose_name='目标产品', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='标准名称', blank=True, null=True)
+    expectValue = models.FloatField(verbose_name='预期值', blank=True, null=True)
+    realValue = models.FloatField(verbose_name='实际值', blank=True, null=True)
+    result = models.CharField(choices=STANDARD_RESULT,
+                              max_length=2, verbose_name='检测结果', blank=True, null=True)
 
     def __str__(self):
         return self.name

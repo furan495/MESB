@@ -2,6 +2,7 @@ import os
 import json
 import time
 import datetime
+import numpy as np
 from app.models import *
 from django.db.models import Q
 from django.http import JsonResponse
@@ -49,11 +50,55 @@ def storeOperate(request):
     position = {'CK': '出库', 'RK': '入库'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
-    operate = Operate()
-    operate.name = position[params[0]]
-    operate.pallet = Pallet.objects.get(number=params[2])
-    operate.save()
-
+    workOrder = WorkOrder.objects.get(
+        Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+    event = Event()
+    event.workOrder = workOrder
+    event.bottle = params[1]
+    event.source = position[params[0]]
+    event.title = '进入%s单元' % position[params[0]]
+    event.save()
+    product = Product.objects.get(workOrder=workOrder)
+    pallet = Pallet.objects.filter(Q(rate__lt=0.67))[0]
+    if pallet.hole1 == False:
+        pallet.hole1 = True
+        pallet.hole1Content = product.name
+    elif pallet.hole2 == False:
+        pallet.hole2 = True
+        pallet.hole2Content = product.name
+    elif pallet.hole3 == False:
+        pallet.hole3 = True
+        pallet.hole3Content = product.name
+    elif pallet.hole4 == False:
+        pallet.hole4 = True
+        pallet.hole4Content = product.name
+    elif pallet.hole5 == False:
+        pallet.hole5 = True
+        pallet.hole5Content = product.name
+    elif pallet.hole6 == False:
+        pallet.hole6 = True
+        pallet.hole6Content = product.name
+    elif pallet.hole7 == False:
+        pallet.hole7 = True
+        pallet.hole7Content = product.name
+    elif pallet.hole8 == False:
+        pallet.hole8 = True
+        pallet.hole8Content = product.name
+    elif pallet.hole9 == False:
+        pallet.hole9 = True
+        pallet.hole9Content = product.name
+    else:
+        pass
+    pallet.save()
+    rate = np.array([pallet.hole1, pallet.hole2, pallet.hole3, pallet.hole4,
+                     pallet.hole5, pallet.hole6, pallet.hole7, pallet.hole8, pallet.hole9])
+    pallet.rate = round(np.sum(rate)/9, 2)
+    pallet.save()
+    storePosition = pallet.position
+    storePosition.status = '3'
+    storePosition.save()
+    product.pallet = pallet
+    product.save()
     return JsonResponse({'ok': 'ok'})
 
 
@@ -153,6 +198,12 @@ def orderSplit(request):
                 workOrder.status = WorkOrderStatus.objects.get(key=1)
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
+                product = Product()
+                product.name = workOrder.description.split(',')[
+                    0].split(':')[1]
+                product.number = str(time.time()*1000000)
+                product.workOrder = workOrder
+                product.save()
     return JsonResponse({'res': 'ok'})
 
 

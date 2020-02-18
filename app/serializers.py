@@ -246,47 +246,52 @@ class PalletSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     palletStr = serializers.SerializerMethodField()
+    batch = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
 
     workOrder = serializers.SlugRelatedField(
         queryset=WorkOrder.objects.all(), label='对应工单', slug_field='number', required=False)
 
+    def get_batch(self, obj):
+        return obj.batch.strftime('%Y-%m-%d %H:%M:%S')
+
     def get_palletStr(self, obj):
         res = ''
-        if obj.pallet.hole1Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '1')
-        if obj.pallet.hole2Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '2')
-        if obj.pallet.hole3Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '3')
-        if obj.pallet.hole4Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '4')
-        if obj.pallet.hole5Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '5')
-        if obj.pallet.hole6Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '6')
-        if obj.pallet.hole7Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '7')
-        if obj.pallet.hole8Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '8')
-        if obj.pallet.hole9Content == obj.name:
-            res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                    obj.pallet.position.number, '9')
+        if obj.pallet:
+            if obj.pallet.hole1Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '1')
+            if obj.pallet.hole2Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '2')
+            if obj.pallet.hole3Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '3')
+            if obj.pallet.hole4Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '4')
+            if obj.pallet.hole5Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '5')
+            if obj.pallet.hole6Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '6')
+            if obj.pallet.hole7Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '7')
+            if obj.pallet.hole8Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '8')
+            if obj.pallet.hole9Content == obj.name:
+                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
+                                        obj.pallet.position.number, '9')
         return res
 
     class Meta:
         model = Product
         fields = ('key', 'pallet', 'prodType', 'workOrder',
-                  'name', 'number', 'description',  'batch', 'palletStr')
+                  'name', 'number', 'description',  'batch', 'palletStr', 'reason')
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
@@ -296,6 +301,9 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
+    product = serializers.SlugRelatedField(
+        queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
+
     class Meta:
         model = ProductStandard
         fields = ('key', 'product', 'name',
