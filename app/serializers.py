@@ -262,30 +262,32 @@ class ProductSerializer(serializers.ModelSerializer):
             if obj.pallet.hole1Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '1')
-            if obj.pallet.hole2Content == obj.name:
+            elif obj.pallet.hole2Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '2')
-            if obj.pallet.hole3Content == obj.name:
+            elif obj.pallet.hole3Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '3')
-            if obj.pallet.hole4Content == obj.name:
+            elif obj.pallet.hole4Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '4')
-            if obj.pallet.hole5Content == obj.name:
+            elif obj.pallet.hole5Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '5')
-            if obj.pallet.hole6Content == obj.name:
+            elif obj.pallet.hole6Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '6')
-            if obj.pallet.hole7Content == obj.name:
+            elif obj.pallet.hole7Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '7')
-            if obj.pallet.hole8Content == obj.name:
+            elif obj.pallet.hole8Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '8')
-            if obj.pallet.hole9Content == obj.name:
+            elif obj.pallet.hole9Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number, '9')
+            else:
+                pass
         return res
 
     class Meta:
@@ -301,13 +303,20 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
+    description = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
+
+    def get_description(self, obj):
+        description = ''
+        if obj.product:
+            description = obj.product.description
+        return description
 
     class Meta:
         model = ProductStandard
         fields = ('key', 'product', 'name',
-                  'expectValue', 'realValue', 'result')
+                  'expectValue', 'realValue', 'result', 'description')
 
 
 class EventSerializer(serializers.ModelSerializer):

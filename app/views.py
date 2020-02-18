@@ -21,8 +21,6 @@ def wincc(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
-    print(params)
-
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
             Q(description__icontains=color[params[2]], bottle='', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
@@ -60,6 +58,8 @@ def storeOperate(request):
     event.save()
     product = Product.objects.get(workOrder=workOrder)
     pallet = Pallet.objects.filter(Q(rate__lt=0.67))[0]
+    product.pallet = pallet
+    product.save()
     if pallet.hole1 == False:
         pallet.hole1 = True
         pallet.hole1Content = product.name
@@ -97,8 +97,6 @@ def storeOperate(request):
     storePosition = pallet.position
     storePosition.status = '3'
     storePosition.save()
-    product.pallet = pallet
-    product.save()
     return JsonResponse({'ok': 'ok'})
 
 
@@ -141,6 +139,9 @@ def querySelect(request):
         selectList = {'deviceType': list(
             map(lambda obj: obj.name, DeviceType.objects.all())), 'process': list(
             map(lambda obj: obj.name, Process.objects.all()))}
+    if params['model'] == 'productStandard':
+        selectList = {'product': list(
+            map(lambda obj: obj.name, Product.objects.all())), 'result': ['合格', '不合格']}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
@@ -199,9 +200,10 @@ def orderSplit(request):
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
                 product = Product()
-                product.name = workOrder.description.split(',')[
-                    0].split(':')[1]
+                product.name = '%s/%s' % (workOrder.description.split(',')[
+                    0].split(':')[1], workOrder.number)
                 product.number = str(time.time()*1000000)
+                product.description = ','.join(description.split(',')[:4])
                 product.workOrder = workOrder
                 product.save()
     return JsonResponse({'res': 'ok'})
