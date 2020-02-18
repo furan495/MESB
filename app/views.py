@@ -153,7 +153,7 @@ def orderSplit(request):
                 workOrder.status = WorkOrderStatus.objects.get(key=1)
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
-    return JsonResponse({'res': 'succ'})
+    return JsonResponse({'res': 'ok'})
 
 
 @csrf_exempt
@@ -177,7 +177,7 @@ def updateCount(request):
     doc = Document.objects.get(key=params['key'])
     doc.count = params['count']+1
     doc.save()
-    return JsonResponse({'ok': 'ok'})
+    return JsonResponse({'res': 'ok'})
 
 
 @csrf_exempt

@@ -462,11 +462,13 @@ class Operate(models.Model):
     order = models.ForeignKey(Order, related_name='operations',
                               on_delete=models.CASCADE, verbose_name='目标订单', blank=True, null=True)
     processRuote = models.ForeignKey(ProcessRoute, related_name='operations',
-                              on_delete=models.CASCADE, verbose_name='目标工艺', blank=True, null=True)
+                                     on_delete=models.CASCADE, verbose_name='目标工艺', blank=True, null=True)
     store = models.ForeignKey(Store, related_name='operations',
                               on_delete=models.CASCADE, verbose_name='目标仓库', blank=True, null=True)
     document = models.ForeignKey(Document, related_name='operations',
                                  on_delete=models.CASCADE, verbose_name='目标文档', blank=True, null=True)
+    role = models.ForeignKey(Role, related_name='operations',
+                             on_delete=models.CASCADE, verbose_name='目标角色', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='操作名称', blank=True, null=True)
     operator = models.CharField(
