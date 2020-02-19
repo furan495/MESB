@@ -102,7 +102,7 @@ class User(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='姓名', blank=True, null=True)
     password = models.CharField(
-        max_length=20, verbose_name='密码', blank=True, null=True)
+        max_length=20, verbose_name='密码', blank=True, null=True, default='123456')
     gender = models.CharField(
         max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
     phone = models.CharField(
