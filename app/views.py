@@ -160,7 +160,8 @@ def loginCheck(request):
     user = User.objects.get(phone=params['phone'])
     res = ''
     if user.password == params['password']:
-        res = {'name': user.name, 'authority': user.role.authority}
+        res = {'name': user.name, 'authority': user.role.authority,
+               'role': user.role.name}
     else:
         res = 'err'
     return JsonResponse({'res': res})
