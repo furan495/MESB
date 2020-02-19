@@ -17,11 +17,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @csrf_exempt
 def wincc(request):
+
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     position = {'LP': '理瓶', 'XG': '旋盖', 'SLA': '数粒A',
                 'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
+
+    route = Order.objects.get(number=params[3]).route
+    processList = list(
+        map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
 
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
@@ -48,6 +53,7 @@ def wincc(request):
             product.reason = '重量不足'
         standard.save()
         product.save()
+
     try:
         event = Event()
         event.workOrder = WorkOrder.objects.get(
@@ -58,6 +64,20 @@ def wincc(request):
         event.save()
     except Exception as e:
         print(e, '这里有问题')
+
+    eventList = list(map(lambda obj: obj.source,
+                         Event.objects.filter(Q(bottle=params[1], workOrder__status__name='加工中'))))
+    try:
+        if len(eventList) == 0 or processList[:len(eventList)] != eventList:
+            with open(BASE_DIR+'/listen.txt', 'w') as f:
+                f.write('这是一个废瓶')
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+            workOrder.status = WorkOrderStatus.objects.get(name='失败')
+            workOrder.save()
+    except Exception as e:
+        with open(BASE_DIR+'/listen.txt', 'w') as f:
+            f.write('这是一个废瓶')
 
     return JsonResponse({'res': 'res'})
 
@@ -152,7 +172,8 @@ def querySelect(request):
     selectList = {}
     if params['model'] == 'order':
         selectList = {'orderType': list(
-            map(lambda obj: obj.name, OrderType.objects.all()))}
+            map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
+            map(lambda obj: obj.name, ProcessRoute.objects.all()))}
     if params['model'] == 'store':
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(

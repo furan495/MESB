@@ -145,6 +145,8 @@ class Order(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     status = models.ForeignKey(OrderStatus, related_name='status',
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
+    route = models.ForeignKey(ProcessRoute, related_name='orders',
+                              on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='types',
                                   on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
     creator = models.CharField(
