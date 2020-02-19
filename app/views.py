@@ -330,16 +330,17 @@ def uploadPic(request):
 @csrf_exempt
 def createStore(request):
     params = json.loads(request.body)
+    print(params)
     count = params['row']*params['column']
     for i in range(count):
         position = StroePosition()
         position.store = Store.objects.get(key=params['key'])
-        position.number = '%s' % str(i+1)
+        position.number = '%s-%s' % (str(i+1), params['key'])
         position.status = '1'
         position.save()
         pallet = Pallet()
         pallet.position = StroePosition.objects.get(
-            number='%s' % str(i+1))
+            number='%s-%s' % (str(i+1), params['key']))
         pallet.number = str(i+1)
         pallet.save()
     return JsonResponse({'res': 'ok'})
