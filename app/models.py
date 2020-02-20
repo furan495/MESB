@@ -557,3 +557,6 @@ class Event(models.Model):
 
     class Meta:
         verbose_name = '事件'
+
+
+
