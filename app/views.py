@@ -6,6 +6,7 @@ import random
 import datetime
 import numpy as np
 from app.models import *
+from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -339,7 +340,6 @@ def uploadPic(request):
 @csrf_exempt
 def createStore(request):
     params = json.loads(request.body)
-    print(params)
     count = params['row']*params['column']
     for i in range(count):
         position = StroePosition()
@@ -353,3 +353,40 @@ def createStore(request):
         pallet.number = str(i+1)
         pallet.save()
     return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def queryOperateChart(request):
+    dikaer = []
+    for x, y in product(range(10), range(10)):
+        dikaer.append([x, y])
+
+    def valueSelect(name):
+        if '新增' in name:
+            return 1
+        if '删除' in name:
+            return 3
+        if '预览' in name:
+            return 5
+        if '上传' in name:
+            return 7
+        if '排产' in name:
+            return 9
+        if '登陆' in name:
+            return 11
+
+    series = []
+    data = [{'data': series}]
+    operateList = Operate.objects.all().order_by('-time')
+    for i in range(len(operateList)):
+        ope = {}
+        ope['x'] = dikaer[i][0]
+        ope['y'] = dikaer[i][1]
+        ope['operate'] = operateList[i].name
+        ope['operator'] = operateList[i].operator
+        ope['value'] = valueSelect(operateList[i].name)
+        ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
+
+        series.append(ope)
+
+    return JsonResponse({'res': data})
