@@ -314,6 +314,11 @@ def upload(request):
     document.name = f.name
     document.path = 'http://127.0.0.1:8899/static/document/%s' % f.name
     document.save()
+    operate = Operate()
+    operate.name = '上传文档'
+    operate.target = f.name
+    operate.operator = up
+    operate.save()
     return JsonResponse({'ok': 'ok'})
 
 

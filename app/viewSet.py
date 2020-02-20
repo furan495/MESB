@@ -124,7 +124,7 @@ class StroePositionViewSet(viewsets.ModelViewSet):
 
 
 class OperateViewSet(viewsets.ModelViewSet):
-    queryset = Operate.objects.all()
+    queryset = Operate.objects.all().order_by('-time')
     serializer_class = OperateSerializer
 
 
