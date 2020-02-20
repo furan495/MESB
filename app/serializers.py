@@ -264,31 +264,31 @@ class ProductSerializer(serializers.ModelSerializer):
         if obj.pallet:
             if obj.pallet.hole1Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '1')
+                                        obj.pallet.position.number.split('-')[0], '1')
             elif obj.pallet.hole2Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '2')
+                                        obj.pallet.position.number.split('-')[0], '2')
             elif obj.pallet.hole3Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '3')
+                                        obj.pallet.position.number.split('-')[0], '3')
             elif obj.pallet.hole4Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '4')
+                                        obj.pallet.position.number.split('-')[0], '4')
             elif obj.pallet.hole5Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '5')
+                                        obj.pallet.position.number.split('-')[0], '5')
             elif obj.pallet.hole6Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '6')
+                                        obj.pallet.position.number.split('-')[0], '6')
             elif obj.pallet.hole7Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '7')
+                                        obj.pallet.position.number.split('-')[0], '7')
             elif obj.pallet.hole8Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '8')
+                                        obj.pallet.position.number.split('-')[0], '8')
             elif obj.pallet.hole9Content == obj.name:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number, '9')
+                                        obj.pallet.position.number.split('-')[0], '9')
             else:
                 pass
         return res
@@ -325,3 +325,23 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ('key', 'title', 'source', 'bottle', 'time', 'workOrder')
+
+
+class MaterialGroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = MaterialGroup
+        fields = ('key', 'name')
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+
+    group = serializers.SlugRelatedField(
+        queryset=MaterialGroup.objects.all(), label='物料分组', slug_field='name', required=False)
+    store = serializers.SlugRelatedField(
+        queryset=Store.objects.all(), label='所在仓库', slug_field='name', required=False)
+
+    class Meta:
+        model = Material
+        fields = ('key', 'name', 'number', 'size',
+                  'unit', 'description', 'mateType', 'group', 'store')

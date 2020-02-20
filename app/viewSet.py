@@ -148,6 +148,16 @@ class DeviceStateViewSet(viewsets.ModelViewSet):
     serializer_class = DeviceStateSerializer
 
 
+class MaterialViewSet(viewsets.ModelViewSet):
+    queryset = Material.objects.all()
+    serializer_class = MaterialSerializer
+
+
+class MaterialGroupViewSet(viewsets.ModelViewSet):
+    queryset = MaterialGroup.objects.all()
+    serializer_class = MaterialGroupSerializer
+
+
 class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer

@@ -186,6 +186,10 @@ def querySelect(request):
     if params['model'] == 'productStandard':
         selectList = {'product': list(
             map(lambda obj: obj.name, Product.objects.filter(Q(prodType__key=1)))), 'result': ['合格', '不合格']}
+    if params['model'] == 'material':
+        selectList = {'group': list(
+            map(lambda obj: obj.name, MaterialGroup.objects.all())), 'store': list(
+            map(lambda obj: obj.name, Store.objects.all())), 'mateType': ['自制', '外采']}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()

@@ -559,4 +559,43 @@ class Event(models.Model):
         verbose_name = '事件'
 
 
+class MaterialGroup(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='物料分组', blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '物料分组'
+
+
+class Material(models.Model):
+    MATERIAL_TYPE = (
+        ('1', '自制'),
+        ('2', '外采')
+    )
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    group = models.ForeignKey(MaterialGroup, related_name='materials',
+                              on_delete=models.CASCADE, verbose_name='物料分组', blank=True, null=True)
+    store = models.ForeignKey(Store, related_name='materials',
+                              on_delete=models.CASCADE, verbose_name='所在仓库', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='物料名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='物料编号', blank=True, null=True)
+    size = models.CharField(
+        max_length=20, verbose_name='物料规格', blank=True, null=True)
+    unit = models.CharField(
+        max_length=20, verbose_name='基本单位', blank=True, null=True)
+    description = models.CharField(
+        max_length=20, verbose_name='物料描述', blank=True, null=True)
+    mateType = models.CharField(choices=MATERIAL_TYPE,
+                                max_length=2, verbose_name='物料类型', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '物料'
