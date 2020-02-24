@@ -148,6 +148,11 @@ class DeviceStateViewSet(viewsets.ModelViewSet):
     serializer_class = DeviceStateSerializer
 
 
+class DeviceFaultViewSet(viewsets.ModelViewSet):
+    queryset = DeviceFault.objects.all()
+    serializer_class = DeviceFaultSerializer
+
+
 class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all()
     serializer_class = MaterialSerializer

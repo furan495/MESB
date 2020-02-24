@@ -292,36 +292,32 @@ class Device(models.Model):
 class DeviceState(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     device = models.ForeignKey(Device, related_name='states',
-                               on_delete=models.CASCADE, verbose_name='目标设备')
-    isOpen = models.BooleanField(verbose_name='是否开机', default=False)
-    openTime = models.CharField(
-        max_length=30, verbose_name='开机时间', blank=True, null=True)
-    closeTime = models.CharField(
-        max_length=30, verbose_name='关机时间', blank=True, null=True)
-    isWork = models.BooleanField(verbose_name='是否工作', default=False)
-    workStart = models.CharField(
-        max_length=30, verbose_name='开始工作时间', blank=True, null=True)
-    workEnd = models.CharField(
-        max_length=30, verbose_name='结束工作时间', blank=True, null=True)
-    isFault = models.BooleanField(verbose_name='是否故障', default=False)
-    faultTime = models.CharField(
-        max_length=30, verbose_name='故障时间', blank=True, null=True)
-    faultLevel = models.CharField(
-        max_length=20, verbose_name='故障等级', blank=True, null=True)
-    faultReason = models.CharField(
-        max_length=200, verbose_name='故障原因', blank=True, null=True)
-    isRepair = models.BooleanField(verbose_name='是否返修', default=False)
-    repairStart = models.CharField(
-        max_length=30, verbose_name='返修开始时间', blank=True, null=True)
-    repairEnd = models.CharField(
-        max_length=30, verbose_name='返修结束时间', blank=True, null=True)
-    repairResult = models.BooleanField(verbose_name='返修结果', default=False)
+                               on_delete=models.CASCADE, verbose_name='对应设备')
+    name = models.CharField(max_length=20, verbose_name='状态名称')
+    time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):
-        return self.device.name
+        return self.name+'/'+str(self.time)
 
     class Meta:
         verbose_name = '设备状态'
+
+
+class DeviceFault(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    device = models.ForeignKey(Device, related_name='faults',
+                               on_delete=models.CASCADE, verbose_name='对应设备')
+    isRepair = models.BooleanField(default=False, verbose_name='是否返修')
+    startTime = models.DateTimeField(auto_now_add=True, verbose_name='开始返修')
+    endTime = models.DateTimeField(auto_now=True, verbose_name='结束返修')
+    operator = models.CharField(max_length=20, verbose_name='操作人')
+    result = models.CharField(max_length=20, verbose_name='返修结果')
+
+    def __str__(self):
+        return self.name+'/'+str(self.time)
+
+    class Meta:
+        verbose_name = '设备故障'
 
 
 class WorkOrderStatus(models.Model):
@@ -462,7 +458,7 @@ class Operate(models.Model):
     operator = models.CharField(
         max_length=20, verbose_name='操作人')
     target = models.CharField(
-        max_length=20, verbose_name='操作对象')
+        max_length=200, verbose_name='操作对象')
     time = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
 
     def __str__(self):

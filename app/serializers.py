@@ -1,5 +1,6 @@
 import time
 from app.models import *
+from django.db.models import Q
 from rest_framework import serializers
 
 
@@ -67,21 +68,42 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class DeviceStateSerializer(serializers.ModelSerializer):
+
     device = serializers.SlugRelatedField(
         queryset=Device.objects.all(), label='设备名称', slug_field='name', required=False)
 
     class Meta:
         model = DeviceState
-        fields = ('key', 'device', 'isOpen', 'openTime', 'closeTime', 'isWork', 'workStart', 'workEnd', 'isFault',
-                  'faultTime', 'faultLevel', 'faultReason', 'isRepair', 'repairStart', 'repairEnd', 'repairResult')
+        fields = ('key', 'device', 'name', 'time')
+
+
+class DeviceFaultSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DeviceFault
+        fields = ('key', 'device', 'isRepair', 'startTime',
+                  'endTime', 'operator', 'result')
 
 
 class DeviceSerializer(serializers.ModelSerializer):
+    stateList = serializers.SerializerMethodField()
     joinTime = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
         queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
     process = serializers.SlugRelatedField(
         queryset=Process.objects.all(), label='所在工序', slug_field='name', required=False)
+
+    def get_state(self, obj):
+        states = list(DeviceState.objects.filter(
+            Q(device=obj)).order_by('time'))
+        return states[-1].name if len(states) > 0 else '关机'
+
+    def get_stateList(self, obj):
+        states = []
+        states = list(map(lambda state: {'name': state.time.strftime('%Y-%m-%d %H:%M:%S'), 'label': state.name,
+                                         'description': '%s' % state.name}, obj.states.all()))
+        return states
 
     def get_joinTime(self, obj):
         return obj.joinTime.strftime('%Y-%m-%d %H:%M:%S')
@@ -89,7 +111,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = ('key', 'deviceType', 'process', 'name', 'number', 'joinTime',
-                  'exitTime', 'factory', 'facTime', 'facPeo', 'facPho')
+                  'exitTime', 'factory', 'facTime', 'facPeo', 'facPho', 'state', 'stateList')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -229,7 +251,7 @@ class StroePositionSerializer(serializers.ModelSerializer):
 class OperateSerializer(serializers.ModelSerializer):
 
     time = serializers.SerializerMethodField()
-    
+
     def get_time(self, obj):
         return obj.time.strftime('%Y-%m-%d %H:%M:%S')
 
