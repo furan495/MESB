@@ -357,6 +357,7 @@ def createStore(request):
 
 @csrf_exempt
 def queryOperateChart(request):
+
     dikaer = []
     for x, y in product(range(10), range(10)):
         dikaer.append([x, y])
@@ -378,7 +379,7 @@ def queryOperateChart(request):
     series = []
     data = [{'data': series}]
     operateList = Operate.objects.all().order_by('-time')
-    for i in range(len(operateList)):
+    for i in range(len(operateList) if len(operateList) <= 100 else 100):
         ope = {}
         ope['x'] = dikaer[i][0]
         ope['y'] = dikaer[i][1]
@@ -386,7 +387,6 @@ def queryOperateChart(request):
         ope['operator'] = operateList[i].operator
         ope['value'] = valueSelect(operateList[i].name)
         ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
-
         series.append(ope)
 
     return JsonResponse({'res': data})
