@@ -138,6 +138,11 @@ class DocumentViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentSerializer
 
 
+class LineStateViewSet(viewsets.ModelViewSet):
+    queryset = LineState.objects.all()
+    serializer_class = LineStateSerializer
+
+
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects.all()
     serializer_class = DeviceTypeSerializer

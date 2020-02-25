@@ -141,12 +141,43 @@ class OrderType(models.Model):
         verbose_name = '订单类型'
 
 
+class LineState(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='产线状态', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '产线状态'
+
+
+class ProductLine(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    workShop = models.ForeignKey(WorkShop, related_name='productLines',
+                                 on_delete=models.CASCADE, verbose_name='隶属车间')
+    state = models.ForeignKey(LineState, related_name='productLines',
+                              on_delete=models.CASCADE, verbose_name='产线状态')
+    name = models.CharField(max_length=20, verbose_name='产线名称')
+    number = models.CharField(max_length=20, verbose_name='产线编号')
+    description = models.CharField(max_length=200, verbose_name='产线描述')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '产线'
+
+
 class Order(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     status = models.ForeignKey(OrderStatus, related_name='status',
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     route = models.ForeignKey(ProcessRoute, related_name='orders',
                               on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
+    line = models.ForeignKey(ProductLine, related_name='orders',
+                             on_delete=models.CASCADE, verbose_name='选用产线', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='types',
                                   on_delete=models.CASCADE, verbose_name='订单类型', blank=True, null=True)
     creator = models.CharField(
@@ -200,21 +231,6 @@ class Bottle(models.Model):
 
     class Meta:
         verbose_name = '瓶子'
-
-
-class ProductLine(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    workShop = models.ForeignKey(WorkShop, related_name='productLines',
-                                 on_delete=models.CASCADE, verbose_name='隶属车间')
-    name = models.CharField(max_length=20, verbose_name='产线名称')
-    number = models.CharField(max_length=20, verbose_name='产线编号')
-    description = models.CharField(max_length=200, verbose_name='产线描述')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '产线'
 
 
 class Process(models.Model):
@@ -489,7 +505,7 @@ class Product(models.Model):
                                on_delete=models.CASCADE, verbose_name='存放托盘', blank=True, null=True)
     prodType = models.ForeignKey(ProductType, related_name='products',
                                  on_delete=models.CASCADE, verbose_name='产品类型', blank=True, null=True)
-    name = models.CharField(max_length=20, verbose_name='产品名称')
+    name = models.CharField(max_length=200, verbose_name='产品名称')
     number = models.CharField(max_length=20, verbose_name='产品编号')
     batch = models.DateTimeField(auto_now_add=True, verbose_name='产品批次')
     reason = models.CharField(

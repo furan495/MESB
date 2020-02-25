@@ -142,13 +142,15 @@ class OrderSerializer(serializers.ModelSerializer):
         queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
     route = serializers.SlugRelatedField(
         queryset=ProcessRoute.objects.all(), label='选用工艺', slug_field='name', required=False)
+    line = serializers.SlugRelatedField(
+        queryset=ProductLine.objects.all(), label='选用产线', slug_field='name', required=False)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number', 'batch', 'scheduling', 'route',
+        fields = ('key', 'creator', 'number', 'batch', 'scheduling', 'route', 'line',
                   'createTime', 'status', 'orderType', 'description')
 
 
@@ -156,7 +158,7 @@ class ProductLineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductLine
-        fields = ('key', 'workShop', 'name',
+        fields = ('key', 'workShop', 'name', 'state',
                   'number', 'description')
 
 
@@ -164,6 +166,13 @@ class BottleStateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BottleState
+        fields = ('key', 'name')
+
+
+class LineStateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LineState
         fields = ('key', 'name')
 
 
