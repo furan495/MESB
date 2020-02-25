@@ -307,13 +307,13 @@ def updateDevice(request):
 def upload(request):
     up = request.POST['up']
     f = request.FILES['file']
-    with open(BASE_DIR+'/static/document/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/upload/document/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://127.0.0.1:8899/static/document/%s' % f.name
+    document.path = 'http://127.0.0.1:8899/upload/document/%s' % f.name
     document.save()
     operate = Operate()
     operate.name = '上传文档'
@@ -329,10 +329,10 @@ def uploadPic(request):
     process = request.POST['process']
     pro = Process.objects.get(Q(name=process, route__key=route))
     f = request.FILES['file']
-    with open(BASE_DIR+'/static/picture/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/upload/picture/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    pro.path = 'http://127.0.0.1:8899/static/picture/%s' % f.name
+    pro.path = 'http://127.0.0.1:8899/upload/picture/%s' % f.name
     pro.save()
     return JsonResponse({'ok': 'ok'})
 

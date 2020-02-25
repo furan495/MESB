@@ -60,7 +60,7 @@ urlpatterns = [
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
-    url(r'^static/(?P<path>.*)$', serve,
+    url(r'^upload/(?P<path>.*)$', serve,
         {'document_root': BASE_DIR+'/upload'}),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
