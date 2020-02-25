@@ -131,7 +131,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('key', 'role', 'department', 'authority',
-                  'name', 'gender', 'password', 'phone', 'company')
+                  'name', 'gender', 'password', 'phone', 'avatar')
 
 
 class OrderSerializer(serializers.ModelSerializer):

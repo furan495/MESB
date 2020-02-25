@@ -107,8 +107,8 @@ class User(models.Model):
         max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
     phone = models.CharField(
         max_length=20, verbose_name='电话', blank=True, null=True)
-    company = models.CharField(
-        max_length=20, verbose_name='公司', blank=True, null=True)
+    avatar = models.CharField(
+        max_length=200, verbose_name='头像', blank=True, null=True)
 
     def __str__(self):
         return '%s/%s/%s/%s/%s' % (str(self.key), self.name, self.gender, self.role, self.phone)

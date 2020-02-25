@@ -162,7 +162,7 @@ def loginCheck(request):
     res = ''
     if user.password == params['password']:
         res = {'name': user.name, 'authority': user.role.authority,
-               'role': user.role.name}
+               'role': user.role.name, 'phone': user.phone, 'avatar': user.avatar}
     else:
         res = 'err'
     return JsonResponse({'res': res})
@@ -335,6 +335,29 @@ def uploadPic(request):
     pro.path = 'http://127.0.0.1:8899/upload/picture/%s' % f.name
     pro.save()
     return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
+def uploadAvatar(request):
+    phone = request.POST['phone']
+    user = User.objects.get(phone=phone)
+    f = request.FILES['file']
+    with open(BASE_DIR+'/upload/avatar/%s%s' % (user.name, f.name[f.name.index('.'):]), 'wb') as uf:
+        for chunk in f.chunks():
+            uf.write(chunk)
+    user.avatar = 'http://127.0.0.1:8899/upload/avatar/%s%s' % (
+        user.name, f.name[f.name.index('.'):])
+    user.save()
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
+def updatePWD(request):
+    params = json.loads(request.body)
+    user = User.objects.get(phone=params['phone'])
+    user.password = params['pwd']
+    user.save()
+    return JsonResponse({'res': 'succ'})
 
 
 @csrf_exempt
