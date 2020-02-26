@@ -9,6 +9,7 @@ from app.models import *
 from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
+from django.db.models.aggregates import Count
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
@@ -411,5 +412,24 @@ def queryOperateChart(request):
         ope['value'] = valueSelect(operateList[i].name)
         ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
         series.append(ope)
+
+    return JsonResponse({'res': data})
+
+
+@csrf_exempt
+def queryQualanaChart(request):
+    qualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
+        Q(prodType__name='合格')).extra(select={'batch': "strftime('%%Y-%%m-%%d')"}).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
+    unqualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
+        Q(prodType__name='不合格')).extra(select={'batch': "strftime('%%Y-%%m-%%d')"}).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
+    reasonData = list(map(lambda obj: {'name': obj['reason'], 'y': obj['count']}, Product.objects.filter(
+        Q(prodType__name='不合格')).values('reason').annotate(count=Count('reason')).values('reason', 'count')))
+
+    data = [
+        {'name': '合格', 'type': 'column', 'data': qualData},
+        {'name': '不合格', 'type': 'column', 'data': unqualData},
+        {'type': 'variablepie', 'data': reasonData,
+            'center': [150, 50], 'size': 200}
+    ]
 
     return JsonResponse({'res': data})

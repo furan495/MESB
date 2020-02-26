@@ -63,6 +63,7 @@ urlpatterns = [
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
+    url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
     url(r'^upload/(?P<path>.*)$', serve,
         {'document_root': BASE_DIR+'/upload'}),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),
