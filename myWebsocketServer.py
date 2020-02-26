@@ -32,6 +32,6 @@ async def routeListenServer(websocket, path):
 
             await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'boards': boards}))
 
-start_server = websockets.serve(routeListenServer, '127.0.0.1', 8765)
+start_server = websockets.serve(routeListenServer, '192.168.1.103', 8765)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
