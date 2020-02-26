@@ -5,6 +5,7 @@ import time
 import random
 import datetime
 import numpy as np
+import pandas as pd
 from app.models import *
 from itertools import product
 from django.db.models import Q
@@ -314,7 +315,7 @@ def upload(request):
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://127.0.0.1:8899/upload/document/%s' % f.name
+    document.path = 'http://192.168.1.103:8899/upload/document/%s' % f.name
     document.save()
     operate = Operate()
     operate.name = '上传文档'
@@ -333,7 +334,7 @@ def uploadPic(request):
     with open(BASE_DIR+'/upload/picture/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    pro.path = 'http://127.0.0.1:8899/upload/picture/%s' % f.name
+    pro.path = 'http://192.168.1.103:8899/upload/picture/%s' % f.name
     pro.save()
     return JsonResponse({'ok': 'ok'})
 
@@ -346,7 +347,7 @@ def uploadAvatar(request):
     with open(BASE_DIR+'/upload/avatar/%s%s' % (user.name, f.name[f.name.index('.'):]), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    user.avatar = 'http://127.0.0.1:8899/upload/avatar/%s%s' % (
+    user.avatar = 'http://192.168.1.103:8899/upload/avatar/%s%s' % (
         user.name, f.name[f.name.index('.'):])
     user.save()
     return JsonResponse({'ok': 'ok'})
@@ -424,12 +425,32 @@ def queryQualanaChart(request):
         Q(prodType__name='不合格')).extra(select={'batch': "strftime('%%Y-%%m-%%d')"}).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
     reasonData = list(map(lambda obj: {'name': obj['reason'], 'y': obj['count']}, Product.objects.filter(
         Q(prodType__name='不合格')).values('reason').annotate(count=Count('reason')).values('reason', 'count')))
-
     data = [
         {'name': '合格', 'type': 'column', 'data': qualData},
         {'name': '不合格', 'type': 'column', 'data': unqualData},
         {'type': 'variablepie', 'data': reasonData,
             'center': [150, 50], 'size': 200}
     ]
-
     return JsonResponse({'res': data})
+
+
+@csrf_exempt
+def queryExcelData(request):
+    data = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
+        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
+    return JsonResponse({'res': data})
+
+
+@csrf_exempt
+def exportData(request):
+    excelData = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
+        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))),  'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
+
+    excel = []
+    for data in excelData:
+        excel.append({'订单编号': data['number'], '下单日期': data['time'], '下单客户': data['user'],
+                     '产线名称': data['line'], '预期产量': data['expectYields'], '实际产量': data['realYields'], '合格率': data['rate']})
+    df = pd.DataFrame(excel)
+    df.to_excel(BASE_DIR+'/upload/export/产能报表.xlsx')
+
+    return JsonResponse({'res': 'http://192.168.1.103:8899/upload/export/产能报表.xlsx'})
