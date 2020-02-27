@@ -419,18 +419,52 @@ def queryOperateChart(request):
 
 @csrf_exempt
 def queryQualanaChart(request):
-    qualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
-        Q(prodType__name='合格')).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
-    unqualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
-        Q(prodType__name='不合格')).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
-    reasonData = list(map(lambda obj: {'name': obj['reason'], 'y': obj['count']}, Product.objects.filter(
-        Q(prodType__name='不合格')).values('reason').annotate(count=Count('reason')).values('reason', 'count')))
+    qualData = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Product.objects.filter(Q(prodType__name='合格'))
+            .values('batch')
+            .annotate(count=Count('batch'))
+            .values('batch', 'count')
+            )
+    )
+    unqualData = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Product.objects.filter(Q(prodType__name='不合格'))
+            .values('batch')
+            .annotate(count=Count('batch'))
+            .values('batch', 'count'))
+    )
+    qualDataRate = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
+                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
+            Product.objects.filter(Q(prodType__name='合格'))
+            .values('batch')
+            .annotate(count=Count('batch')).values('batch', 'count'))
+    )
+    unqualDataRate = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
+                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
+            Product.objects.filter(Q(prodType__name='不合格'))
+            .values('batch')
+            .annotate(count=Count('batch'))
+            .values('batch', 'count'))
+    )
+    reasonData = list(
+        map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
+            Product.objects.filter(Q(prodType__name='不合格'))
+            .values('reason')
+            .annotate(count=Count('reason'))
+            .values('reason', 'count'))
+    )
     data = [
-        {'name': '合格', 'type': 'column', 'data': qualData},
-        {'name': '不合格', 'type': 'column', 'data': unqualData},
-        {'type': 'variablepie', 'data': reasonData,
-            'center': [150, 50], 'size': 200}
+        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': qualData},
+        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': qualDataRate},
+        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': unqualData},
+        {'name': '不合格率', 'type': 'spline', 'yAxis': 1, 'data': unqualDataRate},
+        {'name': '总计', 'type': 'pie', 'data': reasonData,
+            'center': [150, 50], 'size':150}
     ]
+
     return JsonResponse({'res': data})
 
 
