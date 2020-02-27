@@ -420,9 +420,9 @@ def queryOperateChart(request):
 @csrf_exempt
 def queryQualanaChart(request):
     qualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
-        Q(prodType__name='合格')).extra(select={'batch': "strftime('%%Y-%%m-%%d')"}).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
+        Q(prodType__name='合格')).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
     unqualData = list(map(lambda obj: [obj['batch'], obj['count']], Product.objects.filter(
-        Q(prodType__name='不合格')).extra(select={'batch': "strftime('%%Y-%%m-%%d')"}).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
+        Q(prodType__name='不合格')).values('batch').annotate(count=Count('batch')).values('batch', 'count')))
     reasonData = list(map(lambda obj: {'name': obj['reason'], 'y': obj['count']}, Product.objects.filter(
         Q(prodType__name='不合格')).values('reason').annotate(count=Count('reason')).values('reason', 'count')))
     data = [
@@ -449,7 +449,7 @@ def exportData(request):
     excel = []
     for data in excelData:
         excel.append({'订单编号': data['number'], '下单日期': data['time'], '下单客户': data['user'],
-                     '产线名称': data['line'], '预期产量': data['expectYields'], '实际产量': data['realYields'], '合格率': data['rate']})
+                      '产线名称': data['line'], '预期产量': data['expectYields'], '实际产量': data['realYields'], '合格率': data['rate']})
     df = pd.DataFrame(excel)
     df.to_excel(BASE_DIR+'/upload/export/产能报表.xlsx')
 

@@ -287,7 +287,7 @@ class ProductSerializer(serializers.ModelSerializer):
         queryset=WorkOrder.objects.all(), label='对应工单', slug_field='number', required=False)
 
     def get_batch(self, obj):
-        return obj.batch.strftime('%Y-%m-%d %H:%M:%S')
+        return obj.batch.strftime('%Y-%m-%d')
 
     def get_palletStr(self, obj):
         res = ''
