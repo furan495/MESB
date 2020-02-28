@@ -107,6 +107,8 @@ class User(models.Model):
         max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
     phone = models.CharField(
         max_length=20, verbose_name='电话', blank=True, null=True)
+    post = models.CharField(
+        max_length=20, verbose_name='职位', blank=True, null=True)
     avatar = models.CharField(
         max_length=200, verbose_name='头像', blank=True, null=True)
 
