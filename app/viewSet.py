@@ -137,10 +137,18 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['docType']
+
 
 class LineStateViewSet(viewsets.ModelViewSet):
     queryset = LineState.objects.all()
     serializer_class = LineStateSerializer
+
+
+class DocTypeViewSet(viewsets.ModelViewSet):
+    queryset = DocType.objects.all()
+    serializer_class = DocTypeSerializer
 
 
 class DeviceTypeViewSet(viewsets.ModelViewSet):

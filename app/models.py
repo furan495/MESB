@@ -6,8 +6,22 @@ from django.db import models
 # 暂无工具,bom,物料相关表
 
 
+class DocType(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=10, verbose_name='文档类型', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '文档类型'
+
+
 class Document(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    docType = models.ForeignKey(
+        DocType, related_name='documents', on_delete=models.CASCADE, verbose_name='文档类型', blank=True, null=True)
     name = models.CharField(
         max_length=30, verbose_name='文档名称', blank=True, null=True)
     path = models.CharField(

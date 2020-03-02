@@ -190,6 +190,9 @@ def querySelect(request):
         selectList = {'deviceType': list(
             map(lambda obj: obj.name, DeviceType.objects.all())), 'process': list(
             map(lambda obj: obj.name, Process.objects.all()))}
+    if params['model'] == 'document':
+        selectList = {'docType': list(
+            map(lambda obj: [obj.name,obj.key], DocType.objects.all()))}
     if params['model'] == 'productStandard':
         selectList = {'product': list(
             map(lambda obj: obj.name, Product.objects.filter(Q(prodType__key=1)))), 'result': ['合格', '不合格']}
