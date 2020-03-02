@@ -130,7 +130,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('key', 'role', 'department', 'authority','post',
+        fields = ('key', 'role', 'department', 'authority', 'post',
                   'name', 'gender', 'password', 'phone', 'avatar')
 
 
@@ -155,6 +155,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ProductLineSerializer(serializers.ModelSerializer):
+
+    workShop = serializers.SlugRelatedField(
+        queryset=WorkShop.objects.all(), label='隶属车间', slug_field='name', required=False)
+    state = serializers.SlugRelatedField(
+        queryset=LineState.objects.all(), label='产线状态', slug_field='name', required=False)
 
     class Meta:
         model = ProductLine

@@ -182,6 +182,10 @@ def querySelect(request):
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
             map(lambda obj: obj.name, WorkShop.objects.all()))}
+    if params['model'] == 'productLine':
+        selectList = {'state': list(
+            map(lambda obj: obj.name, LineState.objects.all())), 'workShop': list(
+            map(lambda obj: obj.name, WorkShop.objects.all()))}
     if params['model'] == 'device':
         selectList = {'deviceType': list(
             map(lambda obj: obj.name, DeviceType.objects.all())), 'process': list(
@@ -308,6 +312,7 @@ def updateDevice(request):
 @csrf_exempt
 def upload(request):
     up = request.POST['up']
+    url = request.POST['url']
     f = request.FILES['file']
     with open(BASE_DIR+'/upload/document/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
@@ -315,7 +320,7 @@ def upload(request):
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://192.168.1.103:8899/upload/document/%s' % f.name
+    document.path = 'http://%s:8899/upload/document/%s' % (url, f.name)
     document.save()
     operate = Operate()
     operate.name = '上传文档'
@@ -327,6 +332,7 @@ def upload(request):
 
 @csrf_exempt
 def uploadPic(request):
+    url = request.POST['url']
     route = request.POST['route']
     process = request.POST['process']
     pro = Process.objects.get(Q(name=process, route__key=route))
@@ -334,21 +340,22 @@ def uploadPic(request):
     with open(BASE_DIR+'/upload/picture/'+f.name, 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    pro.path = 'http://192.168.1.103:8899/upload/picture/%s' % f.name
+    pro.path = 'http://%s:8899/upload/picture/%s' % (url, f.name)
     pro.save()
     return JsonResponse({'ok': 'ok'})
 
 
 @csrf_exempt
 def uploadAvatar(request):
+    url = request.POST['url']
     phone = request.POST['phone']
     user = User.objects.get(phone=phone)
     f = request.FILES['file']
     with open(BASE_DIR+'/upload/avatar/%s%s' % (user.name, f.name[f.name.index('.'):]), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    user.avatar = 'http://192.168.1.103:8899/upload/avatar/%s%s' % (
-        user.name, f.name[f.name.index('.'):])
+    user.avatar = 'http://%s:8899/upload/avatar/%s%s' % (url,
+                                                         user.name, f.name[f.name.index('.'):])
     user.save()
     return JsonResponse({'ok': 'ok'})
 

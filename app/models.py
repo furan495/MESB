@@ -158,12 +158,15 @@ class LineState(models.Model):
 class ProductLine(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workShop = models.ForeignKey(WorkShop, related_name='productLines',
-                                 on_delete=models.CASCADE, verbose_name='隶属车间')
+                                 on_delete=models.CASCADE, verbose_name='隶属车间', blank=True, null=True)
     state = models.ForeignKey(LineState, related_name='productLines',
-                              on_delete=models.CASCADE, verbose_name='产线状态')
-    name = models.CharField(max_length=20, verbose_name='产线名称')
-    number = models.CharField(max_length=20, verbose_name='产线编号')
-    description = models.CharField(max_length=200, verbose_name='产线描述')
+                              on_delete=models.CASCADE, verbose_name='产线状态', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='产线名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='产线编号', blank=True, null=True)
+    description = models.CharField(
+        max_length=200, verbose_name='产线描述', blank=True, null=True)
 
     def __str__(self):
         return self.name
