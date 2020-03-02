@@ -23,7 +23,7 @@ class Document(models.Model):
     docType = models.ForeignKey(
         DocType, related_name='documents', on_delete=models.CASCADE, verbose_name='文档类型', blank=True, null=True)
     name = models.CharField(
-        max_length=30, verbose_name='文档名称', blank=True, null=True)
+        max_length=100, verbose_name='文档名称', blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='文档路径', blank=True, null=True)
     up = models.CharField(verbose_name='上传者', max_length=20)
@@ -518,6 +518,10 @@ class ProductType(models.Model):
 
 
 class Product(models.Model):
+    PRODUCT_RESULT = (
+        ('1', '合格'),
+        ('2', '不合格'),
+    )
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.OneToOneField(WorkOrder, related_name='workOrder',
@@ -529,11 +533,13 @@ class Product(models.Model):
     name = models.CharField(max_length=200, verbose_name='产品名称')
     number = models.CharField(max_length=20, verbose_name='产品编号')
     batch = models.DateField(auto_now_add=True, verbose_name='产品批次')
+    result = models.CharField(choices=PRODUCT_RESULT,
+                              max_length=2, verbose_name='检测结果', blank=True, null=True)
     reason = models.CharField(
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
 
     def __str__(self):
-        return self.name+'/'+self.batch
+        return self.name
 
     class Meta:
         verbose_name = '产品'

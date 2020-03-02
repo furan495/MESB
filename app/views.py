@@ -49,10 +49,10 @@ def wincc(request):
         standard.realValue = str(float(standard.expectValue)+err)
         if err >= 0:
             standard.result = '1'
-            product.prodType = ProductType.objects.get(key=1)
+            product.result = '1'
         else:
             standard.result = '2'
-            product.prodType = ProductType.objects.get(key=2)
+            product.result ='2'
             product.reason = '重量不足'
         standard.save()
         product.save()
@@ -196,7 +196,7 @@ def querySelect(request):
             map(lambda obj: [obj.name, obj.key], DocType.objects.all()))}
     if params['model'] == 'productStandard':
         selectList = {'product': list(
-            map(lambda obj: obj.name, Product.objects.filter(Q(prodType__key=1)))), 'result': ['合格', '不合格']}
+            map(lambda obj: obj.name, Product.objects.filter(Q(result=1)))), 'result': ['合格', '不合格']}
     if params['model'] == 'material':
         selectList = {'store': list(
             map(lambda obj: obj.name, Store.objects.all())), 'mateType': ['自制', '外采']}

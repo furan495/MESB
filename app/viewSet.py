@@ -53,7 +53,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         data = request.data.copy()
         route = ProcessRoute.objects.get(Q(name__icontains=data['orderType']))
+        line = ProductLine.objects.get(Q(name__icontains=data['orderType']))
         data['route'] = route
+        data['line'] = line
         serializer = self.get_serializer(
             instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -230,7 +232,7 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
 
         product = Product.objects.get(
             Q(workOrder__number=request.data['product'].split('/')[1]))
-        product.prodType = ProductType.objects.get(key=request.data['result'])
+        product.result = '1' if str(request.data['result']) == '1' else '2'
         product.reason = '%s未达到%s的预期结果' % (
             request.data['name'], request.data['expectValue'])
         product.save()
