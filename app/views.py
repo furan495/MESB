@@ -177,7 +177,8 @@ def querySelect(request):
     if params['model'] == 'order':
         selectList = {'orderType': list(
             map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
-            map(lambda obj: obj.name, ProcessRoute.objects.all()))}
+            map(lambda obj: obj.name, ProcessRoute.objects.all())), 'product': list(
+            map(lambda obj: obj.name, ProductType.objects.all()))}
     if params['model'] == 'store':
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
@@ -192,14 +193,16 @@ def querySelect(request):
             map(lambda obj: obj.name, Process.objects.all()))}
     if params['model'] == 'document':
         selectList = {'docType': list(
-            map(lambda obj: [obj.name,obj.key], DocType.objects.all()))}
+            map(lambda obj: [obj.name, obj.key], DocType.objects.all()))}
     if params['model'] == 'productStandard':
         selectList = {'product': list(
             map(lambda obj: obj.name, Product.objects.filter(Q(prodType__key=1)))), 'result': ['合格', '不合格']}
     if params['model'] == 'material':
-        selectList = {'group': list(
-            map(lambda obj: obj.name, MaterialGroup.objects.all())), 'store': list(
+        selectList = {'store': list(
             map(lambda obj: obj.name, Store.objects.all())), 'mateType': ['自制', '外采']}
+    if params['model'] == 'tool':
+        selectList = {'store': list(
+            map(lambda obj: obj.name, Store.objects.all())), 'toolType': ['自制', '外采']}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()

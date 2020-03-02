@@ -345,7 +345,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductType
-        fields = ('key', 'name')
+        fields = ('key', 'name', 'number')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
@@ -370,21 +370,23 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ('key', 'title', 'source', 'bottle', 'time', 'workOrder')
 
 
-class MaterialGroupSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = MaterialGroup
-        fields = ('key', 'name')
-
-
 class MaterialSerializer(serializers.ModelSerializer):
 
-    group = serializers.SlugRelatedField(
-        queryset=MaterialGroup.objects.all(), label='物料分组', slug_field='name', required=False)
     store = serializers.SlugRelatedField(
         queryset=Store.objects.all(), label='所在仓库', slug_field='name', required=False)
 
     class Meta:
         model = Material
         fields = ('key', 'name', 'number', 'size',
-                  'unit', 'description', 'mateType', 'group', 'store')
+                  'unit', 'description', 'mateType', 'store')
+
+
+class ToolSerializer(serializers.ModelSerializer):
+
+    store = serializers.SlugRelatedField(
+        queryset=Store.objects.all(), label='所在仓库', slug_field='name', required=False)
+
+    class Meta:
+        model = Tool
+        fields = ('key', 'name', 'number', 'size',
+                  'unit', 'description', 'toolType', 'store')

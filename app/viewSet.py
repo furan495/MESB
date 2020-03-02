@@ -171,9 +171,9 @@ class MaterialViewSet(viewsets.ModelViewSet):
     serializer_class = MaterialSerializer
 
 
-class MaterialGroupViewSet(viewsets.ModelViewSet):
-    queryset = MaterialGroup.objects.all()
-    serializer_class = MaterialGroupSerializer
+class ToolViewSet(viewsets.ModelViewSet):
+    queryset = Tool.objects.all()
+    serializer_class = ToolSerializer
 
 
 class PalletViewSet(viewsets.ModelViewSet):
