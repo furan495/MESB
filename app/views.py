@@ -7,6 +7,7 @@ import datetime
 import numpy as np
 import pandas as pd
 from app.models import *
+from app.serializers import *
 from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
@@ -52,7 +53,7 @@ def wincc(request):
             product.result = '1'
         else:
             standard.result = '2'
-            product.result ='2'
+            product.result = '2'
             product.reason = '重量不足'
         standard.save()
         product.save()
@@ -486,6 +487,21 @@ def queryExcelData(request):
     data = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
         WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
     return JsonResponse({'res': data})
+
+
+@csrf_exempt
+def annotateDataList(request):
+    def addkey(obj, objs):
+        obj['key'] = objs.index(obj)
+        return obj
+    params = json.loads(request.body)
+    if params['model'] == 'material':
+        queryset = Material.objects.all().values('name').annotate(
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store')
+    else:
+        queryset = Tool.objects.all().values('name').annotate(
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store')
+    return JsonResponse({'res': list(map(lambda obj: addkey(obj, list(queryset)), list(queryset)))})
 
 
 @csrf_exempt

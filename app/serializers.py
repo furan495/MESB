@@ -11,6 +11,20 @@ class WorkShopSerializer(serializers.ModelSerializer):
                   'descriptions', 'createTime')
 
 
+class OrganizationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Organization
+        fields = ('key', 'name', 'level')
+
+
+class OrgaLevelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OrgaLevel
+        fields = ('key', 'name')
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
 
     members = serializers.StringRelatedField(many=True, read_only=True)
@@ -338,7 +352,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder','result',
+        fields = ('key', 'prodType', 'workOrder', 'result',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'standards')
 
 
@@ -377,8 +391,8 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
-        fields = ('key', 'name', 'number', 'size',
-                  'unit', 'description', 'mateType', 'store')
+        fields = ('key', 'name', 'size',
+                  'unit', 'mateType', 'store')
 
 
 class ToolSerializer(serializers.ModelSerializer):
@@ -388,5 +402,5 @@ class ToolSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tool
-        fields = ('key', 'name', 'number', 'size',
-                  'unit', 'description', 'toolType', 'store')
+        fields = ('key', 'name', 'size',
+                  'unit', 'toolType', 'store')

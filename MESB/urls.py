@@ -26,6 +26,7 @@ router.register(r'api/processes', viewSet.ProcessViewSet)
 router.register(r'api/materials', viewSet.MaterialViewSet)
 router.register(r'api/workShops', viewSet.WorkShopViewSet)
 router.register(r'api/documents', viewSet.DocumentViewSet)
+router.register(r'api/orgaLevels', viewSet.OrgaLevelViewSet)
 router.register(r'api/lineStates', viewSet.LineStateViewSet)
 router.register(r'api/storeTypes', viewSet.StoreTypeViewSet)
 router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
@@ -39,6 +40,7 @@ router.register(r'api/bottleStates', viewSet.BottleStateViewSet)
 router.register(r'api/productTypes', viewSet.ProductTypeViewSet)
 router.register(r'api/workPostions', viewSet.WorkPositionViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
+router.register(r'api/organizations', viewSet.OrganizationViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
 router.register(r'api/stroePositions', viewSet.StroePositionViewSet)
 router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
@@ -65,6 +67,7 @@ urlpatterns = [
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryExcelData/',  views.queryExcelData),
+    url(r'^api/annotateDataList/',  views.annotateDataList),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
     url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
     url(r'^upload/(?P<path>.*)$', serve,

@@ -75,8 +75,36 @@ class ProcessRoute(models.Model):
         verbose_name = '工艺路线'
 
 
+class OrgaLevel(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=10, verbose_name='等级名称', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '组织等级'
+
+
+class Organization(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=10, verbose_name='组织', blank=True, null=True)
+    level = models.ForeignKey(
+        OrgaLevel, related_name='organizations', on_delete=models.CASCADE, verbose_name='隶属等级', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '组织'
+
+
 class Department(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    organization = models.ForeignKey(
+        Organization, related_name='departments', on_delete=models.CASCADE, verbose_name='隶属组织', blank=True, null=True)
     name = models.CharField(
         max_length=10, verbose_name='部门', blank=True, null=True)
 
@@ -596,14 +624,10 @@ class Material(models.Model):
                               on_delete=models.CASCADE, verbose_name='所在仓库', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='物料名称', blank=True, null=True)
-    number = models.CharField(
-        max_length=20, verbose_name='物料编号', blank=True, null=True)
     size = models.CharField(
         max_length=20, verbose_name='物料规格', blank=True, null=True)
     unit = models.CharField(
         max_length=20, verbose_name='基本单位', blank=True, null=True)
-    description = models.CharField(
-        max_length=20, verbose_name='物料描述', blank=True, null=True)
     mateType = models.CharField(choices=MATERIAL_TYPE,
                                 max_length=2, verbose_name='物料类型', blank=True, null=True)
 
@@ -624,14 +648,10 @@ class Tool(models.Model):
                               on_delete=models.CASCADE, verbose_name='所在仓库', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='工具名称', blank=True, null=True)
-    number = models.CharField(
-        max_length=20, verbose_name='工具编号', blank=True, null=True)
     size = models.CharField(
         max_length=20, verbose_name='工具规格', blank=True, null=True)
     unit = models.CharField(
         max_length=20, verbose_name='基本单位', blank=True, null=True)
-    description = models.CharField(
-        max_length=20, verbose_name='工具描述', blank=True, null=True)
     toolType = models.CharField(choices=TOOL_TYPE,
                                 max_length=2, verbose_name='工具类型', blank=True, null=True)
 

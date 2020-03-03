@@ -14,6 +14,16 @@ class WorkShopViewSet(viewsets.ModelViewSet):
     serializer_class = WorkShopSerializer
 
 
+class OrganizationViewSet(viewsets.ModelViewSet):
+    queryset = Organization.objects.all()
+    serializer_class = OrganizationSerializer
+
+
+class OrgaLevelViewSet(viewsets.ModelViewSet):
+    queryset = OrgaLevel.objects.all()
+    serializer_class = OrgaLevelSerializer
+
+
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
