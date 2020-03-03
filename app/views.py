@@ -46,9 +46,8 @@ def wincc(request):
         product = Product.objects.get(workOrder=workOrder)
         standard = ProductStandard.objects.get(
             Q(name='重量(单位/g)', product=product))
-        err = random.randint(-2, 2)
-        standard.realValue = str(float(standard.expectValue)+err)
-        if err >= 0:
+        standard.realValue = float(standard.expectValue)+random.randint(-2, 2)
+        if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
             standard.result = '1'
             product.result = '1'
         else:
@@ -270,6 +269,8 @@ def orderSplit(request):
                     0].split(':')[1], workOrder.number)
                 product.number = str(time.time()*1000000)
                 product.workOrder = workOrder
+                product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=workOrder.description.split(',')[
+                    0].split(':')[1]))
                 product.save()
 
                 standard = ProductStandard()

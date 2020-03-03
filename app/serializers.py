@@ -304,7 +304,7 @@ class PalletSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    standards = serializers.StringRelatedField(many=True, read_only=True)
+    stateList = serializers.SerializerMethodField()
     palletStr = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
@@ -315,6 +315,12 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
+
+    def get_stateList(self, obj):
+        states = []
+        states = list(map(lambda event: {'name': event.time.strftime('%Y-%m-%d %H:%M:%S'), 'label': event.title,
+                                         'description': '%s' % event.title}, Event.objects.filter(Q(workOrder=obj.workOrder))))
+        return states
 
     def get_palletStr(self, obj):
         res = ''
@@ -353,7 +359,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('key', 'prodType', 'workOrder', 'result',
-                  'name', 'number',  'batch', 'palletStr', 'reason', 'standards')
+                  'name', 'number',  'batch', 'palletStr', 'reason',  'stateList')
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
@@ -363,7 +369,7 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductType
-        fields = ('key', 'name', 'number', 'path', 'orderType')
+        fields = ('key', 'name', 'number', 'path', 'orderType','errorRange')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
