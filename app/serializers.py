@@ -357,9 +357,13 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
+
+    orderType = serializers.SlugRelatedField(
+        queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
+
     class Meta:
         model = ProductType
-        fields = ('key', 'name', 'number')
+        fields = ('key', 'name', 'number', 'path', 'orderType')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
@@ -404,3 +408,17 @@ class ToolSerializer(serializers.ModelSerializer):
         model = Tool
         fields = ('key', 'name', 'size',
                   'unit', 'toolType', 'store')
+
+
+class BOMSerializer(serializers.ModelSerializer):
+
+    createTime = serializers.SerializerMethodField()
+    product = serializers.SlugRelatedField(
+        queryset=ProductType.objects.all(), label='对应产品', slug_field='name', required=False)
+
+    def get_createTime(self, obj):
+        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
+
+    class Meta:
+        model = BOM
+        fields = ('key', 'product', 'name', 'content', 'creator', 'createTime')

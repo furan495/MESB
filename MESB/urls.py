@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 创建路由器并注册我们的视图。
 router = DefaultRouter()
-#router.register(r'api/boms', viewSet.BOMViewSet)
+router.register(r'api/boms', viewSet.BOMViewSet)
 router.register(r'api/roles', viewSet.RoleViewSet)
 router.register(r'api/users', viewSet.UserViewSet)
 router.register(r'api/tools', viewSet.ToolViewSet)

@@ -537,6 +537,10 @@ class ProductType(models.Model):
         max_length=20, verbose_name='产品类型', blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='产品编号', blank=True, null=True)
+    path = models.CharField(
+        max_length=200, verbose_name='产品图片', blank=True, null=True)
+    orderType = models.ForeignKey(OrderType, related_name='products',
+                                  on_delete=models.CASCADE, verbose_name='关联订单', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -660,3 +664,22 @@ class Tool(models.Model):
 
     class Meta:
         verbose_name = '工具'
+
+
+class BOM(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    product = models.OneToOneField(ProductType, related_name='bom',
+                                   on_delete=models.CASCADE, verbose_name='对应产品', blank=True, null=True)
+    name = models.CharField(
+        max_length=100, verbose_name='BOM名称', blank=True, null=True)
+    content = models.CharField(
+        max_length=1000, verbose_name='BOM内容', blank=True, null=True)
+    creator = models.CharField(
+        max_length=20, verbose_name='创建人', blank=True, null=True)
+    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'BOM'

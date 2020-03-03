@@ -14,6 +14,11 @@ class WorkShopViewSet(viewsets.ModelViewSet):
     serializer_class = WorkShopSerializer
 
 
+class BOMViewSet(viewsets.ModelViewSet):
+    queryset = BOM.objects.all()
+    serializer_class = BOMSerializer
+
+
 class OrganizationViewSet(viewsets.ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer

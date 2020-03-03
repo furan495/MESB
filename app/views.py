@@ -175,11 +175,14 @@ def loginCheck(request):
 def querySelect(request):
     params = json.loads(request.body)
     selectList = {}
-    if params['model'] == 'order':
+    if params['model'] == 'order' or params['model'] == 'productType':
         selectList = {'orderType': list(
             map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
             map(lambda obj: obj.name, ProcessRoute.objects.all())), 'product': list(
-            map(lambda obj: obj.name, ProductType.objects.all()))}
+            map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))}
+    if params['model'] == 'bom':
+        selectList = {'product': list(
+            map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))), 'materials': list(map(lambda obj: obj.name, Material.objects.all()))}
     if params['model'] == 'store':
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
