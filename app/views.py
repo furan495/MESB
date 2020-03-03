@@ -34,7 +34,7 @@ def wincc(request):
 
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
-            Q(description__icontains=color[params[2]], bottle='', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
+            Q(description__icontains=color[params[2]], bottle='', status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
         workOrder.bottle = params[1]
         workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         workOrder.status = WorkOrderStatus.objects.get(key=2)
@@ -42,7 +42,7 @@ def wincc(request):
 
     if position[params[0]] == '称重':
         workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+            Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
         product = Product.objects.get(workOrder=workOrder)
         standard = ProductStandard.objects.get(
             Q(name='重量(单位/g)', product=product))
@@ -60,7 +60,7 @@ def wincc(request):
     try:
         event = Event()
         event.workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+            Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
         event.bottle = params[1]
         event.source = position[params[0]]
         event.title = '进入%s单元' % position[params[0]]
@@ -88,10 +88,11 @@ def wincc(request):
 @csrf_exempt
 def storeOperate(request):
     position = {'CK': '出库', 'RK': '入库'}
+    color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     workOrder = WorkOrder.objects.get(
-        Q(bottle=params[1], order=Order.objects.get(number=params[3])))
+        Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
     workOrder.status = WorkOrderStatus.objects.get(key=3)
     workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     workOrder.save()
@@ -439,7 +440,7 @@ def queryOperateChart(request):
 def queryQualanaChart(request):
     qualData = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(prodType__name='合格'))
+            Product.objects.filter(Q(result='1'))
             .values('batch')
             .annotate(count=Count('batch'))
             .values('batch', 'count')
@@ -447,7 +448,7 @@ def queryQualanaChart(request):
     )
     unqualData = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(prodType__name='不合格'))
+            Product.objects.filter(Q(result='2'))
             .values('batch')
             .annotate(count=Count('batch'))
             .values('batch', 'count'))
@@ -455,21 +456,21 @@ def queryQualanaChart(request):
     qualDataRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
                          round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
-            Product.objects.filter(Q(prodType__name='合格'))
+            Product.objects.filter(Q(result='1'))
             .values('batch')
             .annotate(count=Count('batch')).values('batch', 'count'))
     )
     unqualDataRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
                          round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
-            Product.objects.filter(Q(prodType__name='不合格'))
+            Product.objects.filter(Q(result='2'))
             .values('batch')
             .annotate(count=Count('batch'))
             .values('batch', 'count'))
     )
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-            Product.objects.filter(Q(prodType__name='不合格'))
+            Product.objects.filter(Q(result='2'))
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))
@@ -489,7 +490,7 @@ def queryQualanaChart(request):
 @csrf_exempt
 def queryExcelData(request):
     data = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
-        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
+        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'rate': round(len(Product.objects.filter(Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
     return JsonResponse({'res': data})
 
 
