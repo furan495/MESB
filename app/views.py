@@ -541,8 +541,6 @@ def exportData(request):
 @csrf_exempt
 def queryMateanaChart(request):
 
-    date = int(time.mktime(
-        datetime.datetime.now().date().timetuple()))*1000+8*60*60*1000
     markerRed = {
         'fillColor': {
             'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
@@ -570,35 +568,51 @@ def queryMateanaChart(request):
             ]
         }
     }
-
-    redBottle = Bottle.objects.filter(
-        Q(color='红瓶', createTime__gte=datetime.datetime.now().date()))
-    greenBottle = Bottle.objects.filter(
-        Q(color='绿瓶', createTime__gte=datetime.datetime.now().date()))
-    blueBottle = Bottle.objects.filter(
-        Q(color='蓝瓶', createTime__gte=datetime.datetime.now().date()))
-
-    red = Bottle.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(reds=Sum('red')).values('reds')
-    green = Bottle.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(greens=Sum('green')).values('greens')
-    blue = Bottle.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(blues=Sum('blue')).values('blues')
-
+    redBottle = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
+            count=Count('createTime')).values('createTime', 'count')
+            ))
+    greenBottle = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
+            count=Count('createTime')).values('createTime', 'count')
+            ))
+    blueBottle = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
+            count=Count('createTime')).values('createTime', 'count')
+            ))
+    cup = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+            Bottle.objects.all().values('createTime').annotate(
+            count=Count('createTime')).values('createTime', 'count')
+            ))
+    red = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['reds'], 1],
+            Bottle.objects.all().values('createTime', 'order', 'red').annotate(
+                reds=Sum('red')).values('createTime', 'reds')
+            ))
+    green = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['greens'], 1],
+            Bottle.objects.all().values('createTime', 'order', 'green').annotate(
+                greens=Sum('green')).values('createTime', 'greens')
+            ))
+    blue = list(
+        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['blues'], 1],
+            Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
+                blues=Sum('blue')).values('createTime', 'blues')
+            ))
     data = [
-        {'name': '红瓶', 'type': 'column', 'color': 'red', 'yAxis': 0,
-         'data': [[date, len(redBottle)]]},
-        {'name': '绿瓶', 'type': 'column', 'color': 'green', 'yAxis': 0,
-         'data': [[date, len(greenBottle)]]},
-        {'name': '蓝瓶', 'type': 'column', 'color': 'blue', 'yAxis': 0,
-         'data': [[date, len(blueBottle)]]},
-        {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': [
-            [date, len(redBottle)+len(greenBottle)+len(blueBottle)]]},
-        {'name': '红粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
-            'marker': markerRed, 'data': [[date, int(np.sum(list(map(lambda obj: obj['reds'], red)))), 1]]},
-        {'name': '绿粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
-            'marker': markerGreen, 'data': [[date, int(np.sum(list(map(lambda obj: obj['greens'], green)))), 1]]},
-        {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
-            'marker': markerBlue, 'data': [[date, int(np.sum(list(map(lambda obj: obj['blues'], blue)))), 1]]},
+        {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': cup},
+        {'name': '红瓶', 'type': 'column', 'color': 'red', 'data': redBottle},
+        {'name': '绿瓶', 'type': 'column', 'color': 'green', 'data': greenBottle},
+        {'name': '蓝瓶', 'type': 'column', 'color': 'blue', 'data': blueBottle},
+        {'name': '红粒', 'type': 'bubble', 'yAxis': 1,
+            'color': 'red', 'marker': markerRed, 'data': red},
+        {'name': '绿粒', 'type': 'bubble', 'yAxis': 1,
+            'color': 'green', 'marker': markerGreen, 'data': green},
+        {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1,
+            'color': 'green', 'marker': markerBlue, 'data': blue},
     ]
     return JsonResponse({'res': data})
