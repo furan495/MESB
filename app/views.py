@@ -591,18 +591,19 @@ def queryMateanaChart(request):
     red = list(
         map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['reds'], 1],
             Bottle.objects.all().values('createTime', 'order', 'red').annotate(
-                reds=Sum('red')).values('createTime', 'reds')
+                reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
             ))
     green = list(
         map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['greens'], 1],
             Bottle.objects.all().values('createTime', 'order', 'green').annotate(
-                greens=Sum('green')).values('createTime', 'greens')
+                greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
             ))
     blue = list(
         map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['blues'], 1],
             Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
-                blues=Sum('blue')).values('createTime', 'blues')
+                blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
             ))
+
     data = [
         {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': cup},
         {'name': '红瓶', 'type': 'column', 'color': 'red', 'data': redBottle},
