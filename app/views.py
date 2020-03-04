@@ -11,7 +11,7 @@ from app.serializers import *
 from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
@@ -178,6 +178,15 @@ def loginCheck(request):
 
 @csrf_exempt
 def querySelect(request):
+    """ for i in range(100):
+        material = Material()
+        material.name = '瓶盖'
+        material.store = Store.objects.get(name='一个仓库')
+        material.size = 'cup'
+        material.unit = '个'
+        material.mateType = '2'
+        material.save() """
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
@@ -187,7 +196,7 @@ def querySelect(request):
             map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))}
     if params['model'] == 'bom':
         selectList = {'product': list(
-            map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))), 'materials': list(map(lambda obj: obj.name, Material.objects.all()))}
+            map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))), 'materials': list(set(list(map(lambda obj: obj.name, Material.objects.all()))))}
     if params['model'] == 'store':
         selectList = {'storeType': list(
             map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
@@ -527,3 +536,69 @@ def exportData(request):
     df.to_excel(BASE_DIR+'/upload/export/产能报表.xlsx')
 
     return JsonResponse({'res': 'http://192.168.1.103:8899/upload/export/产能报表.xlsx'})
+
+
+@csrf_exempt
+def queryMateanaChart(request):
+
+    date = int(time.mktime(
+        datetime.datetime.now().date().timetuple()))*1000+8*60*60*1000
+    markerRed = {
+        'fillColor': {
+            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'stops': [
+                [0, 'rgba(255,255,255,0.5)'],
+                [1, 'rgba(255,0,0,0.5)']
+            ]
+        }
+    }
+    markerGreen = {
+        'fillColor': {
+            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'stops': [
+                [0, 'rgba(255,255,255,0.5)'],
+                [1, 'rgba(0,255,0,0.5)']
+            ]
+        }
+    }
+    markerBlue = {
+        'fillColor': {
+            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'stops': [
+                [0, 'rgba(255,255,255,0.5)'],
+                [1, 'rgba(0,0,255,0.5)']
+            ]
+        }
+    }
+
+    redBottle = Bottle.objects.filter(
+        Q(color='红瓶', createTime__gte=datetime.datetime.now().date()))
+    greenBottle = Bottle.objects.filter(
+        Q(color='绿瓶', createTime__gte=datetime.datetime.now().date()))
+    blueBottle = Bottle.objects.filter(
+        Q(color='蓝瓶', createTime__gte=datetime.datetime.now().date()))
+
+    red = Bottle.objects.filter(
+        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(reds=Sum('red')).values('reds')
+    green = Bottle.objects.filter(
+        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(greens=Sum('green')).values('greens')
+    blue = Bottle.objects.filter(
+        Q(createTime__gte=datetime.datetime.now().date())).values('order').annotate(blues=Sum('blue')).values('blues')
+
+    data = [
+        {'name': '红瓶', 'type': 'column', 'color': 'red', 'yAxis': 0,
+         'data': [[date, len(redBottle)]]},
+        {'name': '绿瓶', 'type': 'column', 'color': 'green', 'yAxis': 0,
+         'data': [[date, len(greenBottle)]]},
+        {'name': '蓝瓶', 'type': 'column', 'color': 'blue', 'yAxis': 0,
+         'data': [[date, len(blueBottle)]]},
+        {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': [
+            [date, len(redBottle)+len(greenBottle)+len(blueBottle)]]},
+        {'name': '红粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
+            'marker': markerRed, 'data': [[date, int(np.sum(list(map(lambda obj: obj['reds'], red)))), 1]]},
+        {'name': '绿粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
+            'marker': markerGreen, 'data': [[date, int(np.sum(list(map(lambda obj: obj['greens'], green)))), 1]]},
+        {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1, 'color': 'red',
+            'marker': markerBlue, 'data': [[date, int(np.sum(list(map(lambda obj: obj['blues'], blue)))), 1]]},
+    ]
+    return JsonResponse({'res': data})

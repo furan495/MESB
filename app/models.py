@@ -272,6 +272,7 @@ class Bottle(models.Model):
     red = models.IntegerField(verbose_name='红粒个数', blank=True, null=True)
     green = models.IntegerField(verbose_name='绿粒个数', blank=True, null=True)
     blue = models.IntegerField(verbose_name='蓝粒个数', blank=True, null=True)
+    createTime=models.DateTimeField(auto_now_add=True,verbose_name='创建时间')
 
     def __str__(self):
         return self.number
