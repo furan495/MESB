@@ -15,8 +15,22 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'MESB.settings'
 django.setup()
 
 
+def positionSelect(obj, position):
+    from app.models import Event
+    try:
+        return Event.objects.get(workOrder=obj, source=position).time.strftime(
+            '%Y-%m-%d %H:%M:%S')
+    except:
+        return ''
+
+
 async def routeListenServer(websocket, path):
-    from app.models import WorkOrder, Order, Product
+    from app.models import WorkOrder, Order, Product, OrderStatus
+    if not os.path.exists(BASE_DIR+'/start.txt'):
+        order = Order.objects.filter(Q(status__name='已排产'))[0]
+    else:
+        order = Order.objects.filter(Q(status__name='加工中'))[0]
+    workOrderList = WorkOrder.objects.filter(Q(order=order))
     global count
     async for message in websocket:
         while message == 'start':
@@ -26,11 +40,21 @@ async def routeListenServer(websocket, path):
                 count = 0
                 if os.path.exists(BASE_DIR+'/listen.txt'):
                     os.remove(BASE_DIR+'/listen.txt')
+            workOrderStatusList = list(
+                map(lambda obj: obj.status.name, workOrderList))
+            if '等待中' not in workOrderStatusList:
+                order.status = OrderStatus.objects.get(Q(name='完成'))
+                order.save()
+                if os.path.exists(BASE_DIR + '/start.txt'):
+                    os.remove(BASE_DIR+'/start.txt')
 
             boards = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number,
                                            'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'state': obj.line.state.name, 'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
 
-            await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'boards': boards}))
+            producing = list(
+                map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'RK': positionSelect(obj, '入库')}, workOrderList))
+
+            await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'boards': boards, 'producing': producing}))
 
 start_server = websockets.serve(routeListenServer, '192.168.1.103', 8765)
 asyncio.get_event_loop().run_until_complete(start_server)

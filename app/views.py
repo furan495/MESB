@@ -38,7 +38,12 @@ def wincc(request):
         workOrder.bottle = params[1]
         workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         workOrder.status = WorkOrderStatus.objects.get(key=2)
+        order = workOrder.order
+        order.status = OrderStatus.objects.get(Q(name='加工中'))
         workOrder.save()
+        order.save()
+        with open(BASE_DIR+'/start.txt', 'w') as f:
+            f.write('start')
 
     if position[params[0]] == '称重':
         workOrder = WorkOrder.objects.get(
@@ -46,7 +51,7 @@ def wincc(request):
         product = Product.objects.get(workOrder=workOrder)
         standard = ProductStandard.objects.get(
             Q(name='重量(单位/g)', product=product))
-        standard.realValue = float(standard.expectValue)+random.randint(-2, 2)
+        standard.realValue = float(standard.expectValue)+random.randint(-5, 5)
         if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
             standard.result = '1'
             product.result = '1'
