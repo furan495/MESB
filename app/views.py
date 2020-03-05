@@ -177,54 +177,59 @@ def loginCheck(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ for i in range(100):
-        material = Material()
-        material.name = '瓶盖'
-        material.store = Store.objects.get(name='一个仓库')
-        material.size = 'cup'
-        material.unit = '个'
-        material.mateType = '2'
-        material.save() """
-
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
-        selectList = {'orderType': list(
-            map(lambda obj: obj.name, OrderType.objects.all())), 'route': list(
-            map(lambda obj: obj.name, ProcessRoute.objects.all())), 'product': list(
-            map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))}
+        selectList = {
+            'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
+            'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
+            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))
+        }
     if params['model'] == 'bom':
-        selectList = {'product': list(
-            map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))), 'materials': list(set(list(map(lambda obj: obj.name, Material.objects.all()))))}
+        selectList = {
+            'materials': list(set(list(map(lambda obj: obj.name, Material.objects.all())))),
+            'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
+        }
     if params['model'] == 'store':
-        selectList = {'storeType': list(
-            map(lambda obj: obj.name, StoreType.objects.all())), 'workShop': list(
-            map(lambda obj: obj.name, WorkShop.objects.all()))}
+        selectList = {
+            'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
+            'storeType': list(map(lambda obj: obj.name, StoreType.objects.all())),
+        }
     if params['model'] == 'productLine':
-        selectList = {'state': list(
-            map(lambda obj: obj.name, LineState.objects.all())), 'workShop': list(
-            map(lambda obj: obj.name, WorkShop.objects.all()))}
+        selectList = {
+            'state': list(map(lambda obj: obj.name, LineState.objects.all())),
+            'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all()))
+        }
     if params['model'] == 'device':
-        selectList = {'deviceType': list(
-            map(lambda obj: obj.name, DeviceType.objects.all())), 'process': list(
-            map(lambda obj: obj.name, Process.objects.all()))}
+        selectList = {
+            'process': list(map(lambda obj: obj.name, Process.objects.all())),
+            'deviceType': list(map(lambda obj: obj.name, DeviceType.objects.all())),
+        }
     if params['model'] == 'document':
-        selectList = {'docType': list(
-            map(lambda obj: [obj.name, obj.key], DocType.objects.all()))}
+        selectList = {
+            'docType': list(map(lambda obj: [obj.name, obj.key], DocType.objects.all()))
+        }
     if params['model'] == 'productStandard':
-        selectList = {'product': list(
-            map(lambda obj: obj.name, Product.objects.filter(Q(result=1)))), 'result': ['合格', '不合格']}
+        selectList = {
+            'result': ['合格', '不合格'],
+            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1)))),
+        }
     if params['model'] == 'material':
-        selectList = {'store': list(
-            map(lambda obj: [obj.name, obj.key], Store.objects.all())), 'mateType': ['自制', '外采']}
+        selectList = {
+            'mateType': ['自制', '外采'],
+            'store': list(map(lambda obj: [obj.name, obj.key], Store.objects.all())),
+        }
     if params['model'] == 'tool':
-        selectList = {'store': list(
-            map(lambda obj: [obj.name, obj.key], Store.objects.all())), 'toolType': ['自制', '外采']}
+        selectList = {
+            'toolType': ['自制', '外采'],
+            'store': list(map(lambda obj: [obj.name, obj.key], Store.objects.all())),
+        }
     if params['model'] == 'user':
-        roles = Role.objects.all()
-        departments = Department.objects.all()
-        selectList = {'gender': ['男', '女'],
-                      'role': list(map(lambda obj: obj.name, roles)), 'department': list(map(lambda obj: obj.name, departments))}
+        selectList = {
+            'gender': ['男', '女'],
+            'role': list(map(lambda obj: obj.name,  Role.objects.all())),
+            'department': list(map(lambda obj: obj.name, Department.objects.all()))
+        }
     return JsonResponse({'res': selectList})
 
 
@@ -456,13 +461,6 @@ def queryQualanaChart(request):
 
 
 @csrf_exempt
-def queryExcelData(request):
-    data = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
-        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), 'rate': round(len(Product.objects.filter(Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
-    return JsonResponse({'res': data})
-
-
-@csrf_exempt
 def annotateDataList(request):
     def addkey(obj, objs):
         obj['key'] = objs.index(obj)
@@ -479,17 +477,140 @@ def annotateDataList(request):
 
 @csrf_exempt
 def exportData(request):
-    excelData = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
-        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))),  'rate': round(len(Product.objects.filter(Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
+    modelMap = {'order': '订单', 'material': '物料', 'processRoute': '工艺', 'user': '用户', 'role': '角色', 'store': '仓库',
+                'workShop': '车间', 'device': '设备', 'document': '文档', 'productStandard': '质检数据', 'bom': 'BOM', 'tool': '工具',
+                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计'}
+    res = ''
+    params = json.loads(request.body)
+    if params['model'] == 'workShop':
+        excel = list(
+            map(lambda obj: {
+                '车间编号': obj.number, '车间名称': obj.name, '车间描述': obj.descriptions},
+                WorkShop.objects.all())
+        )
+    if params['model'] == 'productLine':
+        excel = list(
+            map(lambda obj: {
+                '产线名称': obj.name, '隶属车间': obj.workShop.name, '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
+        )
+    if params['model'] == 'processRoute':
+        excel = list(
+            map(lambda obj: {
+                '工艺名称': obj.name, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
+                '包含工序': ('->').join(list(
+                    map(lambda obj: obj.name,
+                        Process.objects.filter(Q(route=obj))
+                        ))
+                ), '详细数据': obj.data},
+                ProcessRoute.objects.all())
+        )
+    if params['model'] == 'store':
+        excel = list(
+            map(lambda obj: {
+                '仓库名称': obj.name, '隶属车间': obj.workShop.name, '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions},
+                Store.objects.all())
+        )
+    if params['model'] == 'device':
+        excel = list(
+            map(lambda obj: {
+                '设备名称': obj.name, '设备类型': obj.deviceType.name, '设备状态': list(DeviceState.objects.filter(Q(device=obj)))[-1].name,
+                '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '入库时间': obj.joinTime.strftime('%Y-%m-%d %H:%M:%S'),
+                '设备厂家': obj.factory, '出厂日期': obj.facTime, '厂家联系人': obj.facPeo, '厂家电话': obj.facPho},
+                Device.objects.all())
+        )
+    if params['model'] == 'material':
+        excel = list(
+            map(lambda obj: {
+                '物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': '自制' if obj['mateType'] == '1' else '外采',
+                '现有库存': obj['counts'], '存储仓库': Store.objects.get(key=obj['store']).name},
+                Material.objects.all().values('name')
+                .annotate(counts=Count('size'))
+                .values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
+        )
+    if params['model'] == 'tool':
+        excel = list(
+            map(lambda obj: {
+                '工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': '自制' if obj['toolType'] == '1' else '外采',
+                '现有库存': obj['counts'], '存储仓库': Store.objects.get(key=obj['store']).name},
+                Tool.objects.all().values('name')
+                .annotate(counts=Count('size'))
+                .values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
+        )
+    if params['model'] == 'bom':
+        excel = list(
+            map(lambda obj: {
+                '对应产品': obj.product.name, 'bom名称': obj.name, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
+                'bom内容': obj.content},
+                BOM.objects.all())
+        )
+    if params['model'] == 'productType':
+        excel = list(
+            map(lambda obj: {
+                '产品名称': obj.name, '订单类型': obj.orderType.name, '产品编号': obj.number, '产品容差': obj.errorRange},
+                ProductType.objects.all())
+        )
+    if params['model'] == 'product':
+        excel = list(
+            map(lambda obj: {
+                '成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'),
+                '质检结果': '合格' if obj.result == '1' else '不合格', '存放仓位': selectPosition(obj),
+                '历史状态': ('->').join(list(
+                    map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title),
+                        Event.objects.filter(Q(workOrder=obj.workOrder))
+                        ))
+                )}, Product.objects.all())
+        )
+    if params['model'] == 'order':
+        excel = list(
+            map(lambda obj: {
+                '订单类别': obj.orderType.name, '选用工艺': obj.route.name, '订单状态': obj.status.name, '创建人': obj.creator, '订单编号': obj.number,
+                '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description},
+                Order.objects.all())
+        )
+    if params['model'] == 'workOrder':
+        excel = list(
+            map(lambda obj: {
+                '工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '工单瓶号': obj.bottle,
+                '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description},
+                WorkOrder.objects.all())
+        )
+    if params['model'] == 'unqualified':
+        excel = list(
+            map(lambda obj: {
+                '成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'),
+                '不合格原因': obj.reason, '存放仓位': selectPosition(obj)},
+                Product.objects.all())
+        )
+    if params['model'] == 'productStandard':
+        excel = list(
+            map(lambda obj: {
+                '产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue, '实际结果': obj.realValue,
+                '检测结果': '合格' if obj.result == '1' else '不合格'},
+                ProductStandard.objects.all())
+        )
+    if params['model'] == 'role':
+        excel = list(
+            map(lambda obj: {'角色名': obj.name, '权限范围': obj.authority},
+                Role.objects.all())
+        )
+    if params['model'] == 'user':
+        excel = list(
+            map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': '男' if obj.gender == '1' else '女', '部门': obj.department.name if obj.department else '', '职位': obj.post, '电话': obj.phone},
+                User.objects.all())
+        )
+    if params['model'] == 'mateAna':
+        data = Bottle.objects.all().values('createTime').annotate(
+            cup=Count('color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cup', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues')
 
-    excel = []
-    for data in excelData:
-        excel.append({'订单编号': data['number'], '下单日期': data['time'], '下单客户': data['user'],
-                      '产线名称': data['line'], '预期产量': data['expectYields'], '实际产量': data['realYields'], '合格率': data['rate']})
+        excel = list(
+            map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cup'], '红瓶': obj['rbot'],
+                             '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, data)
+        )
+
     df = pd.DataFrame(excel)
-    df.to_excel(BASE_DIR+'/upload/export/产能报表.xlsx')
-
-    return JsonResponse({'res': 'http://192.168.1.103:8899/upload/export/产能报表.xlsx'})
+    df.to_excel(BASE_DIR+'/upload/export/%s报表.xlsx' %
+                modelMap[params['model']])
+    return JsonResponse({'res': 'http://%s:8899/upload/export/%s报表.xlsx' % (params['url'], modelMap[params['model']])})
 
 
 @csrf_exempt

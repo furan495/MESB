@@ -66,7 +66,6 @@ urlpatterns = [
     url(r'^api/uploadAvatar/',  views.uploadAvatar),
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/storeOperate/',  views.storeOperate),
-    url(r'^api/queryExcelData/',  views.queryExcelData),
     url(r'^api/annotateDataList/',  views.annotateDataList),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
     url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
