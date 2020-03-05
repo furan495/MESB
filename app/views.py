@@ -526,7 +526,7 @@ def annotateDataList(request):
 @csrf_exempt
 def exportData(request):
     excelData = list(map(lambda obj: {'key': obj.key, 'line': obj.line.name, 'number': obj.number, 'time': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'user': obj.creator, 'expectYields': len(WorkOrder.objects.filter(Q(order=obj))), 'realYields': len(
-        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))),  'rate': round(len(Product.objects.filter(Q(prodType__name='合格', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
+        WorkOrder.objects.filter(Q(status__name='已完成', order=obj))),  'rate': round(len(Product.objects.filter(Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2)}, Order.objects.all()))
 
     excel = []
     for data in excelData:
@@ -536,6 +536,21 @@ def exportData(request):
     df.to_excel(BASE_DIR+'/upload/export/产能报表.xlsx')
 
     return JsonResponse({'res': 'http://192.168.1.103:8899/upload/export/产能报表.xlsx'})
+
+
+@csrf_exempt
+def queryPoweranaChart(request):
+
+    data = [
+        {'name': '预期产量', 'type': 'column',
+            'data': list(map(lambda obj:  len(
+                WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))},
+        {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
+            WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))},
+        {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
+            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2), Order.objects.all()))},
+    ]
+    return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.all()))})
 
 
 @csrf_exempt
