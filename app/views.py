@@ -216,10 +216,10 @@ def querySelect(request):
             map(lambda obj: obj.name, Product.objects.filter(Q(result=1)))), 'result': ['合格', '不合格']}
     if params['model'] == 'material':
         selectList = {'store': list(
-            map(lambda obj: obj.name, Store.objects.all())), 'mateType': ['自制', '外采']}
+            map(lambda obj: [obj.name, obj.key], Store.objects.all())), 'mateType': ['自制', '外采']}
     if params['model'] == 'tool':
         selectList = {'store': list(
-            map(lambda obj: obj.name, Store.objects.all())), 'toolType': ['自制', '外采']}
+            map(lambda obj: [obj.name, obj.key], Store.objects.all())), 'toolType': ['自制', '外采']}
     if params['model'] == 'user':
         roles = Role.objects.all()
         departments = Department.objects.all()
