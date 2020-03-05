@@ -6,6 +6,7 @@ import random
 import datetime
 import numpy as np
 import pandas as pd
+from app.utils import *
 from app.models import *
 from app.serializers import *
 from itertools import product
@@ -42,8 +43,6 @@ def wincc(request):
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         workOrder.save()
         order.save()
-        with open(BASE_DIR+'/start.txt', 'w') as f:
-            f.write('start')
 
     if position[params[0]] == '称重':
         workOrder = WorkOrder.objects.get(
@@ -452,52 +451,7 @@ def queryOperateChart(request):
 
 @csrf_exempt
 def queryQualanaChart(request):
-    qualData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(result='1'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count')
-            )
-    )
-    unqualData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(result='2'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count'))
-    )
-    qualDataRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
-                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
-            Product.objects.filter(Q(result='1'))
-            .values('batch')
-            .annotate(count=Count('batch')).values('batch', 'count'))
-    )
-    unqualDataRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
-                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))), 2)],
-            Product.objects.filter(Q(result='2'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count'))
-    )
-    reasonData = list(
-        map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-            Product.objects.filter(Q(result='2'))
-            .values('reason')
-            .annotate(count=Count('reason'))
-            .values('reason', 'count'))
-    )
-    data = [
-        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': qualData},
-        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': qualDataRate},
-        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': unqualData},
-        {'name': '不合格率', 'type': 'spline', 'yAxis': 1, 'data': unqualDataRate},
-        {'name': '总计', 'type': 'pie', 'data': reasonData,
-            'center': [150, 50], 'size':150}
-    ]
-
+    data = qualAna()
     return JsonResponse({'res': data})
 
 
@@ -540,95 +494,11 @@ def exportData(request):
 
 @csrf_exempt
 def queryPoweranaChart(request):
-
-    data = [
-        {'name': '预期产量', 'type': 'column',
-            'data': list(map(lambda obj:  len(
-                WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))},
-        {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
-            WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))},
-        {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
-            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))), 2), Order.objects.all()))},
-    ]
+    data = powerAna()
     return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.all()))})
 
 
 @csrf_exempt
 def queryMateanaChart(request):
-
-    markerRed = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
-            'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(255,0,0,0.5)']
-            ]
-        }
-    }
-    markerGreen = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
-            'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(0,255,0,0.5)']
-            ]
-        }
-    }
-    markerBlue = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
-            'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(0,0,255,0.5)']
-            ]
-        }
-    }
-    redBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    greenBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    blueBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    cup = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Bottle.objects.all().values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    red = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['reds'], 1],
-            Bottle.objects.all().values('createTime', 'order', 'red').annotate(
-                reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
-            ))
-    green = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['greens'], 1],
-            Bottle.objects.all().values('createTime', 'order', 'green').annotate(
-                greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
-            ))
-    blue = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['blues'], 1],
-            Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
-                blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
-            ))
-
-    data = [
-        {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': cup},
-        {'name': '红瓶', 'type': 'column', 'color': 'red', 'data': redBottle},
-        {'name': '绿瓶', 'type': 'column', 'color': 'green', 'data': greenBottle},
-        {'name': '蓝瓶', 'type': 'column', 'color': 'blue', 'data': blueBottle},
-        {'name': '红粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'red', 'marker': markerRed, 'data': red},
-        {'name': '绿粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'green', 'marker': markerGreen, 'data': green},
-        {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'green', 'marker': markerBlue, 'data': blue},
-    ]
+    data = mateAna()
     return JsonResponse({'res': data})
