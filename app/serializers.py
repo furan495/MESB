@@ -13,9 +13,12 @@ class WorkShopSerializer(serializers.ModelSerializer):
 
 class OrganizationSerializer(serializers.ModelSerializer):
 
+    level = serializers.SlugRelatedField(
+        queryset=OrgaLevel.objects.all(), label='组织等级', slug_field='name', required=False)
+
     class Meta:
         model = Organization
-        fields = ('key', 'name', 'level')
+        fields = ('key', 'name', 'level', 'parent')
 
 
 class OrgaLevelSerializer(serializers.ModelSerializer):
@@ -203,12 +206,6 @@ class LineStateSerializer(serializers.ModelSerializer):
         fields = ('key', 'name')
 
 
-class WorkPositionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkPosition
-        fields = ('key', 'productLine', 'name')
-
-
 class ProcessRouteSerializer(serializers.ModelSerializer):
     devices = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
@@ -369,7 +366,7 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductType
-        fields = ('key', 'name', 'number', 'path', 'orderType','errorRange')
+        fields = ('key', 'name', 'number', 'path', 'orderType', 'errorRange')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):

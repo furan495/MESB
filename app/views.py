@@ -229,12 +229,17 @@ def querySelect(request):
     if params['model'] == 'material':
         selectList = {
             'mateType': ['自制', '外采'],
-            'store': list(map(lambda obj: [obj.name, obj.key], Store.objects.all())),
+            'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
         }
     if params['model'] == 'tool':
         selectList = {
             'toolType': ['自制', '外采'],
-            'store': list(map(lambda obj: [obj.name, obj.key], Store.objects.all())),
+            'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
+        }
+    if params['model'] == 'organization':
+        selectList = {
+            'level': list(map(lambda obj: obj.name, OrgaLevel.objects.all())),
+            'parent': list(map(lambda obj: obj['parent'], Organization.objects.all().values('parent').distinct())),
         }
     if params['model'] == 'user':
         selectList = {

@@ -89,11 +89,6 @@ class ProductLineViewSet(viewsets.ModelViewSet):
     serializer_class = ProductLineSerializer
 
 
-class WorkPositionViewSet(viewsets.ModelViewSet):
-    queryset = WorkPosition.objects.all()
-    serializer_class = WorkPositionSerializer
-
-
 class ProcessRouteViewSet(viewsets.ModelViewSet):
     queryset = ProcessRoute.objects.all()
     serializer_class = ProcessRouteSerializer

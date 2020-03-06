@@ -90,9 +90,11 @@ class OrgaLevel(models.Model):
 class Organization(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
-        max_length=10, verbose_name='组织', blank=True, null=True)
+        max_length=20, verbose_name='组织名称', blank=True, null=True)
+    parent = models.CharField(
+        max_length=20, verbose_name='上级组织', blank=True, null=True)
     level = models.ForeignKey(
-        OrgaLevel, related_name='organizations', on_delete=models.CASCADE, verbose_name='隶属等级', blank=True, null=True)
+        OrgaLevel, related_name='organizations', on_delete=models.CASCADE, verbose_name='组织等级', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -272,7 +274,7 @@ class Bottle(models.Model):
     red = models.IntegerField(verbose_name='红粒个数', blank=True, null=True)
     green = models.IntegerField(verbose_name='绿粒个数', blank=True, null=True)
     blue = models.IntegerField(verbose_name='蓝粒个数', blank=True, null=True)
-    createTime=models.DateField(auto_now_add=True,verbose_name='创建时间')
+    createTime = models.DateField(auto_now_add=True, verbose_name='创建时间')
 
     def __str__(self):
         return self.number
@@ -296,21 +298,6 @@ class Process(models.Model):
 
     class Meta:
         verbose_name = '工序'
-
-
-class WorkPosition(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    """ productLine = models.ForeignKey(ProductLine, related_name='workPositions',
-                                    on_delete=models.CASCADE, verbose_name='隶属产线') """
-    process = models.OneToOneField(Process, related_name='process',
-                                   on_delete=models.CASCADE, verbose_name='对应工序')
-    name = models.CharField(max_length=20, verbose_name='工位名')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '工位'
 
 
 class DeviceType(models.Model):
