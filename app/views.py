@@ -36,6 +36,10 @@ def wincc(request):
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
             Q(description__icontains=color[params[2]], bottle='', status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
+        bottle = Bottle.objects.filter(
+            Q(order__number=params[3], color=color[params[2]]))[0]
+        bottle.number = params[1]
+        bottle.save()
         workOrder.bottle = params[1]
         workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         workOrder.status = WorkOrderStatus.objects.get(key=2)
@@ -100,6 +104,10 @@ def storeOperate(request):
     workOrder.status = WorkOrderStatus.objects.get(key=3)
     workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     workOrder.save()
+    bottle = Bottle.objects.get(
+        Q(number=params[1], order__number=params[3], color=color[params[2]]))
+    bottle.status = BottleState.objects.get(name='入库')
+    bottle.save()
     event = Event()
     event.workOrder = workOrder
     event.bottle = params[1]
@@ -479,7 +487,7 @@ def annotateDataList(request):
 def exportData(request):
     modelMap = {'order': '订单', 'material': '物料', 'processRoute': '工艺', 'user': '用户', 'role': '角色', 'store': '仓库',
                 'workShop': '车间', 'device': '设备', 'document': '文档', 'productStandard': '质检数据', 'bom': 'BOM', 'tool': '工具',
-                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计'}
+                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计', 'powerAna': '产能报表', 'qualAna': '质量统计'}
     res = ''
     params = json.loads(request.body)
     if params['model'] == 'workShop':
@@ -579,7 +587,7 @@ def exportData(request):
             map(lambda obj: {
                 '成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'),
                 '不合格原因': obj.reason, '存放仓位': selectPosition(obj)},
-                Product.objects.all())
+                Product.objects.filter(result='2'))
         )
     if params['model'] == 'productStandard':
         excel = list(
@@ -601,10 +609,25 @@ def exportData(request):
     if params['model'] == 'mateAna':
         data = Bottle.objects.all().values('createTime').annotate(
             cup=Count('color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cup', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues')
-
         excel = list(
             map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cup'], '红瓶': obj['rbot'],
                              '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, data)
+        )
+    if params['model'] == 'powerAna':
+        data = Bottle.objects.all().values('order').annotate(
+            expects=Count('order'), reals=Count('order', filter=Q(status__name='入库'))).values('order__number', 'expects', 'reals')
+        rate = list(map(lambda obj: round(len(Product.objects.filter(
+            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))
+        excel = list(
+            map(lambda obj: {'订单号': obj[0]['order__number'], '预期产量': obj[0]['expects'], '实际产量': obj[0]['reals'],
+                             '合格率': obj[1]}, list(zip(data, rate)))
+        )
+    if params['model'] == 'qualAna':
+        data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(
+            result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+        excel = list(
+            map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '合格数': obj['good'], '不合格数': obj['bad'],
+                             '合格率': round(obj['good']/(obj['good']+obj['bad']), 2), '不合格率': round(obj['bad']/(obj['good']+obj['bad']), 2)}, data)
         )
 
     df = pd.DataFrame(excel)

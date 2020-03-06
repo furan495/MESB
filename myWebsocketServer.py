@@ -27,10 +27,10 @@ def positionSelect(obj, position):
 async def routeListenServer(websocket, path):
     from app.utils import powerAna, qualAna, mateAna,storeAna
     from app.models import WorkOrder, Order, Product, OrderStatus
-    if not os.path.exists(BASE_DIR+'/start.txt'):
-        order = Order.objects.filter(Q(status__name='已排产'))[0]
-    else:
+    try:
         order = Order.objects.filter(Q(status__name='加工中'))[0]
+    except:
+        order = Order.objects.filter(Q(status__name='已排产'))[0]
     workOrderList = WorkOrder.objects.filter(Q(order=order))
     global count
     async for message in websocket:

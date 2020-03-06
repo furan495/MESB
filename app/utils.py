@@ -18,36 +18,21 @@ def powerAna():
 
 
 def qualAna():
-    qualData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(result='1'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count')
-            )
-    )
-    unqualData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000, obj['count']],
-            Product.objects.filter(Q(result='2'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count'))
-    )
-    qualDataRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
-                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))) if len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))) != 0 else 1, 2)],
-            Product.objects.filter(Q(result='1'))
-            .values('batch')
-            .annotate(count=Count('batch')).values('batch', 'count'))
-    )
-    unqualDataRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))*1000+8*60*60*1000,
-                         round(obj['count']/len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))) if len(Product.objects.filter(Q(batch__gte=datetime.datetime.now().date()))) != 0 else 1, 2)],
-            Product.objects.filter(Q(result='2'))
-            .values('batch')
-            .annotate(count=Count('batch'))
-            .values('batch', 'count'))
-    )
+    data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(
+        result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+    goodData = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
+                         * 1000+8*60*60*1000, obj['good']], data))
+    badData = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
+                         * 1000+8*60*60*1000, obj['bad']], data))
+    goodRate = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
+                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']), 2)], data))
+    badRate = list(
+        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
+                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']), 2)], data))
+
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(Q(result='2'))
@@ -56,10 +41,10 @@ def qualAna():
             .values('reason', 'count'))
     )
     data = [
-        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': qualData},
-        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': qualDataRate},
-        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': unqualData},
-        {'name': '不合格率', 'type': 'spline', 'yAxis': 1, 'data': unqualDataRate},
+        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
+        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': goodRate},
+        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
+        {'name': '不合格率', 'type': 'spline', 'yAxis': 1, 'data': badRate},
         {'name': '总计', 'type': 'pie', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
@@ -186,4 +171,3 @@ def selectPosition(product):
         else:
             pass
     return res
-    
