@@ -25,13 +25,8 @@ def positionSelect(obj, position):
 
 
 async def routeListenServer(websocket, path):
-    from app.utils import powerAna, qualAna, mateAna,storeAna
+    from app.utils import powerAna, qualAna, mateAna, storeAna
     from app.models import WorkOrder, Order, Product, OrderStatus
-    try:
-        order = Order.objects.filter(Q(status__name='加工中'))[0]
-    except:
-        order = Order.objects.filter(Q(status__name='已排产'))[0]
-    workOrderList = WorkOrder.objects.filter(Q(order=order))
     global count
     async for message in websocket:
         while message == 'start':
@@ -42,6 +37,13 @@ async def routeListenServer(websocket, path):
                 if os.path.exists(BASE_DIR+'/listen.txt'):
                     os.remove(BASE_DIR+'/listen.txt')
 
+            workOrderList = []
+            if len(Order.objects.filter(Q(status__name='已排产'))) > 0 or len(Order.objects.filter(Q(status__name='加工中'))) > 0:
+                try:
+                    order = Order.objects.filter(Q(status__name='加工中'))[0]
+                except:
+                    order = Order.objects.filter(Q(status__name='已排产'))[0]
+                workOrderList = WorkOrder.objects.filter(Q(order=order))
             producing = list(
                 map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'RK': positionSelect(obj, '入库')}, workOrderList))
 

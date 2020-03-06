@@ -118,7 +118,7 @@ class BottleStateViewSet(viewsets.ModelViewSet):
 
 
 class WorkOrderViewSet(viewsets.ModelViewSet):
-    queryset = WorkOrder.objects.all()
+    queryset = WorkOrder.objects.all().order_by('-createTime')
     serializer_class = WorkOrderSerializer
 
     filter_backends = [DjangoFilterBackend]

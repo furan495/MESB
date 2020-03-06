@@ -42,7 +42,7 @@ def wincc(request):
         bottle.save()
         workOrder.bottle = params[1]
         workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        workOrder.status = WorkOrderStatus.objects.get(key=2)
+        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         workOrder.save()
@@ -100,10 +100,14 @@ def storeOperate(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     workOrder = WorkOrder.objects.get(
-        Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
-    workOrder.status = WorkOrderStatus.objects.get(key=3)
+        Q(bottle=params[1], description__icontains=color[params[2]], order__number=params[3]))
+    workOrder.status = WorkOrderStatus.objects.get(name='已完成')
     workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     workOrder.save()
+    if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[3]))) == 0:
+        order = Order.objects.get(number=params[3])
+        order.status = OrderStatus.objects.get(name='完成')
+        order.save()
     bottle = Bottle.objects.get(
         Q(number=params[1], order__number=params[3], color=color[params[2]]))
     bottle.status = BottleState.objects.get(name='入库')
@@ -275,7 +279,7 @@ def orderSplit(request):
     params = json.loads(request.body)
     orderDesc = params['description'].split(';')
     order = Order.objects.get(key=params['key'])
-    order.status = OrderStatus.objects.get(key=2)
+    order.status = OrderStatus.objects.get(name='已排产')
     order.save()
     for description in orderDesc:
         if len(description.split(',')) > 1:
@@ -287,7 +291,7 @@ def orderSplit(request):
                 workOrder.startTime = ''
                 time.sleep(0.01)
                 workOrder.number = str(time.time()*1000000)
-                workOrder.status = WorkOrderStatus.objects.get(key=1)
+                workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()
 
@@ -476,10 +480,10 @@ def annotateDataList(request):
     params = json.loads(request.body)
     if params['model'] == 'material':
         queryset = Material.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name')
     else:
         queryset = Tool.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name')
     return JsonResponse({'res': list(map(lambda obj: addkey(obj, list(queryset)), list(queryset)))})
 
 
