@@ -10,12 +10,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 
 class WorkShopViewSet(viewsets.ModelViewSet):
-    queryset = WorkShop.objects.all()
+    queryset = WorkShop.objects.all().order_by('-createTime')
     serializer_class = WorkShopSerializer
 
 
 class BOMViewSet(viewsets.ModelViewSet):
-    queryset = BOM.objects.all()
+    queryset = BOM.objects.all().order_by('-createTime')
     serializer_class = BOMSerializer
 
 
@@ -45,17 +45,17 @@ class WorkOrderStatusViewSet(viewsets.ModelViewSet):
 
 
 class RoleViewSet(viewsets.ModelViewSet):
-    queryset = Role.objects.all()
+    queryset = Role.objects.all().order_by('-key')
     serializer_class = RoleSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-key')
     serializer_class = UserSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().order_by('-key')
     serializer_class = OrderSerializer
 
     def update(self, request, *args, **kwargs):
@@ -80,12 +80,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class ProductLineViewSet(viewsets.ModelViewSet):
-    queryset = ProductLine.objects.all()
+    queryset = ProductLine.objects.all().order_by('-key')
     serializer_class = ProductLineSerializer
 
 
 class ProcessRouteViewSet(viewsets.ModelViewSet):
-    queryset = ProcessRoute.objects.all()
+    queryset = ProcessRoute.objects.all().order_by('-key')
     serializer_class = ProcessRouteSerializer
 
 
@@ -116,7 +116,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all()
+    queryset = Store.objects.all().order_by('-key')
     serializer_class = StoreSerializer
 
 
@@ -136,7 +136,7 @@ class OperateViewSet(viewsets.ModelViewSet):
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
-    queryset = Device.objects.all()
+    queryset = Device.objects.all().order_by('-key')
     serializer_class = DeviceSerializer
 
 
@@ -228,7 +228,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
 
 
 class ProductStandardViewSet(viewsets.ModelViewSet):
-    queryset = ProductStandard.objects.all()
+    queryset = ProductStandard.objects.all().order_by('-key')
     serializer_class = ProductStandardSerializer
 
     def update(self, request, *args, **kwargs):
