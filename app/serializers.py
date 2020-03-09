@@ -18,7 +18,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('key', 'name', 'level', 'parent')
+        fields = ('key', 'name', 'level', 'parent', 'duty')
 
 
 class OrgaLevelSerializer(serializers.ModelSerializer):
@@ -26,15 +26,6 @@ class OrgaLevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrgaLevel
         fields = ('key', 'name')
-
-
-class DepartmentSerializer(serializers.ModelSerializer):
-
-    members = serializers.StringRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = Department
-        fields = ('key', 'name', 'members')
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -145,7 +136,7 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.SlugRelatedField(
         queryset=Role.objects.all(), label='角色', slug_field='name', required=False)
     department = serializers.SlugRelatedField(
-        queryset=Department.objects.all(), label='部门', slug_field='name', required=False)
+        queryset=Organization.objects.filter(Q(level__name='部门')), label='部门', slug_field='name', required=False)
 
     def get_authority(self, obj):
         try:

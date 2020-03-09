@@ -32,7 +32,6 @@ router.register(r'api/storeTypes', viewSet.StoreTypeViewSet)
 router.register(r'api/workOrders', viewSet.WorkOrderViewSet)
 router.register(r'api/orderTypes', viewSet.OrderTypeViewSet)
 router.register(r'api/deviceTypes', viewSet.DeviceTypeViewSet)
-router.register(r'api/departments', viewSet.DepartmentViewSet)
 router.register(r'api/deviceStates', viewSet.DeviceStateViewSet)
 router.register(r'api/deviceFaults', viewSet.DeviceFaultViewSet)
 router.register(r'api/productLines', viewSet.ProductLineViewSet)
@@ -66,6 +65,7 @@ urlpatterns = [
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/annotateDataList/',  views.annotateDataList),
+    url(r'^api/queryOrganization/',  views.queryOrganization),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
     url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
     url(r'^api/queryMateanaChart/',  views.queryMateanaChart),

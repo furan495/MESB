@@ -245,7 +245,7 @@ def querySelect(request):
         selectList = {
             'gender': ['男', '女'],
             'role': list(map(lambda obj: obj.name,  Role.objects.all())),
-            'department': list(map(lambda obj: obj.name, Department.objects.all()))
+            'department': list(map(lambda obj: obj.name, Organization.objects.filter(Q(level__name='部门'))))
         }
     return JsonResponse({'res': selectList})
 
@@ -655,3 +655,41 @@ def queryPoweranaChart(request):
 def queryMateanaChart(request):
     data = mateAna()
     return JsonResponse({'res': data})
+
+
+@csrf_exempt
+def queryOrganization(request):
+    """ [{
+    id: 'CEO',
+    title: 'CEO',
+    name: 'Grethe Hjetland',
+    image: 'https://wp-assets.highcharts.com/www-highcharts-com/blog/wp-content/uploads/2018/11/12132317/Grethe.jpg'
+    }, {
+    id: 'Product',
+    name: '产品研发'
+    }] """
+    data = list(
+        map(lambda company: {'title': company.name, 'key': company.key, 'children': list(
+            map(lambda department: {'title': department.name, 'key': department.key, 'children': list(
+                map(lambda member: {'title': member.name, 'key': member.key}, User.objects.filter(
+                    Q(department__name=department.name)))
+            )}, Organization.objects.filter(
+                Q(level__name='部门', parent=company.name)))
+        )}, Organization.objects.filter(Q(level__name='公司')))
+    )
+
+    series = list(map(lambda obj: [obj.parent, obj.name],
+                      Organization.objects.filter(Q(level__name='部门'))))
+    seriesId = list(map(lambda obj: [obj.name, obj.key],
+                        Organization.objects.filter(Q(level__name='部门'))))
+
+    nodes = list(map(lambda obj: {'id': obj.name, 'name': obj.name,
+                                  'title': User.objects.filter(Q(department__name=obj.name, post='部长'))[0].name if len(User.objects.filter(Q(department__name=obj.name, post='部长'))) == 1 else '',
+                                  'image': User.objects.filter(Q(department__name=obj.name, post='部长'))[0].avatar if len(User.objects.filter(Q(department__name=obj.name, post='部长'))) == 1 else '',
+                                  }, Organization.objects.filter(Q(level__name='部门'))))
+    nodesId = list(map(lambda obj: {'id': obj.key, 'name': obj.duty},
+                       Organization.objects.filter(Q(level__name='部门'))))
+    list(map(lambda obj: series.append(obj), seriesId))
+    list(map(lambda obj: nodes.append(obj), nodesId))
+
+    return JsonResponse({'tree': data, 'series': series, 'nodes': nodes})

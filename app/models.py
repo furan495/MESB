@@ -93,6 +93,8 @@ class Organization(models.Model):
         max_length=20, verbose_name='组织名称', blank=True, null=True)
     parent = models.CharField(
         max_length=20, verbose_name='上级组织', blank=True, null=True)
+    duty = models.CharField(
+        max_length=20, verbose_name='组织职责', blank=True, null=True)
     level = models.ForeignKey(
         OrgaLevel, related_name='organizations', on_delete=models.CASCADE, verbose_name='组织等级', blank=True, null=True)
 
@@ -101,20 +103,6 @@ class Organization(models.Model):
 
     class Meta:
         verbose_name = '组织'
-
-
-class Department(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    organization = models.ForeignKey(
-        Organization, related_name='departments', on_delete=models.CASCADE, verbose_name='隶属组织', blank=True, null=True)
-    name = models.CharField(
-        max_length=10, verbose_name='部门', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '部门'
 
 
 class Role(models.Model):
@@ -140,7 +128,7 @@ class User(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
     department = models.ForeignKey(
-        Department, related_name='members', on_delete=models.CASCADE, verbose_name='部门', blank=True, null=True)
+        Organization, related_name='members', on_delete=models.CASCADE, verbose_name='部门', blank=True, null=True)
     role = models.ForeignKey(Role, related_name='users',
                              on_delete=models.CASCADE, verbose_name='角色', blank=True, null=True)
     name = models.CharField(
@@ -157,7 +145,7 @@ class User(models.Model):
         max_length=200, verbose_name='头像', blank=True, null=True)
 
     def __str__(self):
-        return '%s/%s/%s/%s/%s' % (str(self.key), self.name, self.gender, self.role, self.phone)
+        return '%s/%s' % (self.name, self.post)
 
     class Meta:
         verbose_name = '用户'
