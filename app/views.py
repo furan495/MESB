@@ -658,6 +658,30 @@ def queryMateanaChart(request):
 
 
 @csrf_exempt
+def splitCheck(request):
+    params = json.loads(request.body)
+    rbot = Bottle.objects.filter(Q(order__number=params['number'], color='红瓶')).values('color').annotate(count=Count(
+        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
+    gbot = Bottle.objects.filter(Q(order__number=params['number'], color='绿瓶')).values('color').annotate(count=Count(
+        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
+    bbot = Bottle.objects.filter(Q(order__number=params['number'], color='蓝瓶')).values('color').annotate(count=Count(
+        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
+    reds = rbot['reds']+gbot['reds']+bbot['reds']
+    cup = rbot['count']+bbot['count']+gbot['count']
+    blues = rbot['blues']+gbot['blues']+bbot['blues']
+    greens = rbot['greens']+gbot['greens']+bbot['greens']
+    res = 'ok'
+    bom = list(map(lambda obj: obj.content, BOM.objects.filter(
+        Q(product__orderType__name=params['orderType']))))
+    materialMap = {}
+    for mat in list(set(('').join(bom)[:-1].split(','))):
+        materialMap[mat] = len(Material.objects.filter(Q(name=mat)))
+    if materialMap['红瓶'] < rbot['count'] or materialMap['绿瓶'] < gbot['count'] or materialMap['蓝瓶'] < bbot['count']:
+        res = 'or'
+    return JsonResponse({'res': res})
+
+
+@csrf_exempt
 def queryOrganization(request):
     """ [{
     id: 'CEO',

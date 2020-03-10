@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^api/uploadPic/',  views.uploadPic),
     url(r'^api/updatePWD/',  views.updatePWD),
     url(r'^api/addBottle/',  views.addBottle),
+    url(r'^api/splitCheck/',  views.splitCheck),
     url(r'^api/loginCheck/',  views.loginCheck),
     url(r'^api/exportData/',  views.exportData),
     url(r'^api/orderSplit/',  views.orderSplit),

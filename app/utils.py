@@ -28,10 +28,10 @@ def qualAna():
                          * 1000+8*60*60*1000, obj['bad']], data))
     goodRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']), 2)], data))
+                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) !=0 else 1, 2)], data))
     badRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']), 2)], data))
+                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) !=0 else 1, 2)], data))
 
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
