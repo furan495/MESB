@@ -101,6 +101,7 @@ def wincc(request):
             workOrder = WorkOrder.objects.get(
                 Q(bottle=params[1], order=Order.objects.get(number=params[3])))
             workOrder.status = WorkOrderStatus.objects.get(name='失败')
+            workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             workOrder.save()
     except Exception as e:
         print(e, '这里有问题222')
@@ -194,11 +195,20 @@ def loginCheck(request):
     user = User.objects.get(phone=params['phone'])
     res = ''
     if user.password == params['password']:
-        res = {'name': user.name, 'authority': user.role.authority,
+        res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'state': user.state,
                'role': user.role.name, 'phone': user.phone, 'avatar': user.avatar}
     else:
         res = 'err'
     return JsonResponse({'res': res})
+
+
+@csrf_exempt
+def updateUserState(request):
+    params = json.loads(request.body)
+    user = User.objects.get(key=params['key'])
+    user.state = params['state']
+    user.save()
+    return JsonResponse({'res': 'ok'})
 
 
 @csrf_exempt
@@ -595,7 +605,7 @@ def exportData(request):
     if params['model'] == 'order':
         excel = list(
             map(lambda obj: {
-                '订单类别': obj.orderType.name, '选用工艺': obj.route.name, '订单状态': obj.status.name, '创建人': obj.creator, '订单编号': obj.number,
+                '订单类别': obj.orderType.name, '选用工艺': obj.route.name, '订单状态': obj.status.name, '创建人': obj.creator, '目标客户': obj.customer.name, '订单编号': obj.number,
                 '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description},
                 Order.objects.all())
         )

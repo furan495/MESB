@@ -126,6 +126,11 @@ class User(models.Model):
         ('2', '女'),
     )
 
+    USER_STATE = (
+        ('1', '离线'),
+        ('2', '在线'),
+    )
+
     key = models.AutoField(primary_key=True, verbose_name='主键')
     department = models.ForeignKey(
         Organization, related_name='members', on_delete=models.CASCADE, verbose_name='部门', blank=True, null=True)
@@ -141,6 +146,8 @@ class User(models.Model):
         max_length=20, verbose_name='电话', blank=True, null=True)
     post = models.CharField(
         max_length=20, verbose_name='职位', blank=True, null=True)
+    state = models.CharField(
+        max_length=20, verbose_name='状态', choices=USER_STATE, blank=True, null=True, default='1')
     avatar = models.CharField(
         max_length=200, verbose_name='头像', blank=True, null=True)
 
