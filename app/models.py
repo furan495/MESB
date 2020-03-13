@@ -207,8 +207,29 @@ class ProductLine(models.Model):
         verbose_name = '产线'
 
 
+class Customer(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='客户名', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='客户编号', blank=True, null=True)
+    phone = models.CharField(
+        max_length=20, verbose_name='联系电话', blank=True, null=True)
+    level = models.IntegerField(verbose_name='客户等级', blank=True, null=True)
+    company = models.CharField(
+        max_length=20, verbose_name='公司名称', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '客户'
+
+
 class Order(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
+    customer = models.ForeignKey(Customer, related_name='orders',
+                                 on_delete=models.CASCADE, verbose_name='目标客户', blank=True, null=True)
     status = models.ForeignKey(OrderStatus, related_name='status',
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     route = models.ForeignKey(ProcessRoute, related_name='orders',

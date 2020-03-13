@@ -21,6 +21,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @csrf_exempt
+def recordWeight(request):
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
+
+    print(params)
+
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def wincc(request):
 
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
@@ -29,9 +39,7 @@ def wincc(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
-    route = Order.objects.get(number=params[3]).route
-    processList = list(
-        map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
+    print(params)
 
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
@@ -49,21 +57,26 @@ def wincc(request):
         order.save()
 
     if position[params[0]] == '称重':
-        workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
-        product = Product.objects.get(workOrder=workOrder)
-        standard = ProductStandard.objects.get(
-            Q(name='重量(单位/g)', product=product))
-        standard.realValue = float(standard.expectValue)+random.randint(-5, 5)
-        if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
-            standard.result = '1'
-            product.result = '1'
-        else:
-            standard.result = '2'
-            product.result = '2'
-            product.reason = '重量不足'
-        standard.save()
-        product.save()
+        try:
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
+            product = Product.objects.get(workOrder=workOrder)
+            standard = ProductStandard.objects.get(
+                Q(name='重量(单位/g)', product=product))
+            standard.realValue = float(
+                standard.expectValue)+random.randint(-5, 5)
+            if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
+                standard.result = '1'
+                product.result = '1'
+            else:
+                standard.result = '2'
+                product.result = '2'
+                product.reason = '重量不足'
+            standard.save()
+            product.save()
+        except:
+            with open(BASE_DIR+'/listen.txt', 'w') as f:
+                f.write('这是一个废瓶')
 
     try:
         event = Event()
@@ -77,8 +90,11 @@ def wincc(request):
         print(e, '这里有问题')
 
     eventList = list(map(lambda obj: obj.source,
-                         Event.objects.filter(Q(bottle=params[1], workOrder__status__name='加工中'))))
+                         Event.objects.filter(Q(bottle=params[1], workOrder__order__number=params[3], workOrder__status__name='加工中'))))
     try:
+        route = Order.objects.get(number=params[3]).route
+        processList = list(
+            map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
         if len(eventList) == 0 or processList[:len(eventList)] != eventList:
             with open(BASE_DIR+'/listen.txt', 'w') as f:
                 f.write('这是一个废瓶')
@@ -87,9 +103,7 @@ def wincc(request):
             workOrder.status = WorkOrderStatus.objects.get(name='失败')
             workOrder.save()
     except Exception as e:
-        with open(BASE_DIR+'/listen.txt', 'w') as f:
-            f.write('这是一个废瓶')
-
+        print(e, '这里有问题222')
     return JsonResponse({'res': 'res'})
 
 
@@ -170,8 +184,8 @@ def queryPallet(request):
     num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
-    print('%s,' % pallets)
-    return JsonResponse({'res': '18,'})
+    print('%s,' % pallets.split('-')[0])
+    return JsonResponse({'res': '15,'})
 
 
 @csrf_exempt
@@ -194,6 +208,7 @@ def querySelect(request):
     if params['model'] == 'order' or params['model'] == 'productType':
         selectList = {
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
+            'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
             'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))
         }
@@ -294,7 +309,7 @@ def orderSplit(request):
                 workOrder.bottle = ''
                 workOrder.endTime = ''
                 workOrder.startTime = ''
-                time.sleep(0.01)
+                time.sleep(0.1)
                 workOrder.number = str(time.time()*1000000)
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.description = ','.join(description.split(',')[:4])
@@ -496,7 +511,7 @@ def annotateDataList(request):
 def exportData(request):
     modelMap = {'order': '订单', 'material': '物料', 'processRoute': '工艺', 'user': '用户', 'role': '角色', 'store': '仓库',
                 'workShop': '车间', 'device': '设备', 'document': '文档', 'productStandard': '质检数据', 'bom': 'BOM', 'tool': '工具',
-                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计', 'powerAna': '产能报表', 'qualAna': '质量统计'}
+                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计', 'powerAna': '产能报表', 'qualAna': '质量统计', 'customer': '客户数据'}
     res = ''
     params = json.loads(request.body)
     if params['model'] == 'workShop':
@@ -638,6 +653,11 @@ def exportData(request):
             map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '合格数': obj['good'], '不合格数': obj['bad'],
                              '合格率': round(obj['good']/(obj['good']+obj['bad']), 2), '不合格率': round(obj['bad']/(obj['good']+obj['bad']), 2)}, data)
         )
+    if params['model'] == 'customer':
+        excel = list(
+            map(lambda obj: {'客户名称': obj.name, '客户编号': obj.number, '联系电话': obj.phone,
+                             '客户等级': obj.level, '公司': obj.company}, Customer.objects.all())
+        )
 
     df = pd.DataFrame(excel)
     df.to_excel(BASE_DIR+'/upload/export/%s报表.xlsx' %
@@ -683,15 +703,6 @@ def splitCheck(request):
 
 @csrf_exempt
 def queryOrganization(request):
-    """ [{
-    id: 'CEO',
-    title: 'CEO',
-    name: 'Grethe Hjetland',
-    image: 'https://wp-assets.highcharts.com/www-highcharts-com/blog/wp-content/uploads/2018/11/12132317/Grethe.jpg'
-    }, {
-    id: 'Product',
-    name: '产品研发'
-    }] """
     data = list(
         map(lambda company: {'title': company.name, 'key': company.key, 'children': list(
             map(lambda department: {'title': department.name, 'key': department.key, 'children': list(

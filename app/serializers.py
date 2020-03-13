@@ -70,6 +70,12 @@ class DocTypeSerializer(serializers.ModelSerializer):
         fields = ('key', 'name')
 
 
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ('key', 'name', 'number', 'phone', 'level', 'company')
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     upTime = serializers.SerializerMethodField()
     docType = serializers.SlugRelatedField(
@@ -156,6 +162,8 @@ class OrderSerializer(serializers.ModelSerializer):
         queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
     orderType = serializers.SlugRelatedField(
         queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
+    customer = serializers.SlugRelatedField(
+        queryset=Customer.objects.all(), label='目标用户', slug_field='name', required=False)
     route = serializers.SlugRelatedField(
         queryset=ProcessRoute.objects.all(), label='选用工艺', slug_field='name', required=False)
     line = serializers.SlugRelatedField(
@@ -166,7 +174,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number', 'batch', 'scheduling', 'route', 'line',
+        fields = ('key', 'creator', 'number', 'batch', 'scheduling', 'route', 'line', 'customer',
                   'createTime', 'status', 'orderType', 'description')
 
 
