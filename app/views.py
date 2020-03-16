@@ -3,6 +3,7 @@ import re
 import json
 import time
 import random
+import pypinyin
 import datetime
 import numpy as np
 import pandas as pd
@@ -386,13 +387,14 @@ def upload(request):
     up = request.POST['up']
     url = request.POST['url']
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/document/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/upload/document/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
     document.up = up
     document.name = f.name
-    document.path = 'http://%s:8899/upload/document/%s' % (url, f.name)
+    document.path = 'http://%s:8899/upload/document/%s' % (url, ''.join(
+        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))))
     document.save()
     operate = Operate()
     operate.name = '上传文档'
@@ -409,10 +411,11 @@ def uploadPic(request):
     process = request.POST['process']
     pro = Process.objects.get(Q(name=process, route__key=route))
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/picture/'+f.name, 'wb') as uf:
+    with open(BASE_DIR+'/upload/picture/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
-    pro.path = 'http://%s:8899/upload/picture/%s' % (url, f.name)
+    pro.path = 'http://%s:8899/upload/picture/%s' % (url, ''.join(
+        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))))
     pro.save()
     return JsonResponse({'ok': 'ok'})
 
@@ -423,11 +426,11 @@ def uploadAvatar(request):
     phone = request.POST['phone']
     user = User.objects.get(phone=phone)
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/avatar/%s%s' % (user.name, f.name[f.name.index('.'):]), 'wb') as uf:
+    with open(BASE_DIR+'/upload/avatar/%s%s' % (''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(user.name, style=pypinyin.NORMAL)))), f.name[f.name.index('.'):]), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     user.avatar = 'http://%s:8899/upload/avatar/%s%s' % (url,
-                                                         user.name, f.name[f.name.index('.'):])
+                                                         ''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(user.name, style=pypinyin.NORMAL)))), f.name[f.name.index('.'):])
     user.save()
     return JsonResponse({'ok': 'ok'})
 
