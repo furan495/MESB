@@ -214,6 +214,7 @@ def updateUserState(request):
 
 @csrf_exempt
 def querySelect(request):
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
