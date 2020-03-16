@@ -55,7 +55,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-key')
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
 

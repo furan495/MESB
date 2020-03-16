@@ -197,7 +197,7 @@ def loginCheck(request):
     res = ''
     if user.password == params['password']:
         res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'state': user.state,
-               'role': user.role.name, 'phone': user.phone, 'avatar': user.avatar}
+               'role': user.role.name, 'phone': user.phone}
     else:
         res = 'err'
     return JsonResponse({'res': res})
@@ -417,21 +417,6 @@ def uploadPic(request):
     pro.path = 'http://%s:8899/upload/picture/%s' % (url, ''.join(
         list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))))
     pro.save()
-    return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
-def uploadAvatar(request):
-    url = request.POST['url']
-    phone = request.POST['phone']
-    user = User.objects.get(phone=phone)
-    f = request.FILES['file']
-    with open(BASE_DIR+'/upload/avatar/%s%s' % (''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(user.name, style=pypinyin.NORMAL)))), f.name[f.name.index('.'):]), 'wb') as uf:
-        for chunk in f.chunks():
-            uf.write(chunk)
-    user.avatar = 'http://%s:8899/upload/avatar/%s%s' % (url,
-                                                         ''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(user.name, style=pypinyin.NORMAL)))), f.name[f.name.index('.'):])
-    user.save()
     return JsonResponse({'ok': 'ok'})
 
 
