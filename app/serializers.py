@@ -234,9 +234,13 @@ class ProcessSerializer(serializers.ModelSerializer):
 
 
 class BottleSerializer(serializers.ModelSerializer):
+
+    status = serializers.SlugRelatedField(
+        queryset=BottleState.objects.all(), label='瓶子状态', slug_field='name', required=False)
+
     class Meta:
         model = Bottle
-        fields = ('key', 'order', 'number', 'color', 'red', 'green', 'blue')
+        fields = ('key', 'order', 'number', 'color', 'red', 'green', 'blue','status')
 
 
 class WorkOrderSerializer(serializers.ModelSerializer):
@@ -273,10 +277,10 @@ class StoreSerializer(serializers.ModelSerializer):
                   'number', 'storeType', 'positions')
 
 
-class StroePositionSerializer(serializers.ModelSerializer):
+class StorePositionSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = StroePosition
+        model = StorePosition
         fields = ('key', 'store', 'number', 'status')
 
 

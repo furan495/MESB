@@ -41,7 +41,7 @@ router.register(r'api/productTypes', viewSet.ProductTypeViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/organizations', viewSet.OrganizationViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
-router.register(r'api/stroePositions', viewSet.StroePositionViewSet)
+router.register(r'api/storePositions', viewSet.StorePositionViewSet)
 router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
 router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 

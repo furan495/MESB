@@ -130,9 +130,9 @@ class StoreTypeViewSet(viewsets.ModelViewSet):
     serializer_class = StoreTypeSerializer
 
 
-class StroePositionViewSet(viewsets.ModelViewSet):
-    queryset = StroePosition.objects.all()
-    serializer_class = StroePositionSerializer
+class StorePositionViewSet(viewsets.ModelViewSet):
+    queryset = StorePosition.objects.all()
+    serializer_class = StorePositionSerializer
 
 
 class OperateViewSet(viewsets.ModelViewSet):

@@ -435,13 +435,13 @@ def createStore(request):
     params = json.loads(request.body)
     count = params['row']*params['column']
     for i in range(count):
-        position = StroePosition()
+        position = StorePosition()
         position.store = Store.objects.get(key=params['key'])
         position.number = '%s-%s' % (str(i+1), params['key'])
         position.status = '1'
         position.save()
         pallet = Pallet()
-        pallet.position = StroePosition.objects.get(
+        pallet.position = StorePosition.objects.get(
             number='%s-%s' % (str(i+1), params['key']))
         pallet.number = str(i+1)
         pallet.save()

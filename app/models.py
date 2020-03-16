@@ -456,7 +456,7 @@ class Store(models.Model):
         verbose_name = '仓库'
 
 
-class StroePosition(models.Model):
+class StorePosition(models.Model):
     POSITION_STATUS = (
         ('1', '有盘'),
         ('2', '无盘'),
@@ -479,7 +479,7 @@ class StroePosition(models.Model):
 
 class Pallet(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    position = models.OneToOneField(StroePosition, related_name='positions',
+    position = models.OneToOneField(StorePosition, related_name='positions',
                                     on_delete=models.CASCADE, verbose_name='隶属仓位')
     number = models.CharField(max_length=20, verbose_name='托盘编号')
     rate = models.FloatField(verbose_name='利用率', default=0.0)
@@ -493,23 +493,23 @@ class Pallet(models.Model):
     hole8 = models.BooleanField(verbose_name='孔位8状态', default=False)
     hole9 = models.BooleanField(verbose_name='孔位9状态', default=False)
     hole1Content = models.CharField(
-        max_length=20, verbose_name='孔位1内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位1内容', blank=True, null=True)
     hole2Content = models.CharField(
-        max_length=20, verbose_name='孔位2内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位2内容', blank=True, null=True)
     hole3Content = models.CharField(
-        max_length=20, verbose_name='孔位3内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位3内容', blank=True, null=True)
     hole4Content = models.CharField(
-        max_length=20, verbose_name='孔位4内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位4内容', blank=True, null=True)
     hole5Content = models.CharField(
-        max_length=20, verbose_name='孔位5内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位5内容', blank=True, null=True)
     hole6Content = models.CharField(
-        max_length=20, verbose_name='孔位6内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位6内容', blank=True, null=True)
     hole7Content = models.CharField(
-        max_length=20, verbose_name='孔位7内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位7内容', blank=True, null=True)
     hole8Content = models.CharField(
-        max_length=20, verbose_name='孔位8内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位8内容', blank=True, null=True)
     hole9Content = models.CharField(
-        max_length=20, verbose_name='孔位9内容', blank=True, null=True)
+        max_length=200, verbose_name='孔位9内容', blank=True, null=True)
 
     def __str__(self):
         return self.number
