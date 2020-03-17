@@ -13,7 +13,7 @@ from app.serializers import *
 from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
-from django.db.models.aggregates import Count, Sum
+from django.db.models.aggregates import Count, Sum, Max, Min
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
@@ -214,6 +214,11 @@ def updateUserState(request):
 
 @csrf_exempt
 def querySelect(request):
+
+    """ data = Order.objects.all().values('customer', 'number').annotate(
+        workOrders=Count('workOrders'), startTime=Min('workOrders__startTime'), endTime=Max('workOrders__endTime'), times=int(time.mktime(time.strptime(str(Max('workOrders__endTime')), '%YYYY-%mm-%dd %HH:%MM:%SS')))-int(time.mktime(time.strptime(str(Min('workOrders__startTime')), '%YYYY-%mm-%dd %HH:%MM:%SS')))).values('customer__name', 'customer__level', 'customer__number', 'number', 'batch', 'status__name', 'scheduling', 'createTime', 'workOrders', 'startTime', 'endTime','times')
+    
+    print(data) """
 
     params = json.loads(request.body)
     selectList = {}
