@@ -100,6 +100,9 @@ def wincc(request):
             workOrder.status = WorkOrderStatus.objects.get(name='失败')
             workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             workOrder.save()
+            order = workOrder.order
+            order.status = OrderStatus.objects.get(Q(name='失败'))
+            order.save()
     except Exception as e:
         print(e, '这里有问题222')
     return JsonResponse({'res': 'res'})
@@ -110,9 +113,9 @@ def storeOperate(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     print(params)
-    store = Store.objects.get(Q(number=params[-1]))
+    store = Store.objects.get(Q(storeType__name='成品库'))
     storePosition = StorePosition.objects.get(
-        Q(number='%s-%s' % (params[-2], store.key)))
+        Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
     storePosition.save()
     pallet = Pallet.objects.get(Q(number=params[-2]))
@@ -153,6 +156,9 @@ def storeOperate(request):
             event.save()
             workOrder.status = WorkOrderStatus.objects.get(name='已完成')
             workOrder.endTime = datetime.datetime.now()
+            product = workOrder.workOrder
+            product.pallet = Pallet.objects.get(number=params[-2])
+            product.save()
             workOrder.save()
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
@@ -165,14 +171,17 @@ def storeOperate(request):
 
 @csrf_exempt
 def queryPallet(request):
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
-    bottles = Bottle.objects.filter(
-        Q(order=Order.objects.get(number=params['number'])))
-    num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
-    pallets = ','.join(list(map(lambda obj: obj.position.number, list(
-        Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
-    print('%s,' % pallets.split('-')[0])
-    return JsonResponse({'res': '%s,' % pallets.split('-')[0]})
+    try:
+        params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
+        bottles = Bottle.objects.filter(
+            Q(order=Order.objects.get(number=params['number'])))
+        num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
+        pallets = ','.join(list(map(lambda obj: obj.position.number, list(
+            Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
+        print('%s,' % pallets.split('-')[0])
+    except:
+        pass
+    return JsonResponse({'res': '15,'})
 
 
 @csrf_exempt
@@ -301,6 +310,8 @@ def orderSplit(request):
     orderDesc = params['description'].split(';')
     order = Order.objects.get(key=params['key'])
     order.status = OrderStatus.objects.get(name='已排产')
+    order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     order.save()
     for description in orderDesc:
         if len(description.split(',')) > 1:
@@ -308,7 +319,7 @@ def orderSplit(request):
                 workOrder = WorkOrder()
                 workOrder.order = order
                 time.sleep(0.1)
-                workOrder.number = str(time.time()*1000000)
+                workOrder.number = str(time.time()*1000000)[:15]
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.description = ','.join(description.split(',')[:4])
                 workOrder.save()

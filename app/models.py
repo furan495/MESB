@@ -479,8 +479,8 @@ class StorePosition(models.Model):
 
 class Pallet(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    position = models.OneToOneField(StorePosition, related_name='positions',
-                                    on_delete=models.CASCADE, verbose_name='隶属仓位')
+    position = models.ForeignKey(StorePosition, related_name='positions',
+                                 on_delete=models.CASCADE, verbose_name='隶属仓位', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='托盘编号')
     rate = models.FloatField(verbose_name='利用率', default=0.0)
     hole1 = models.BooleanField(verbose_name='孔位1状态', default=False)

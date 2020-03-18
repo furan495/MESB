@@ -240,7 +240,8 @@ class BottleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bottle
-        fields = ('key', 'order', 'number', 'color', 'red', 'green', 'blue','status')
+        fields = ('key', 'order', 'number', 'color',
+                  'red', 'green', 'blue', 'status')
 
 
 class WorkOrderSerializer(serializers.ModelSerializer):
@@ -255,10 +256,12 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
+
     def get_startTime(self, obj):
         if obj.startTime:
             return obj.startTime.strftime('%Y-%m-%d %H:%M:%S')
         return ''
+
     def get_endTime(self, obj):
         if obj.endTime:
             return obj.endTime.strftime('%Y-%m-%d %H:%M:%S')
@@ -335,31 +338,31 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_palletStr(self, obj):
         res = ''
         if obj.pallet:
-            if obj.pallet.hole1Content == obj.name:
+            if obj.pallet.hole1Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '1')
-            elif obj.pallet.hole2Content == obj.name:
+            elif obj.pallet.hole2Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '2')
-            elif obj.pallet.hole3Content == obj.name:
+            elif obj.pallet.hole3Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '3')
-            elif obj.pallet.hole4Content == obj.name:
+            elif obj.pallet.hole4Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '4')
-            elif obj.pallet.hole5Content == obj.name:
+            elif obj.pallet.hole5Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '5')
-            elif obj.pallet.hole6Content == obj.name:
+            elif obj.pallet.hole6Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '6')
-            elif obj.pallet.hole7Content == obj.name:
+            elif obj.pallet.hole7Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '7')
-            elif obj.pallet.hole8Content == obj.name:
+            elif obj.pallet.hole8Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '8')
-            elif obj.pallet.hole9Content == obj.name:
+            elif obj.pallet.hole9Content != '':
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '9')
             else:
@@ -368,7 +371,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'result',
+        fields = ('key', 'prodType', 'workOrder', 'result', 'pallet',
                   'name', 'number',  'batch', 'palletStr', 'reason',  'stateList')
 
 
