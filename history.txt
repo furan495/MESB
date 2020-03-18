@@ -10,7 +10,7 @@ FROM      dbo.app_order INNER JOIN
                 dbo.app_customer ON dbo.app_order.customer_id = dbo.app_customer.[key] LEFT OUTER JOIN
                 dbo.app_workorder ON dbo.app_order.[key] = dbo.app_workorder.order_id LEFT OUTER JOIN
                 dbo.app_product ON dbo.app_workorder.[key] = dbo.app_product.workOrder_id
-WHERE   (dbo.app_orderstatus.name = '已排产')
+WHERE   (dbo.app_orderstatus.name = '完成')
 GROUP BY dbo.app_order.customer_id, dbo.app_order.number, dbo.app_customer.name, dbo.app_customer.[level], 
                 dbo.app_customer.number, dbo.app_order.batch, dbo.app_order.createTime, dbo.app_order.scheduling, 
                 dbo.app_orderstatus.name
