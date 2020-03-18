@@ -110,8 +110,9 @@ def storeOperate(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     print(params)
-
-    storePosition = StorePosition.objects.get(Q(number__icontains=params[-1]))
+    store = Store.objects.get(Q(number=params[-1]))
+    storePosition = StorePosition.objects.get(
+        Q(number='%s-%s' % (params[-2], store.key)))
     storePosition.status = '3'
     storePosition.save()
     pallet = Pallet.objects.get(Q(number=params[-2]))
@@ -140,9 +141,10 @@ def storeOperate(request):
     pallet.rate = round(np.sum(rate)/9, 2)
     pallet.save()
 
-    for bottle in params[2:-2]:
+    for bottle in params[2:-3]:
         if bottle != '0':
-            workOrder = WorkOrder.objects.get(Q(bottle=bottle,status__name='进行中'))
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=bottle, status__name='加工中'))
             event = Event()
             event.workOrder = workOrder
             event.bottle = bottle
@@ -154,10 +156,10 @@ def storeOperate(request):
             workOrder.save()
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
-        order = Order.objects.get(number=params[3])
+        order = Order.objects.get(number=params[1])
         order.status = OrderStatus.objects.get(name='完成')
         order.save()
-    
+
     return JsonResponse({'res': 'res'})
 
 
@@ -197,6 +199,10 @@ def updateUserState(request):
 
 @csrf_exempt
 def querySelect(request):
+    """ data = Order.objects.filter(Q(status__name='已排产')).values('customer', 'number').annotate(
+        workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
+
+    print(data.query.__str__()) """
 
     params = json.loads(request.body)
     selectList = {}
