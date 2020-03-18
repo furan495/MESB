@@ -247,12 +247,22 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     orderNum = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
+    startTime = serializers.SerializerMethodField()
+    endTime = serializers.SerializerMethodField()
     events = serializers.StringRelatedField(many=True, read_only=True)
     status = serializers.SlugRelatedField(
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
+    def get_startTime(self, obj):
+        if obj.startTime:
+            return obj.startTime.strftime('%Y-%m-%d %H:%M:%S')
+        return ''
+    def get_endTime(self, obj):
+        if obj.endTime:
+            return obj.endTime.strftime('%Y-%m-%d %H:%M:%S')
+        return ''
 
     def get_orderNum(self, obj):
         return obj.order.number

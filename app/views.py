@@ -23,10 +23,28 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @csrf_exempt
 def recordWeight(request):
+    color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
-
     print(params)
+    try:
+        workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
+        product = Product.objects.get(workOrder=workOrder)
+        standard = ProductStandard.objects.get(
+            Q(name='重量', product=product))
+        standard.realValue = float(params[4])
+        if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
+            standard.result = '1'
+            product.result = '1'
+        else:
+            standard.result = '2'
+            product.result = '2'
+            product.reason = '重量不足'
+        standard.save()
+        product.save()
+    except:
+        pass
 
     return JsonResponse({'res': 'ok'})
 
@@ -44,40 +62,18 @@ def wincc(request):
 
     if position[params[0]] == '理瓶':
         workOrder = WorkOrder.objects.filter(
-            Q(description__icontains=color[params[2]], bottle='', status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
+            Q(description__icontains=color[params[2]], bottle=None, status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
         bottle = Bottle.objects.filter(
             Q(order__number=params[3], color=color[params[2]]))[0]
         bottle.number = params[1]
         bottle.save()
         workOrder.bottle = params[1]
-        workOrder.startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         workOrder.save()
         order.save()
-
-    if position[params[0]] == '称重':
-        try:
-            workOrder = WorkOrder.objects.get(
-                Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
-            product = Product.objects.get(workOrder=workOrder)
-            standard = ProductStandard.objects.get(
-                Q(name='重量(单位/g)', product=product))
-            standard.realValue = float(
-                standard.expectValue)+random.randint(-5, 5)
-            if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
-                standard.result = '1'
-                product.result = '1'
-            else:
-                standard.result = '2'
-                product.result = '2'
-                product.reason = '重量不足'
-            standard.save()
-            product.save()
-        except:
-            with open(BASE_DIR+'/listen.txt', 'w') as f:
-                f.write('这是一个废瓶')
 
     try:
         event = Event()
@@ -111,70 +107,57 @@ def wincc(request):
 
 @csrf_exempt
 def storeOperate(request):
-    position = {'CK': '出库', 'RK': '入库'}
-    color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
-    workOrder = WorkOrder.objects.get(
-        Q(bottle=params[1], description__icontains=color[params[2]], order__number=params[3]))
-    workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-    workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    workOrder.save()
-    if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[3]))) == 0:
-        order = Order.objects.get(number=params[3])
-        order.status = OrderStatus.objects.get(name='完成')
-        order.save()
-    bottle = Bottle.objects.get(
-        Q(number=params[1], order__number=params[3], color=color[params[2]]))
-    bottle.status = BottleState.objects.get(name='入库')
-    bottle.save()
-    event = Event()
-    event.workOrder = workOrder
-    event.bottle = params[1]
-    event.source = position[params[0]]
-    event.title = '进入%s单元' % position[params[0]]
-    event.save()
-    product = Product.objects.get(workOrder=workOrder)
-    pallet = Pallet.objects.filter(Q(rate__lt=0.67))[0]
-    product.pallet = pallet
-    product.save()
-    if pallet.hole1 == False:
-        pallet.hole1 = True
-        pallet.hole1Content = product.name
-    elif pallet.hole2 == False:
-        pallet.hole2 = True
-        pallet.hole2Content = product.name
-    elif pallet.hole3 == False:
-        pallet.hole3 = True
-        pallet.hole3Content = product.name
-    elif pallet.hole4 == False:
-        pallet.hole4 = True
-        pallet.hole4Content = product.name
-    elif pallet.hole5 == False:
-        pallet.hole5 = True
-        pallet.hole5Content = product.name
-    elif pallet.hole6 == False:
-        pallet.hole6 = True
-        pallet.hole6Content = product.name
-    elif pallet.hole7 == False:
-        pallet.hole7 = True
-        pallet.hole7Content = product.name
-    elif pallet.hole8 == False:
-        pallet.hole8 = True
-        pallet.hole8Content = product.name
-    elif pallet.hole9 == False:
-        pallet.hole9 = True
-        pallet.hole9Content = product.name
-    else:
-        pass
+    print(params)
+
+    storePosition = StorePosition.objects.get(Q(number__icontains=params[-1]))
+    storePosition.status = '3'
+    storePosition.save()
+    pallet = Pallet.objects.get(Q(number=params[-2]))
+    pallet.position = storePosition
+    pallet.hole1Content = params[2] if params[2] != '0' else ''
+    pallet.hole2Content = params[3] if params[3] != '0' else ''
+    pallet.hole3Content = params[4] if params[4] != '0' else ''
+    pallet.hole4Content = params[5] if params[5] != '0' else ''
+    pallet.hole5Content = params[6] if params[6] != '0' else ''
+    pallet.hole6Content = params[7] if params[7] != '0' else ''
+    pallet.hole7Content = params[8] if params[8] != '0' else ''
+    pallet.hole8Content = params[9] if params[9] != '0' else ''
+    pallet.hole9Content = params[10] if params[10] != '0' else ''
+    pallet.hole1 = True if params[2] != '0' else False
+    pallet.hole2 = True if params[3] != '0' else False
+    pallet.hole3 = True if params[4] != '0' else False
+    pallet.hole4 = True if params[5] != '0' else False
+    pallet.hole5 = True if params[6] != '0' else False
+    pallet.hole6 = True if params[7] != '0' else False
+    pallet.hole7 = True if params[8] != '0' else False
+    pallet.hole8 = True if params[9] != '0' else False
+    pallet.hole9 = True if params[10] != '0' else False
     pallet.save()
     rate = np.array([pallet.hole1, pallet.hole2, pallet.hole3, pallet.hole4,
                      pallet.hole5, pallet.hole6, pallet.hole7, pallet.hole8, pallet.hole9])
     pallet.rate = round(np.sum(rate)/9, 2)
     pallet.save()
-    storePosition = pallet.position
-    storePosition.status = '3'
-    storePosition.save()
+
+    for bottle in params[2:-2]:
+        if bottle != '0':
+            workOrder = WorkOrder.objects.get(Q(bottle=bottle,status__name='进行中'))
+            event = Event()
+            event.workOrder = workOrder
+            event.bottle = bottle
+            event.source = '立库'
+            event.title = '进入立库单元'
+            event.save()
+            workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+            workOrder.endTime = datetime.datetime.now()
+            workOrder.save()
+
+    if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
+        order = Order.objects.get(number=params[3])
+        order.status = OrderStatus.objects.get(name='完成')
+        order.save()
+    
     return JsonResponse({'res': 'res'})
 
 
@@ -187,7 +170,7 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
     print('%s,' % pallets.split('-')[0])
-    return JsonResponse({'res': '15,'})
+    return JsonResponse({'res': '%s,' % pallets.split('-')[0]})
 
 
 @csrf_exempt
@@ -214,11 +197,6 @@ def updateUserState(request):
 
 @csrf_exempt
 def querySelect(request):
-
-    """ data = Order.objects.all().values('customer', 'number').annotate(
-        workOrders=Count('workOrders'), startTime=Min('workOrders__startTime'), endTime=Max('workOrders__endTime'), times=int(time.mktime(time.strptime(str(Max('workOrders__endTime')), '%YYYY-%mm-%dd %HH:%MM:%SS')))-int(time.mktime(time.strptime(str(Min('workOrders__startTime')), '%YYYY-%mm-%dd %HH:%MM:%SS')))).values('customer__name', 'customer__level', 'customer__number', 'number', 'batch', 'status__name', 'scheduling', 'createTime', 'workOrders', 'startTime', 'endTime','times')
-    
-    print(data) """
 
     params = json.loads(request.body)
     selectList = {}
@@ -323,9 +301,6 @@ def orderSplit(request):
             for i in range(int(description.split(',')[-1].split(':')[1])):
                 workOrder = WorkOrder()
                 workOrder.order = order
-                workOrder.bottle = ''
-                workOrder.endTime = ''
-                workOrder.startTime = ''
                 time.sleep(0.1)
                 workOrder.number = str(time.time()*1000000)
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
@@ -342,8 +317,8 @@ def orderSplit(request):
                 product.save()
 
                 standard = ProductStandard()
-                standard.name = '重量(单位/g)'
-                standard.expectValue = str(np.sum(list(map(lambda obj: int(obj), re.findall(
+                standard.name = '重量'
+                standard.expectValue = str(np.sum(list(map(lambda obj: int(obj)*5, re.findall(
                     '\d+', description[:description.index('份数')])))))
                 standard.product = product
                 standard.save()
