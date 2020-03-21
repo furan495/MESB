@@ -118,7 +118,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'sql_server.pyodbc',
         'NAME': 'mes',
-        'HOST': '192.168.2.3',
+        'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
         'PASSWORD': 'sa',

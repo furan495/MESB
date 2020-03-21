@@ -114,6 +114,13 @@ def storeOperate(request):
         'str'].split(',')
     print(params)
     store = Store.objects.get(Q(storeType__name='成品库'))
+    apallet = Pallet.objects.get(
+        Q(position__number='%s-%s' % (params[-1], store.key)))
+    position = StorePosition.objects.get(Q(status='2'))
+    position.status = '1'
+    position.save()
+    apallet.position = position
+    apallet.save()
     storePosition = StorePosition.objects.get(
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
@@ -171,17 +178,30 @@ def storeOperate(request):
 
 @csrf_exempt
 def queryPallet(request):
-    try:
-        params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
-        bottles = Bottle.objects.filter(
-            Q(order=Order.objects.get(number=params['number'])))
-        num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
-        pallets = ','.join(list(map(lambda obj: obj.position.number, list(
-            Pallet.objects.filter(Q(rate__lt=0.67)))[num:])))
-        print('%s,' % pallets.split('-')[0])
-    except:
-        pass
-    return JsonResponse({'res': '15,'})
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
+    bottles = Bottle.objects.filter(
+        Q(order=Order.objects.get(number=params['number'])))
+    num = -int(len(bottles)/9) if len(bottles)/9 > 1 else -1
+    pallets = ','.join(list(map(lambda obj: obj.position.number, list(
+        Pallet.objects.filter(Q(rate__lt=0.67)))[:num])))
+    print('%s,' % pallets.split('-')[0])
+    return JsonResponse({'res': '%s,' % pallets.split('-')[0]})
+
+
+@csrf_exempt
+def OutputPallet(request):
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
+    store = Store.objects.get(Q(storeType__name='成品库'))
+    pallet = Pallet.objects.get(Q(number=params['pallet']))
+    position = pallet.position
+    position.status = '2'
+    position.save()
+    # 这里要带上库位
+    pallet.position = StorePosition.objects.get(
+        Q(number='%s-%s' % (params['position'], store.key)))
+    pallet.save()
+    print(params)
+    return JsonResponse({'res': 'ok'})
 
 
 @csrf_exempt

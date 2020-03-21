@@ -65,6 +65,7 @@ urlpatterns = [
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/recordWeight/',  views.recordWeight),
     url(r'^api/updateDevice/',  views.updateDevice),
+    url(r'^api/OutputPallet/',  views.OutputPallet),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/updateUserState/',  views.updateUserState),
     url(r'^api/annotateDataList/',  views.annotateDataList),
