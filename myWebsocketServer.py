@@ -36,14 +36,18 @@ async def routeListenServer(websocket, path):
                 count = 0
                 if os.path.exists(BASE_DIR+'/listen.txt'):
                     os.remove(BASE_DIR+'/listen.txt')
+            info = ''
+            if os.path.exists(BASE_DIR+'/listen.txt'):
+                with open(BASE_DIR+'/listen.txt') as f:
+                    info = f.read()
 
             workOrderList = WorkOrder.objects.filter(
                 Q(status__name='等待中') | Q(status__name='加工中'))
             producing = list(
                 map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
 
-            await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing}))
+            await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info, 'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing}))
 
-start_server = websockets.serve(routeListenServer, 'localhost', 8765)
+start_server = websockets.serve(routeListenServer, '192.168.2.3', 8765)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

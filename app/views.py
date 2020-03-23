@@ -93,16 +93,16 @@ def wincc(request):
         processList = list(
             map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
         if len(eventList) == 0 or processList[:len(eventList)] != eventList:
-            with open(BASE_DIR+'/listen.txt', 'w') as f:
-                f.write('这是一个废瓶')
             workOrder = WorkOrder.objects.get(
                 Q(bottle=params[1], order=Order.objects.get(number=params[3])))
             workOrder.status = WorkOrderStatus.objects.get(name='失败')
             workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             workOrder.save()
-            order = workOrder.order
+            with open(BASE_DIR+'/listen.txt', 'w') as f:
+                f.write('工单号:%s-瓶号:%s' % (workOrder.number, workOrder.bottle))
+            """ order = workOrder.order
             order.status = OrderStatus.objects.get(Q(name='失败'))
-            order.save()
+            order.save() """
     except Exception as e:
         print(e, '这里有问题222')
     return JsonResponse({'res': 'res'})
@@ -110,63 +110,81 @@ def wincc(request):
 
 @csrf_exempt
 def storeOperate(request):
+
+    def updatePalletContent(hole, params, holeContent):
+        if hole:
+            return params if holeContent == None or holeContent == '' else holeContent
+        else:
+            return params if params != '0' else ''
+
+    def updatePalletHole(hole, holeContent):
+        if hole:
+            return True
+        else:
+            return True if holeContent != '0' else False
+
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     print(params)
     store = Store.objects.get(Q(storeType__name='成品库'))
-    apallet = Pallet.objects.get(
-        Q(position__number='%s-%s' % (params[-1], store.key)))
-    position = StorePosition.objects.get(Q(status='2'))
-    position.status = '1'
-    position.save()
-    apallet.position = position
-    apallet.save()
     storePosition = StorePosition.objects.get(
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
     storePosition.save()
     pallet = Pallet.objects.get(Q(number=params[-2]))
     pallet.position = storePosition
-    pallet.hole1Content = params[2] if params[2] != '0' else ''
-    pallet.hole2Content = params[3] if params[3] != '0' else ''
-    pallet.hole3Content = params[4] if params[4] != '0' else ''
-    pallet.hole4Content = params[5] if params[5] != '0' else ''
-    pallet.hole5Content = params[6] if params[6] != '0' else ''
-    pallet.hole6Content = params[7] if params[7] != '0' else ''
-    pallet.hole7Content = params[8] if params[8] != '0' else ''
-    pallet.hole8Content = params[9] if params[9] != '0' else ''
-    pallet.hole9Content = params[10] if params[10] != '0' else ''
-    pallet.hole1 = True if params[2] != '0' else False
-    pallet.hole2 = True if params[3] != '0' else False
-    pallet.hole3 = True if params[4] != '0' else False
-    pallet.hole4 = True if params[5] != '0' else False
-    pallet.hole5 = True if params[6] != '0' else False
-    pallet.hole6 = True if params[7] != '0' else False
-    pallet.hole7 = True if params[8] != '0' else False
-    pallet.hole8 = True if params[9] != '0' else False
-    pallet.hole9 = True if params[10] != '0' else False
+    pallet.hole1 = updatePalletHole(pallet.hole1, params[2])
+    pallet.hole2 = updatePalletHole(pallet.hole2, params[3])
+    pallet.hole3 = updatePalletHole(pallet.hole3, params[4])
+    pallet.hole4 = updatePalletHole(pallet.hole4, params[5])
+    pallet.hole5 = updatePalletHole(pallet.hole5, params[6])
+    pallet.hole6 = updatePalletHole(pallet.hole6, params[7])
+    pallet.hole7 = updatePalletHole(pallet.hole7, params[8])
+    pallet.hole8 = updatePalletHole(pallet.hole8, params[9])
+    pallet.hole9 = updatePalletHole(pallet.hole9, params[10])
     pallet.save()
     rate = np.array([pallet.hole1, pallet.hole2, pallet.hole3, pallet.hole4,
                      pallet.hole5, pallet.hole6, pallet.hole7, pallet.hole8, pallet.hole9])
     pallet.rate = round(np.sum(rate)/9, 2)
+    pallet.hole1Content = updatePalletContent(
+        pallet.hole1, params[2], pallet.hole1Content)
+    pallet.hole2Content = updatePalletContent(
+        pallet.hole2, params[3], pallet.hole2Content)
+    pallet.hole3Content = updatePalletContent(
+        pallet.hole3, params[4], pallet.hole3Content)
+    pallet.hole4Content = updatePalletContent(
+        pallet.hole4, params[5], pallet.hole4Content)
+    pallet.hole5Content = updatePalletContent(
+        pallet.hole5, params[6], pallet.hole5Content)
+    pallet.hole6Content = updatePalletContent(
+        pallet.hole6, params[7], pallet.hole6Content)
+    pallet.hole7Content = updatePalletContent(
+        pallet.hole7, params[8], pallet.hole7Content)
+    pallet.hole8Content = updatePalletContent(
+        pallet.hole8, params[9], pallet.hole8Content)
+    pallet.hole9Content = updatePalletContent(
+        pallet.hole9, params[10], pallet.hole9Content)
     pallet.save()
 
-    for bottle in params[2:-3]:
+    for bottle in params[2:-2]:
         if bottle != '0':
-            workOrder = WorkOrder.objects.get(
-                Q(bottle=bottle, status__name='加工中'))
-            event = Event()
-            event.workOrder = workOrder
-            event.bottle = bottle
-            event.source = '立库'
-            event.title = '进入立库单元'
-            event.save()
-            workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-            workOrder.endTime = datetime.datetime.now()
-            product = workOrder.workOrder
-            product.pallet = Pallet.objects.get(number=params[-2])
-            product.save()
-            workOrder.save()
+            try:
+                workOrder = WorkOrder.objects.get(
+                    Q(bottle=bottle, status__name='加工中'))
+                event = Event()
+                event.workOrder = workOrder
+                event.bottle = bottle
+                event.source = '立库'
+                event.title = '进入立库单元'
+                event.save()
+                workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+                workOrder.endTime = datetime.datetime.now()
+                product = workOrder.workOrder
+                product.pallet = Pallet.objects.get(number=params[-2])
+                product.save()
+                workOrder.save()
+            except:
+                pass
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
         order = Order.objects.get(number=params[1])
@@ -185,20 +203,17 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[:num])))
     print('%s,' % pallets.split('-')[0])
-    return JsonResponse({'res': '%s,' % pallets.split('-')[0]})
+    return JsonResponse({'res': '12,'})
 
 
 @csrf_exempt
 def OutputPallet(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
-    store = Store.objects.get(Q(storeType__name='成品库'))
     pallet = Pallet.objects.get(Q(number=params['pallet']))
     position = pallet.position
     position.status = '2'
     position.save()
-    # 这里要带上库位
-    pallet.position = StorePosition.objects.get(
-        Q(number='%s-%s' % (params['position'], store.key)))
+    pallet.position = None
     pallet.save()
     print(params)
     return JsonResponse({'res': 'ok'})

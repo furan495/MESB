@@ -320,6 +320,7 @@ class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
     palletStr = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
 
@@ -328,6 +329,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
+
+    def get_name(self, obj):
+        return obj.name+'/'+obj.workOrder.bottle
 
     def get_stateList(self, obj):
         states = []
@@ -338,35 +342,33 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_palletStr(self, obj):
         res = ''
         if obj.pallet:
-            if obj.pallet.hole1Content != '':
+            if obj.pallet.hole1Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '1')
-            elif obj.pallet.hole2Content != '':
+            if obj.pallet.hole2Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '2')
-            elif obj.pallet.hole3Content != '':
+            if obj.pallet.hole3Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '3')
-            elif obj.pallet.hole4Content != '':
+            if obj.pallet.hole4Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '4')
-            elif obj.pallet.hole5Content != '':
+            if obj.pallet.hole5Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '5')
-            elif obj.pallet.hole6Content != '':
+            if obj.pallet.hole6Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '6')
-            elif obj.pallet.hole7Content != '':
+            if obj.pallet.hole7Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '7')
-            elif obj.pallet.hole8Content != '':
+            if obj.pallet.hole8Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '8')
-            elif obj.pallet.hole9Content != '':
+            if obj.pallet.hole9Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '9')
-            else:
-                pass
         return res
 
     class Meta:
