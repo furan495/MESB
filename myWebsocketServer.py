@@ -48,6 +48,6 @@ async def routeListenServer(websocket, path):
 
             await websocket.send(json.dumps({'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info, 'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing}))
 
-start_server = websockets.serve(routeListenServer, '192.168.2.3', 8765)
+start_server = websockets.serve(routeListenServer, '127.0.0.1', 8765)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

@@ -203,7 +203,7 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[:num])))
     print('%s,' % pallets.split('-')[0])
-    return JsonResponse({'res': '12,'})
+    return JsonResponse({'res': '17,'})
 
 
 @csrf_exempt
@@ -243,10 +243,11 @@ def updateUserState(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ data = Order.objects.filter(Q(status__name='已排产')).values('customer', 'number').annotate(
+    """ data = Order.objects.filter(Q(status__name='完成')).values('customer', 'number').annotate(
         workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
 
     print(data.query.__str__()) """
+
 
     params = json.loads(request.body)
     selectList = {}

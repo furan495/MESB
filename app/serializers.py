@@ -142,7 +142,7 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.SlugRelatedField(
         queryset=Role.objects.all(), label='角色', slug_field='name', required=False)
     department = serializers.SlugRelatedField(
-        queryset=Organization.objects.filter(Q(level__name='部门')), label='部门', slug_field='name', required=False)
+        queryset=Organization.objects.all(), label='部门', slug_field='name', required=False)
 
     def get_authority(self, obj):
         try:
