@@ -74,6 +74,27 @@ def wincc(request):
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         workOrder.save()
         order.save()
+        Material.objects.filter(Q(name=color[params[2]]))[0].delete()
+    if position[params[0]] == '数粒A':
+        workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], status__name='加工中'))
+        red = workOrder.description.split(',')[1].split(':')[1]
+        for i in range(int(red)):
+            Material.objects.filter(Q(name='红粒'))[0].delete()
+    if position[params[0]] == '数粒B':
+        workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], status__name='加工中'))
+        green = workOrder.description.split(',')[1].split(':')[1]
+        for i in range(int(green)):
+            Material.objects.filter(Q(name='绿粒'))[0].delete()
+    if position[params[0]] == '数粒C':
+        workOrder = WorkOrder.objects.get(
+            Q(bottle=params[1], status__name='加工中'))
+        blue = workOrder.description.split(',')[1].split(':')[1]
+        for i in range(int(blue)):
+            Material.objects.filter(Q(name='蓝粒'))[0].delete()
+    if position[params[0]] == '旋盖':
+        Material.objects.filter(Q(name='瓶盖'))[0].delete()
 
     try:
         event = Event()
@@ -100,9 +121,6 @@ def wincc(request):
             workOrder.save()
             with open(BASE_DIR+'/listen.txt', 'w') as f:
                 f.write('工单号:%s-瓶号:%s' % (workOrder.number, workOrder.bottle))
-            """ order = workOrder.order
-            order.status = OrderStatus.objects.get(Q(name='失败'))
-            order.save() """
     except Exception as e:
         print(e, '这里有问题222')
     return JsonResponse({'res': 'res'})
@@ -131,7 +149,8 @@ def storeOperate(request):
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
     storePosition.save()
-    pallet = Pallet.objects.get(Q(number=params[-2]))
+    pallet = Pallet.objects.get(
+        Q(number=params[-2], position__store__storeType__name='成品库'))
     pallet.position = storePosition
     pallet.hole1 = updatePalletHole(pallet.hole1, params[2])
     pallet.hole2 = updatePalletHole(pallet.hole2, params[3])
@@ -180,17 +199,17 @@ def storeOperate(request):
                 workOrder.status = WorkOrderStatus.objects.get(name='已完成')
                 workOrder.endTime = datetime.datetime.now()
                 product = workOrder.workOrder
-                product.pallet = Pallet.objects.get(number=params[-2])
+                product.pallet = Pallet.objects.get(
+                    number=params[-2], position__store__storeType__name='成品库')
                 product.save()
                 workOrder.save()
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
         order = Order.objects.get(number=params[1])
         order.status = OrderStatus.objects.get(name='完成')
         order.save()
-
     return JsonResponse({'res': 'res'})
 
 
@@ -209,7 +228,8 @@ def queryPallet(request):
 @csrf_exempt
 def OutputPallet(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
-    pallet = Pallet.objects.get(Q(number=params['pallet']))
+    pallet = Pallet.objects.get(
+        Q(number=params['pallet'], position__store__storeType__name='成品库'))
     position = pallet.position
     position.status = '2'
     position.save()
@@ -734,25 +754,25 @@ def splitCheck(request):
         if desc.split(',')[0].split(':')[1] == '蓝瓶':
             bbot = bbot+int(count)
     if red > Material.objects.filter(Q(name='红粒')).count():
-        res='err'
+        res = 'err'
         material = '红粒不足，无法排产'
     if green > Material.objects.filter(Q(name='绿粒')).count():
-        res='err'
+        res = 'err'
         material = '绿粒不足，无法排产'
     if blue > Material.objects.filter(Q(name='蓝粒')).count():
-        res='err'
+        res = 'err'
         material = '蓝粒不足，无法排产'
     if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
-        res='err'
+        res = 'err'
         material = '瓶盖不足，无法排产'
     if rbot > Material.objects.filter(Q(name='红瓶')).count():
-        res='err'
+        res = 'err'
         material = '红瓶不足，无法排产'
     if gbot > Material.objects.filter(Q(name='绿瓶')).count():
-        res='err'
+        res = 'err'
         material = '绿瓶不足，无法排产'
     if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
-        res='err'
+        res = 'err'
         material = '蓝瓶不足，无法排产'
 
     return JsonResponse({'res': res, 'material': material})
