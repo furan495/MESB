@@ -75,28 +75,28 @@ def wincc(request):
         workOrder.save()
         order.save()
         Material.objects.filter(Q(name=color[params[2]]))[0].delete()
-    if position[params[0]] == '数粒A':
-        workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], status__name='加工中'))
-        red = workOrder.description.split(',')[1].split(':')[1]
-        for i in range(int(red)):
-            Material.objects.filter(Q(name='红粒'))[0].delete()
-    if position[params[0]] == '数粒B':
-        workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], status__name='加工中'))
-        green = workOrder.description.split(',')[1].split(':')[1]
-        for i in range(int(green)):
-            Material.objects.filter(Q(name='绿粒'))[0].delete()
-    if position[params[0]] == '数粒C':
-        workOrder = WorkOrder.objects.get(
-            Q(bottle=params[1], status__name='加工中'))
-        blue = workOrder.description.split(',')[1].split(':')[1]
-        for i in range(int(blue)):
-            Material.objects.filter(Q(name='蓝粒'))[0].delete()
-    if position[params[0]] == '旋盖':
-        Material.objects.filter(Q(name='瓶盖'))[0].delete()
 
     try:
+        if position[params[0]] == '数粒A':
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=params[1], status__name='加工中'))
+            red = workOrder.description.split(',')[1].split(':')[1]
+            for i in range(int(red)):
+                Material.objects.filter(Q(name='红粒'))[0].delete()
+        if position[params[0]] == '数粒B':
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=params[1], status__name='加工中'))
+            green = workOrder.description.split(',')[1].split(':')[1]
+            for i in range(int(green)):
+                Material.objects.filter(Q(name='绿粒'))[0].delete()
+        if position[params[0]] == '数粒C':
+            workOrder = WorkOrder.objects.get(
+                Q(bottle=params[1], status__name='加工中'))
+            blue = workOrder.description.split(',')[1].split(':')[1]
+            for i in range(int(blue)):
+                Material.objects.filter(Q(name='蓝粒'))[0].delete()
+        if position[params[0]] == '旋盖':
+            Material.objects.filter(Q(name='瓶盖'))[0].delete()
         event = Event()
         event.workOrder = WorkOrder.objects.get(
             Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
@@ -454,14 +454,14 @@ def upload(request):
     up = request.POST['up']
     url = request.POST['url']
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/document/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))), 'wb') as uf:
+    with open(BASE_DIR+'/upload/document/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     document = Document()
     document.up = up
     document.name = f.name
     document.path = 'http://%s:8899/upload/document/%s' % (url, ''.join(
-        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))))
+        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'))
     document.save()
     operate = Operate()
     operate.name = '上传文档'
@@ -478,11 +478,11 @@ def uploadPic(request):
     process = request.POST['process']
     pro = Process.objects.get(Q(name=process, route__key=route))
     f = request.FILES['file']
-    with open(BASE_DIR+'/upload/picture/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))), 'wb') as uf:
+    with open(BASE_DIR+'/upload/picture/'+''.join(list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'), 'wb') as uf:
         for chunk in f.chunks():
             uf.write(chunk)
     pro.path = 'http://%s:8899/upload/picture/%s' % (url, ''.join(
-        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))))
+        list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'))
     pro.save()
     return JsonResponse({'ok': 'ok'})
 
@@ -807,3 +807,6 @@ def queryOrganization(request):
     list(map(lambda obj: nodes.append(obj), nodesId))
 
     return JsonResponse({'tree': data, 'series': series, 'nodes': nodes})
+
+
+
