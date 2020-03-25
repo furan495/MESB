@@ -190,6 +190,10 @@ def storeOperate(request):
             try:
                 workOrder = WorkOrder.objects.get(
                     Q(bottle=bottle, status__name='加工中'))
+                bottle = Bottle.objects.get(
+                    Q(number=bottle, order__number=params[1]))
+                bottle.status = BottleState.objects.get(Q(name='入库'))
+                bottle.save()
                 event = Event()
                 event.workOrder = workOrder
                 event.bottle = bottle
@@ -264,8 +268,9 @@ def updateUserState(request):
 @csrf_exempt
 def logoutUser(request):
     params = json.loads(request.body)
-    user=User.objects.get(Q(phone=params['phone'],password=params['password']))
-    user.state='1'
+    user = User.objects.get(
+        Q(phone=params['phone'], password=params['password']))
+    user.state = '1'
     user.save()
     return JsonResponse({'res': 'ok'})
 
@@ -569,9 +574,6 @@ def annotateDataList(request):
 
 @csrf_exempt
 def exportData(request):
-    modelMap = {'order': '订单', 'material': '物料', 'processRoute': '工艺', 'user': '用户', 'role': '角色', 'store': '仓库',
-                'workShop': '车间', 'device': '设备', 'document': '文档', 'productStandard': '质检数据', 'bom': 'BOM', 'tool': '工具',
-                'productType': '产品', 'productLine': '产线', 'product': '成品', 'workOrder': '工单', 'producing': '生产', 'unqualified': '不合格', 'mateAna': '耗材统计', 'powerAna': '产能报表', 'qualAna': '质量统计', 'customer': '客户数据'}
     res = ''
     params = json.loads(request.body)
     if params['model'] == 'workShop':
@@ -720,9 +722,8 @@ def exportData(request):
         )
 
     df = pd.DataFrame(excel)
-    df.to_excel(BASE_DIR+'/upload/export/%s报表.xlsx' %
-                modelMap[params['model']])
-    return JsonResponse({'res': 'http://%s:8899/upload/export/%s报表.xlsx' % (params['url'], modelMap[params['model']])})
+    df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
+    return JsonResponse({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
 
 
 @csrf_exempt

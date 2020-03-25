@@ -141,31 +141,31 @@ def storeAna():
 def selectPosition(product):
     res = ''
     if product.pallet:
-        if product.pallet.hole1Content == product.name:
+        if product.pallet.hole1Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '1')
-        elif product.pallet.hole2Content == product.name:
+        elif product.pallet.hole2Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '2')
-        elif product.pallet.hole3Content == product.name:
+        elif product.pallet.hole3Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '3')
-        elif product.pallet.hole4Content == product.name:
+        elif product.pallet.hole4Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '4')
-        elif product.pallet.hole5Content == product.name:
+        elif product.pallet.hole5Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '5')
-        elif product.pallet.hole6Content == product.name:
+        elif product.pallet.hole6Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '6')
-        elif product.pallet.hole7Content == product.name:
+        elif product.pallet.hole7Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '7')
-        elif product.pallet.hole8Content == product.name:
+        elif product.pallet.hole8Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '8')
-        elif product.pallet.hole9Content == product.name:
+        elif product.pallet.hole9Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '9')
         else:
