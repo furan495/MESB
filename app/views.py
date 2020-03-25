@@ -262,10 +262,11 @@ def updateUserState(request):
 
 
 @csrf_exempt
-def logoutAll(request):
-    for user in User.objects.filter(Q(state='2')):
-        user.state = '1'
-        user.save()
+def logoutUser(request):
+    params = json.loads(request.body)
+    user=User.objects.get(Q(phone=params['phone'],password=params['password']))
+    user.state='1'
+    user.save()
     return JsonResponse({'res': 'ok'})
 
 
