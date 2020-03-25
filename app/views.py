@@ -719,25 +719,43 @@ def queryMateanaChart(request):
 @csrf_exempt
 def splitCheck(request):
     params = json.loads(request.body)
-    rbot = Bottle.objects.filter(Q(order__number=params['number'], color='红瓶')).values('color').annotate(count=Count(
-        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
-    gbot = Bottle.objects.filter(Q(order__number=params['number'], color='绿瓶')).values('color').annotate(count=Count(
-        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
-    bbot = Bottle.objects.filter(Q(order__number=params['number'], color='蓝瓶')).values('color').annotate(count=Count(
-        'color'), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('count', 'reds', 'greens', 'blues')[0]
-    reds = rbot['reds']+gbot['reds']+bbot['reds']
-    cup = rbot['count']+bbot['count']+gbot['count']
-    blues = rbot['blues']+gbot['blues']+bbot['blues']
-    greens = rbot['greens']+gbot['greens']+bbot['greens']
-    res = 'ok'
-    bom = list(map(lambda obj: obj.content, BOM.objects.filter(
-        Q(product__orderType__name=params['orderType']))))
-    materialMap = {}
-    for mat in list(set(('').join(bom)[:-1].split(','))):
-        materialMap[mat] = len(Material.objects.filter(Q(name=mat)))
-    if materialMap['红瓶'] < rbot['count'] or materialMap['绿瓶'] < gbot['count'] or materialMap['蓝瓶'] < bbot['count']:
-        res = 'or'
-    return JsonResponse({'res': res})
+    descriptions = params['description'].split(';')[:-1]
+    res, material = 'ok', ''
+    rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
+    for desc in descriptions:
+        count = desc.split(',')[-1].split(':')[1]
+        red = red+int(desc.split(',')[1].split(':')[1])*int(count)
+        green = green+int(desc.split(',')[2].split(':')[1])*int(count)
+        blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
+        if desc.split(',')[0].split(':')[1] == '红瓶':
+            rbot = rbot+int(count)
+        if desc.split(',')[0].split(':')[1] == '绿瓶':
+            gbot = gbot+int(count)
+        if desc.split(',')[0].split(':')[1] == '蓝瓶':
+            bbot = bbot+int(count)
+    if red > Material.objects.filter(Q(name='红粒')).count():
+        res='err'
+        material = '红粒不足，无法排产'
+    if green > Material.objects.filter(Q(name='绿粒')).count():
+        res='err'
+        material = '绿粒不足，无法排产'
+    if blue > Material.objects.filter(Q(name='蓝粒')).count():
+        res='err'
+        material = '蓝粒不足，无法排产'
+    if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
+        res='err'
+        material = '瓶盖不足，无法排产'
+    if rbot > Material.objects.filter(Q(name='红瓶')).count():
+        res='err'
+        material = '红瓶不足，无法排产'
+    if gbot > Material.objects.filter(Q(name='绿瓶')).count():
+        res='err'
+        material = '绿瓶不足，无法排产'
+    if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
+        res='err'
+        material = '蓝瓶不足，无法排产'
+
+    return JsonResponse({'res': res, 'material': material})
 
 
 @csrf_exempt
