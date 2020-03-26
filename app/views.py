@@ -809,4 +809,23 @@ def queryOrganization(request):
     return JsonResponse({'tree': data, 'series': series, 'nodes': nodes})
 
 
+errTime = 0
+@csrf_exempt
+def queryProducing(request):
+    global errTime
+    info = ''
+    if os.path.exists(BASE_DIR+'/listen.txt'):
+        errTime = errTime+1
+        with open(BASE_DIR+'/listen.txt') as f:
+            info = f.read()
 
+    if errTime == 3:
+        if os.path.exists(BASE_DIR+'/listen.txt'):
+            os.remove(BASE_DIR+'/listen.txt')
+
+    workOrderList = WorkOrder.objects.filter(
+        Q(status__name='等待中') | Q(status__name='加工中'))
+    producing = list(
+        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
+
+    return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})

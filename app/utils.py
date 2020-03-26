@@ -4,6 +4,14 @@ from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
 
 
+def positionSelect(obj, position):
+    try:
+        return Event.objects.get(workOrder=obj, source=position).time.strftime(
+            '%Y-%m-%d %H:%M:%S')
+    except:
+        return ''
+
+
 def powerAna():
     data = [
         {'name': '预期产量', 'type': 'column',
@@ -28,10 +36,10 @@ def qualAna():
                          * 1000+8*60*60*1000, obj['bad']], data))
     goodRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) !=0 else 1, 2)], data))
+                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
     badRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) !=0 else 1, 2)], data))
+                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
 
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
