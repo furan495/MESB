@@ -16,11 +16,11 @@ def powerAna():
     data = [
         {'name': '预期产量', 'type': 'column',
             'data': list(map(lambda obj:  len(
-                WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))},
+                WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
         {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
-            WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))},
+            WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))[-20:]},
         {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
-            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))},
+            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))[-20:]},
     ]
     return data
 

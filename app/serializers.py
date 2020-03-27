@@ -331,7 +331,10 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.batch.strftime('%Y-%m-%d')
 
     def get_name(self, obj):
-        return obj.name+'/'+obj.workOrder.bottle
+        try:
+            return obj.name+'/'+obj.workOrder.bottle
+        except:
+            return obj.name
 
     def get_stateList(self, obj):
         states = []

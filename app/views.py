@@ -13,8 +13,8 @@ from app.serializers import *
 from itertools import product
 from django.db.models import Q
 from django.http import JsonResponse
-from django.db.models.aggregates import Count, Sum, Max, Min
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 
 # Create your views here.
 
@@ -61,18 +61,18 @@ def wincc(request):
     print(params)
 
     if position[params[0]] == '理瓶':
-        workOrder = WorkOrder.objects.filter(
-            Q(description__icontains=color[params[2]], bottle=None, status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
         bottle = Bottle.objects.filter(
-            Q(order__number=params[3], color=color[params[2]]))[0]
+            Q(order__number=params[3], number='', color=color[params[2]]))[0]
         bottle.number = params[1]
         bottle.save()
+        workOrder = WorkOrder.objects.filter(
+            Q(description__icontains=color[params[2]], bottle=None, status__name='等待中', order=Order.objects.get(number=params[3]))).order_by('createTime')[0]
         workOrder.bottle = params[1]
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+        workOrder.save()
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
-        workOrder.save()
         order.save()
         Material.objects.filter(Q(name=color[params[2]]))[0].delete()
 
@@ -190,25 +190,42 @@ def storeOperate(request):
             try:
                 workOrder = WorkOrder.objects.get(
                     Q(bottle=bottle, status__name='加工中'))
-                bottle = Bottle.objects.get(
+                workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+                workOrder.endTime = datetime.datetime.now()
+                workOrder.save()
+                bot = Bottle.objects.get(
                     Q(number=bottle, order__number=params[1]))
-                bottle.status = BottleState.objects.get(Q(name='入库'))
-                bottle.save()
+                bot.status = BottleState.objects.get(Q(name='入库'))
+                bot.save()
+                product = workOrder.workOrder
+                product.pallet = pallet
+                product.save()
                 event = Event()
                 event.workOrder = workOrder
                 event.bottle = bottle
                 event.source = '立库'
                 event.title = '进入立库单元'
                 event.save()
-                workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-                workOrder.endTime = datetime.datetime.now()
-                product = workOrder.workOrder
-                product.pallet = Pallet.objects.get(
-                    number=params[-2], position__store__storeType__name='成品库')
-                product.save()
-                workOrder.save()
             except Exception as e:
-                print(e)
+                try:
+                    workOrder = WorkOrder.objects.filter(
+                        Q(bottle=bottle, status__name='失败'))[0]
+                    workOrder.save()
+                    bottle = Bottle.objects.get(
+                        Q(number=bottle, order__number=params[1]))
+                    bottle.status = BottleState.objects.get(Q(name='入库'))
+                    bottle.save()
+                    product = workOrder.workOrder
+                    product.pallet = pallet
+                    product.save()
+                    event = Event()
+                    event.workOrder = workOrder
+                    event.bottle = bottle
+                    event.source = '立库'
+                    event.title = '进入立库单元'
+                    event.save()
+                except Exception as e:
+                    print(e)
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
         order = Order.objects.get(number=params[1])
@@ -226,7 +243,7 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[:num])))
     print('%s,' % pallets.split('-')[0])
-    return JsonResponse({'res': '17,'})
+    return JsonResponse({'res': '8,'})
 
 
 @csrf_exempt
@@ -279,6 +296,19 @@ def logoutUser(request):
 def querySelect(request):
     """ data = Order.objects.filter(Q(status__name='完成')).values('customer', 'number').annotate(
         workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
+
+    print(data.query.__str__()) """
+
+    """ for i in range(1000):
+        material = Material()
+        material.name = '瓶盖'
+        material.unit = '个'
+        material.size = 'cap'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save() """
+
+    """ data = Order.objects.filter(Q(status__name='等待中')).values('number', 'scheduling', 'status__name').annotate(rbot=Count('bottles', filter=Q(bottles__color='红瓶')), gbot=Count('bottles', filter=Q(bottles__color='绿瓶')), bbot=Count('bottles', filter=Q(bottles__color='蓝瓶')), rred=Sum('bottles__red', filter=Q(bottles__color='红瓶')) if Sum('bottles__red', filter=Q(bottles__color='红瓶'))==1 else Avg('bottles__red', filter=Q(bottles__color='红瓶')), gred=Sum('bottles__red', filter=Q(bottles__color='绿瓶')), bred=Sum('bottles__red', filter=Q(bottles__color='蓝瓶')), rgreen=Sum('bottles__green', filter=Q(bottles__color='红瓶')), ggreen=Sum('bottles__green', filter=Q(bottles__color='绿瓶')), bgreen=Sum('bottles__green', filter=Q(bottles__color='蓝瓶')), rblue=Sum('bottles__blue', filter=Q(bottles__color='红瓶')), gblue=Sum('bottles__blue', filter=Q(bottles__color='绿瓶')), bblue=Sum('bottles__blue', filter=Q(bottles__color='蓝瓶'))).values('number', 'scheduling', 'status__name', 'rbot', 'gbot', 'bbot', 'rred', 'gred', 'bred', 'rgreen', 'ggreen', 'bgreen', 'rblue', 'gblue', 'bblue')
 
     print(data.query.__str__()) """
 
@@ -820,12 +850,13 @@ def queryProducing(request):
             info = f.read()
 
     if errTime == 3:
+        errTime = 0
         if os.path.exists(BASE_DIR+'/listen.txt'):
             os.remove(BASE_DIR+'/listen.txt')
 
     workOrderList = WorkOrder.objects.filter(
         Q(status__name='等待中') | Q(status__name='加工中'))
     producing = list(
-        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
+        map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
 
     return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})

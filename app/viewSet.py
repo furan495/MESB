@@ -223,7 +223,7 @@ class PalletViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-key')
     serializer_class = ProductSerializer
 
 
