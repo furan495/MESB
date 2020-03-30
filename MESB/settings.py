@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
     }
 'default': {
         'ENGINE': 'sql_server.pyodbc',
-        'NAME': 'mes2',
+        'NAME': 'mes',
         'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
@@ -100,25 +100,13 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
             'MARS_Connection': True,
         }
     }
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mes',
-        'USER': 'root',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'TEST': {
-                'CHARSET': 'utf8',
-                'COLLATION': 'utf8_general_ci',
-        }
-    }
 """
 
 DATABASES = {
     'default': {
         'ENGINE': 'sql_server.pyodbc',
         'NAME': 'mes',
-        'HOST': '127.0.0.1',
+        'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
         'PASSWORD': 'sa',

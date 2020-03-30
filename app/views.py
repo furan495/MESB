@@ -229,7 +229,7 @@ def storeOperate(request):
 
     if len(WorkOrder.objects.filter(Q(status__name='等待中', order__number=params[1]))) == 0:
         order = Order.objects.get(number=params[1])
-        order.status = OrderStatus.objects.get(name='完成')
+        order.status = OrderStatus.objects.get(name='已完成')
         order.save()
     return JsonResponse({'res': 'res'})
 
@@ -294,7 +294,7 @@ def logoutUser(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ data = Order.objects.filter(Q(status__name='完成')).values('customer', 'number').annotate(
+    """ data = Order.objects.filter(Q(status__name='已完成')).values('customer', 'number').annotate(
         workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
 
     print(data.query.__str__()) """
