@@ -14,12 +14,29 @@ def positionSelect(obj, position):
 
 def powerAna():
     data = [
-        {'name': '预期产量', 'type': 'column',
-            'data': list(map(lambda obj:  len(
-                WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
-        {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
+        {'name': '预期产量', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#00C1FF00'],
+                [1, '#00C1FFFF']
+            ]
+        }, 'data': list(map(lambda obj:  len(
+            WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
+        {'name': '实际产量', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#22E1B400'],
+                [1, '#22E1B4FF']
+            ]
+        }, 'data':  list(map(lambda obj:   len(
             WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))[-20:]},
-        {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
+        {'name': '合格率', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#762EFF00'],
+                [1, '#762EFFFF']
+            ]
+        }, 'data': list(map(lambda obj: round(len(Product.objects.filter(
             Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))[-20:]},
     ]
     return data
@@ -49,11 +66,20 @@ def qualAna():
             .values('reason', 'count'))
     )
     data = [
-        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
-        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': goodRate},
-        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
-        {'name': '不合格率', 'type': 'spline', 'yAxis': 1, 'data': badRate},
-        {'name': '总计', 'type': 'pie', 'data': reasonData,
+        {'name': '合格', 'type': 'column', 'color': '#00C1FF',
+            'yAxis': 0, 'data': goodData},
+        {'name': '合格率', 'type': 'spline', 'dashStyle': 'Dot',
+            'color': '#E65608', 'yAxis': 1, 'data': goodRate},
+        {'name': '不合格', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#762EFF00'],
+                [1, '#762EFFFF']
+            ]
+        }, 'yAxis': 0, 'data': badData},
+        {'name': '不合格率', 'type': 'spline', 'dashStyle': 'Dot',
+            'color': '#762EFF', 'yAxis': 1, 'data': badRate},
+        {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
     return data
@@ -62,28 +88,28 @@ def qualAna():
 def mateAna():
     markerRed = {
         'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
             'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(255,0,0,0.5)']
+                [0, '#F2005F00'],
+                [1, '#F2005FFF']
             ]
         }
     }
     markerGreen = {
         'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
             'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(0,255,0,0.5)']
+                [0, '#00FFBF00'],
+                [1, '#00FFBFFF']
             ]
         }
     }
     markerBlue = {
         'fillColor': {
-            'radialGradient': {'cx': 0.4, 'cy': 0.3, 'r': 0.7},
+            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
             'stops': [
-                [0, 'rgba(255,255,255,0.5)'],
-                [1, 'rgba(0,0,255,0.5)']
+                [0, '#0087FE00'],
+                [1, '#0087FEFF']
             ]
         }
     }
@@ -124,16 +150,23 @@ def mateAna():
             ))
 
     data = [
-        {'name': '瓶盖', 'type': 'spline', 'color': 'gold', 'data': cup},
-        {'name': '红瓶', 'type': 'column', 'color': 'red', 'data': redBottle},
-        {'name': '绿瓶', 'type': 'column', 'color': 'green', 'data': greenBottle},
-        {'name': '蓝瓶', 'type': 'column', 'color': 'blue', 'data': blueBottle},
+        {'name': '瓶盖', 'type': 'spline', 'dashStyle': 'Dot',
+            'color': 'gold', 'data': cup},
+        {'name': '红瓶', 'type': 'column', 'color': '#F2005F', 'data': redBottle},
+        {'name': '绿瓶', 'type': 'column', 'color': '#00FFBF', 'data': greenBottle},
+        {'name': '蓝瓶', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#0087FE00'],
+                [1, '#0087FEFF']
+            ]
+        }, 'data': blueBottle},
         {'name': '红粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'red', 'marker': markerRed, 'data': red},
+            'color': '#F2005F', 'marker': markerRed, 'data': red},
         {'name': '绿粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'green', 'marker': markerGreen, 'data': green},
+            'color': '#00FFBF', 'marker': markerGreen, 'data': green},
         {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1,
-            'color': 'green', 'marker': markerBlue, 'data': blue},
+            'color': '#0087FE', 'marker': markerBlue, 'data': blue},
     ]
     return data
 
