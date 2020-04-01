@@ -299,11 +299,11 @@ def querySelect(request):
 
     print(data.query.__str__()) """
 
-    """ for i in range(1000):
+    """ for i in range(500):
         material = Material()
-        material.name = '瓶盖'
+        material.name = '蓝粒'
         material.unit = '个'
-        material.size = 'cap'
+        material.size = 'blue'
         material.mateType = '2'
         material.store = Store.objects.get(name='原料库')
         material.save() """
