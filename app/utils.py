@@ -173,7 +173,13 @@ def mateAna():
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'column', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'column', 'color': {
+            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+            'stops': [
+                [0, '#762EFF00'],
+                [1, '#762EFFFF']
+            ]
+        }, 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
