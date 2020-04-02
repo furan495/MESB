@@ -872,14 +872,6 @@ def filterChart(request):
         badRate = list(
             map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
                              * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], product))
-
-        reasonData = list(
-            map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-                Product.objects.filter(Q(result='2'))
-                .values('reason')
-                .annotate(count=Count('reason'))
-                .values('reason', 'count'))
-        )
         data = [
             {'name': '合格', 'type': 'column', 'color': '#00C1FF',
                 'yAxis': 0, 'data': goodData},
@@ -894,8 +886,6 @@ def filterChart(request):
             }, 'yAxis': 0, 'data': badData},
             {'name': '不合格率', 'type': 'spline', 'dashStyle': 'Dot',
                 'color': '#762EFF', 'yAxis': 1, 'data': badRate},
-            {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
-                'center': [150, 50], 'size':150}
         ]
     if params['chart'] == 'mate':
         markerRed = {
