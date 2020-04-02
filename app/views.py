@@ -293,6 +293,13 @@ def logoutUser(request):
 
 
 @csrf_exempt
+def checkUserState(request):
+    params = json.loads(request.body)
+    user = User.objects.get(key=params['key'])
+    return JsonResponse({'res': user.state})
+
+
+@csrf_exempt
 def querySelect(request):
     """ data = Order.objects.filter(Q(status__name='已完成')).values('customer', 'number').annotate(
         workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')

@@ -69,6 +69,7 @@ urlpatterns = [
     url(r'^api/OutputPallet/',  views.OutputPallet),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryProducing/',  views.queryProducing),
+    url(r'^api/checkUserState/',  views.checkUserState),
     url(r'^api/updateUserState/',  views.updateUserState),
     url(r'^api/annotateDataList/',  views.annotateDataList),
     url(r'^api/queryOrganization/',  views.queryOrganization),
