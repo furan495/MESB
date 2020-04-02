@@ -67,18 +67,18 @@ def qualAna():
     )
     data = [
         {'name': '合格', 'type': 'column', 'color': '#00C1FF',
-            'yAxis': 0, 'data': goodData},
+            'yAxis': 0, 'data': goodData[-20:]},
         {'name': '合格率', 'type': 'spline', 'dashStyle': 'Dot',
-            'color': '#E65608', 'yAxis': 1, 'data': goodRate},
+            'color': '#E65608', 'yAxis': 1, 'data': goodRate[-20:]},
         {'name': '不合格', 'type': 'column', 'color': {
             'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
             'stops': [
                 [0, '#762EFF00'],
                 [1, '#762EFFFF']
             ]
-        }, 'yAxis': 0, 'data': badData},
+        }, 'yAxis': 0, 'data': badData[-20:]},
         {'name': '不合格率', 'type': 'spline', 'dashStyle': 'Dot',
-            'color': '#762EFF', 'yAxis': 1, 'data': badRate},
+            'color': '#762EFF', 'yAxis': 1, 'data': badRate[-20:]},
         {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
@@ -152,21 +152,21 @@ def mateAna():
     data = [
         {'name': '瓶盖', 'type': 'spline', 'dashStyle': 'Dot',
             'color': 'gold', 'data': cup},
-        {'name': '红瓶', 'type': 'column', 'color': '#F2005F', 'data': redBottle},
-        {'name': '绿瓶', 'type': 'column', 'color': '#00FFBF', 'data': greenBottle},
+        {'name': '红瓶', 'type': 'column', 'color': '#F2005F', 'data': redBottle[-20:]},
+        {'name': '绿瓶', 'type': 'column', 'color': '#00FFBF', 'data': greenBottle[-20:]},
         {'name': '蓝瓶', 'type': 'column', 'color': {
             'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
             'stops': [
                 [0, '#0087FE00'],
                 [1, '#0087FEFF']
             ]
-        }, 'data': blueBottle},
+        }, 'data': blueBottle[-20:]},
         {'name': '红粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#F2005F', 'marker': markerRed, 'data': red},
+            'color': '#F2005F', 'marker': markerRed, 'data': red[-20:]},
         {'name': '绿粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#00FFBF', 'marker': markerGreen, 'data': green},
+            'color': '#00FFBF', 'marker': markerGreen, 'data': green[-20:]},
         {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#0087FE', 'marker': markerBlue, 'data': blue},
+            'color': '#0087FE', 'marker': markerBlue, 'data': blue[-20:]},
     ]
     return data
 
