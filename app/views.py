@@ -293,6 +293,17 @@ def logoutUser(request):
 
 
 @csrf_exempt
+def logout(request):
+    params = json.loads(request.body)
+    print(params)
+    """ user = User.objects.get(
+        Q(phone=params['phone'], password=params['password']))
+    user.state = '1'
+    user.save() """
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def checkUserState(request):
     params = json.loads(request.body)
     user = User.objects.get(key=params['key'])
@@ -311,6 +322,46 @@ def querySelect(request):
         material.name = '蓝粒'
         material.unit = '个'
         material.size = 'blue'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save() """
+    """ for i in range(500):
+        material = Material()
+        material.name = '红粒'
+        material.unit = '个'
+        material.size = 'red'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save()
+    for i in range(500):
+        material = Material()
+        material.name = '红瓶'
+        material.unit = '个'
+        material.size = 'rbottle'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save()
+    for i in range(500):
+        material = Material()
+        material.name = '绿瓶'
+        material.unit = '个'
+        material.size = 'gbottle'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save()
+    for i in range(500):
+        material = Material()
+        material.name = '蓝瓶'
+        material.unit = '个'
+        material.size = 'bbottle'
+        material.mateType = '2'
+        material.store = Store.objects.get(name='原料库')
+        material.save()
+    for i in range(500):
+        material = Material()
+        material.name = '绿粒'
+        material.unit = '个'
+        material.size = 'green'
         material.mateType = '2'
         material.store = Store.objects.get(name='原料库')
         material.save() """
