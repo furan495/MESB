@@ -57,6 +57,13 @@ def qualAna():
     badRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
                          * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
+    reasonData = list(
+        map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
+            Product.objects.filter(Q(result='2'))
+            .values('reason')
+            .annotate(count=Count('reason'))
+            .values('reason', 'count'))
+    )
     data = [
         {'name': '合格', 'type': 'column', 'color': '#00C1FF',
             'yAxis': 0, 'data': goodData[-20:]},
@@ -71,6 +78,8 @@ def qualAna():
         }, 'yAxis': 0, 'data': badData[-20:]},
         {'name': '不合格率', 'type': 'spline', 'dashStyle': 'Dot',
             'color': '#762EFF', 'yAxis': 1, 'data': badRate[-20:]},
+        {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
+            'center': [150, 50], 'size':150}
     ]
     return data
 
@@ -142,8 +151,10 @@ def mateAna():
     data = [
         {'name': '瓶盖', 'type': 'spline', 'dashStyle': 'Dot',
             'color': 'gold', 'data': cup},
-        {'name': '红瓶', 'type': 'column', 'color': '#F2005F', 'data': redBottle[-20:]},
-        {'name': '绿瓶', 'type': 'column', 'color': '#00FFBF', 'data': greenBottle[-20:]},
+        {'name': '红瓶', 'type': 'column',
+            'color': '#F2005F', 'data': redBottle[-20:]},
+        {'name': '绿瓶', 'type': 'column',
+            'color': '#00FFBF', 'data': greenBottle[-20:]},
         {'name': '蓝瓶', 'type': 'column', 'color': {
             'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
             'stops': [
@@ -182,28 +193,28 @@ def selectPosition(product):
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '1')
         elif product.pallet.hole2Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '2')
         elif product.pallet.hole3Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '3')
         elif product.pallet.hole4Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '4')
         elif product.pallet.hole5Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '5')
         elif product.pallet.hole6Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '6')
         elif product.pallet.hole7Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '7')
         elif product.pallet.hole8Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '8')
         elif product.pallet.hole9Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '9')
         else:
             pass
