@@ -882,8 +882,14 @@ def filterChart(request):
         data = [
             {'name': '合格', 'type': 'column', 'color': '#00C1FF',
                 'yAxis': 0, 'data': goodData},
-            {'name': '合格率', 'type': 'spline', 'dashStyle': 'Dot',
-                'color': '#E65608', 'yAxis': 1, 'data': goodRate},
+            {'name': '合格率', 'type': 'areaspline',
+             'color': {
+                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'stops': [
+                     [0, '#00C1FF00'],
+                     [1, '#00C1FF99']
+                 ]
+             }, 'yAxis': 1, 'data': goodRate},
             {'name': '不合格', 'type': 'column', 'color': {
                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                 'stops': [
@@ -891,8 +897,14 @@ def filterChart(request):
                     [1, '#762EFFFF']
                 ]
             }, 'yAxis': 0, 'data': badData},
-            {'name': '不合格率', 'type': 'spline', 'dashStyle': 'Dot',
-                'color': '#762EFF', 'yAxis': 1, 'data': badRate},
+            {'name': '不合格率', 'type': 'areaspline',
+             'color': {
+                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'stops': [
+                     [0, '#762EFF00'],
+                     [1, '#762EFF99']
+                 ]
+             }, 'yAxis': 1, 'data': badRate},
             {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
                 'center': [150, 50], 'size':150}
         ]
@@ -939,7 +951,7 @@ def filterChart(request):
                 Bottle.objects.filter(Q(color='蓝瓶', order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
                 ))
-        cup = list(
+        cap = list(
             map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
                 Bottle.objects.filter(Q(order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
@@ -960,8 +972,14 @@ def filterChart(request):
                     blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
                 ))
         data = [
-            {'name': '瓶盖', 'type': 'spline', 'dashStyle': 'Dot',
-                'color': 'gold', 'data': cup},
+            {'name': '瓶盖', 'type': 'areaspline',
+                'color': {
+                    'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+                    'stops': [
+                        [0, '#0087FE00'],
+                        [1, '#0087FEFF']
+                    ]
+                }, 'data': cap},
             {'name': '红瓶', 'type': 'column', 'color': '#F2005F', 'data': redBottle},
             {'name': '绿瓶', 'type': 'column', 'color': '#00FFBF', 'data': greenBottle},
             {'name': '蓝瓶', 'type': 'column', 'color': {
