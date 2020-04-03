@@ -312,6 +312,16 @@ def checkUserState(request):
 
 @csrf_exempt
 def querySelect(request):
+    """ for i in range(20):
+        user=User()
+        user.name='用户%s' % str(i+1)
+        user.password='123456'
+        user.role=Role.objects.get(Q(name='管理员'))
+        user.gender='1'
+        user.post='软件工程师'
+        user.department=Organization.objects.get(Q(name='研发部'))
+        user.phone='user-%s' % str(i+1)
+        user.save() """
     """ data = Order.objects.filter(Q(status__name='已完成')).values('customer', 'number').annotate(
         workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
 
