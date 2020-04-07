@@ -307,7 +307,7 @@ def logout(request):
 def checkUserState(request):
     params = json.loads(request.body)
     user = User.objects.get(key=params['key'])
-    return JsonResponse({'res': user.state})
+    return JsonResponse({'res': user.state, 'count': User.objects.filter(Q(state='2')).count()})
 
 
 @csrf_exempt
@@ -913,12 +913,12 @@ def filterChart(request):
                 ))
         data = [
             {'name': '瓶盖', 'type': 'spline', 'data': cap},
-            {'name': '红瓶', 'type': 'column','data': redBottle},
+            {'name': '红瓶', 'type': 'column', 'data': redBottle},
             {'name': '绿瓶', 'type': 'column',  'data': greenBottle},
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
-            {'name': '红粒', 'type': 'spline', 'yAxis': 1,'data': red},
-            {'name': '绿粒', 'type': 'spline', 'yAxis': 1,'data': green},
-            {'name': '蓝粒', 'type': 'spline', 'yAxis': 1,'data': blue},
+            {'name': '红粒', 'type': 'spline', 'yAxis': 1, 'data': red},
+            {'name': '绿粒', 'type': 'spline', 'yAxis': 1, 'data': green},
+            {'name': '蓝粒', 'type': 'spline', 'yAxis': 1, 'data': blue},
         ]
     return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))})
 

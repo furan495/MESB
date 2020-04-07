@@ -3,8 +3,6 @@ from django.db import models
 
 # Create your models here.
 
-# 暂无工具,bom,物料相关表
-
 
 class DocType(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
