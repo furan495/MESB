@@ -14,29 +14,11 @@ def positionSelect(obj, position):
 
 def powerAna():
     data = [
-        {'name': '预期产量', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#00C1FF00'],
-                [1, '#00C1FFFF']
-            ]
-        }, 'data': list(map(lambda obj:  len(
+        {'name': '预期产量', 'type': 'column', 'data': list(map(lambda obj:  len(
             WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
-        {'name': '实际产量', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#22E1B400'],
-                [1, '#22E1B4FF']
-            ]
-        }, 'data':  list(map(lambda obj:   len(
+        {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
             WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))[-20:]},
-        {'name': '合格率', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#762EFF00'],
-                [1, '#762EFFFF']
-            ]
-        }, 'data': list(map(lambda obj: round(len(Product.objects.filter(
+        {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
             Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))[-20:]},
     ]
     return data
@@ -54,9 +36,6 @@ def qualAna():
     goodRate = list(
         map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
                          * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
-    badRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['bad']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(Q(result='2'))
@@ -65,65 +44,16 @@ def qualAna():
             .values('reason', 'count'))
     )
     data = [
-        {'name': '合格', 'type': 'column', 'color': '#00C1FF',
-            'yAxis': 0, 'data': goodData[-20:]},
-        {'name': '合格率', 'type': 'areaspline',
-            'color': {
-                'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                'stops': [
-                    [0, '#00C1FF00'],
-                    [1, '#00C1FF99']
-                ]
-            }, 'yAxis': 1, 'data': goodRate[-20:]},
-        {'name': '不合格', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#762EFF00'],
-                [1, '#762EFFFF']
-            ]
-        }, 'yAxis': 0, 'data': badData[-20:]},
-        {'name': '不合格率', 'type': 'areaspline',
-            'color': {
-                'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                'stops': [
-                    [0, '#762EFF00'],
-                    [1, '#762EFF99']
-                ]
-            }, 'yAxis': 1, 'data': badRate[-20:]},
-        {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
+        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData[-20:]},
+        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': goodRate[-20:]},
+        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData[-20:]},
+        {'name': '总计', 'type': 'pie', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
     return data
 
 
 def mateAna():
-    markerRed = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
-            'stops': [
-                [0, '#F2005F00'],
-                [1, '#F2005FFF']
-            ]
-        }
-    }
-    markerGreen = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
-            'stops': [
-                [0, '#00FFBF00'],
-                [1, '#00FFBFFF']
-            ]
-        }
-    }
-    markerBlue = {
-        'fillColor': {
-            'radialGradient': {'cx': 0.5, 'cy': 0.5, 'r': 3},
-            'stops': [
-                [0, '#0087FE00'],
-                [1, '#0087FEFF']
-            ]
-        }
-    }
     redBottle = list(
         map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
             Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
@@ -161,44 +91,20 @@ def mateAna():
             ))
 
     data = [
-        {'name': '瓶盖', 'type': 'areaspline',
-            'color': {
-                'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                'stops': [
-                    [0, '#0087FE00'],
-                    [1, '#0087FEFF']
-                ]
-            }, 'data': cap},
-        {'name': '红瓶', 'type': 'column',
-            'color': '#F2005F', 'data': redBottle[-20:]},
-        {'name': '绿瓶', 'type': 'column',
-            'color': '#00FFBF', 'data': greenBottle[-20:]},
-        {'name': '蓝瓶', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#0087FE00'],
-                [1, '#0087FEFF']
-            ]
-        }, 'data': blueBottle[-20:]},
-        {'name': '红粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#F2005F', 'marker': markerRed, 'data': red[-20:]},
-        {'name': '绿粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#00FFBF', 'marker': markerGreen, 'data': green[-20:]},
-        {'name': '蓝粒', 'type': 'bubble', 'yAxis': 1,
-            'color': '#0087FE', 'marker': markerBlue, 'data': blue[-20:]},
+        {'name': '瓶盖', 'type': 'spline', 'data': cap},
+        {'name': '红瓶', 'type': 'column', 'data': redBottle[-20:]},
+        {'name': '绿瓶', 'type': 'column', 'data': greenBottle[-20:]},
+        {'name': '蓝瓶', 'type': 'column', 'data': blueBottle[-20:]},
+        {'name': '红粒', 'type': 'spline', 'yAxis': 1, 'data': red[-20:]},
+        {'name': '绿粒', 'type': 'spline', 'yAxis': 1, 'data': green[-20:]},
+        {'name': '蓝粒', 'type': 'spline', 'yAxis': 1, 'data': blue[-20:]},
     ]
     return data
 
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'column', 'color': {
-            'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-            'stops': [
-                [0, '#762EFF00'],
-                [1, '#762EFFFF']
-            ]
-        }, 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'column', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
