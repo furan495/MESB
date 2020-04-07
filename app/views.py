@@ -870,7 +870,8 @@ def filterChart(request):
         )
         data = [
             {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
-            {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': goodRate},
+            {'name': '合格率', 'type': 'spline', 'color': 'gold',
+                'yAxis': 1, 'data': goodRate},
             {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
             {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
                 'center': [150, 50], 'size':150}
@@ -1012,4 +1013,10 @@ def queryProducing(request):
     producing = list(
         map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
 
-    return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna(), 'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
+    return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
+
+
+@csrf_exempt
+def queryCharts(request):
+    return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna()})
+

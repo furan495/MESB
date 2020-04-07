@@ -61,6 +61,7 @@ urlpatterns = [
     url(r'^api/loginCheck/',  views.loginCheck),
     url(r'^api/exportData/',  views.exportData),
     url(r'^api/orderSplit/',  views.orderSplit),
+    url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/filterChart/',  views.filterChart),
     url(r'^api/updateCount/',  views.updateCount),

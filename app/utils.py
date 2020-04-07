@@ -45,7 +45,8 @@ def qualAna():
     )
     data = [
         {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData[-20:]},
-        {'name': '合格率', 'type': 'spline', 'yAxis': 1, 'data': goodRate[-20:]},
+        {'name': '合格率', 'type': 'spline', 'color': 'gold',
+            'yAxis': 1, 'data': goodRate[-20:]},
         {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData[-20:]},
         {'name': '总计', 'type': 'pie', 'data': reasonData,
             'center': [150, 50], 'size':150}
