@@ -1020,3 +1020,28 @@ def queryProducing(request):
 def queryCharts(request):
     return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna()})
 
+
+@csrf_exempt
+def addMaterialOrTool(request):
+    params = json.loads(request.body)
+    Material.objects.filter(Q(name=None)).delete()
+    Tool.objects.filter(Q(name=None)).delete()
+    if params['model'] == 'material':
+        for i in range(params['addCount']):
+            material = Material()
+            material.name = params['name']
+            material.size = params['size']
+            material.unit = params['unit']
+            material.mateType = '1' if params['mateType'] == '自制' else '2'
+            material.store = Store.objects.get(name=params['store__name'])
+            material.save()
+    if params['model'] == 'tool':
+        for i in range(params['addCount']):
+            tool = Tool()
+            tool.name = params['name']
+            tool.size = params['size']
+            tool.unit = params['unit']
+            tool.toolType = '1' if params['toolType'] == '自制' else '2'
+            tool.store = Store.objects.get(name=params['store__name'])
+            tool.save()
+    return JsonResponse({'res': 'ok'})

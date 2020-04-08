@@ -75,6 +75,7 @@ urlpatterns = [
     url(r'^api/checkUserState/',  views.checkUserState),
     url(r'^api/updateUserState/',  views.updateUserState),
     url(r'^api/annotateDataList/',  views.annotateDataList),
+    url(r'^api/addMaterialOrTool/',  views.addMaterialOrTool),
     url(r'^api/queryOrganization/',  views.queryOrganization),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
     url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
