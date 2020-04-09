@@ -306,8 +306,13 @@ def logout(request):
 @csrf_exempt
 def checkUserState(request):
     params = json.loads(request.body)
-    user = User.objects.get(key=params['key'])
-    return JsonResponse({'res': user.state, 'count': User.objects.filter(Q(state='2')).count()})
+    res=''
+    try:
+        user = User.objects.get(key=params['key'])
+        res=user.state
+    except:
+        pass
+    return JsonResponse({'res': res, 'count': User.objects.filter(Q(state='2')).count()})
 
 
 @csrf_exempt
