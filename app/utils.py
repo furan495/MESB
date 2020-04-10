@@ -14,11 +14,11 @@ def positionSelect(obj, position):
 
 def powerAna():
     data = [
-        {'name': '预期产量', 'type': 'column', 'data': list(map(lambda obj:  len(
+        {'name': '预期产量', 'type': 'line', 'data': list(map(lambda obj:  len(
             WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
         {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
             WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))[-20:]},
-        {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
+        {'name': '合格率', 'type': 'line', 'data': list(map(lambda obj: round(len(Product.objects.filter(
             Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))[-20:]},
     ]
     return data
@@ -45,9 +45,9 @@ def qualAna():
     )
     data = [
         {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData[-20:]},
-        {'name': '合格率', 'type': 'spline', 'color': 'gold',
-            'yAxis': 1, 'data': goodRate[-20:]},
         {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData[-20:]},
+        {'name': '合格率', 'type': 'line', 'color': 'gold',
+            'yAxis': 1, 'data': goodRate[-20:]},
         {'name': '总计', 'type': 'pie', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
@@ -92,20 +92,20 @@ def mateAna():
             ))
 
     data = [
-        {'name': '瓶盖', 'type': 'spline', 'data': cap},
+        {'name': '红粒', 'type': 'column', 'data': red[-20:]},
         {'name': '红瓶', 'type': 'column', 'data': redBottle[-20:]},
+        {'name': '绿粒', 'type': 'column',  'data': green[-20:]},
         {'name': '绿瓶', 'type': 'column', 'data': greenBottle[-20:]},
+        {'name': '蓝粒', 'type': 'column',  'data': blue[-20:]},
         {'name': '蓝瓶', 'type': 'column', 'data': blueBottle[-20:]},
-        {'name': '红粒', 'type': 'spline', 'yAxis': 1, 'data': red[-20:]},
-        {'name': '绿粒', 'type': 'spline', 'yAxis': 1, 'data': green[-20:]},
-        {'name': '蓝粒', 'type': 'spline', 'yAxis': 1, 'data': blue[-20:]},
+        {'name': '瓶盖', 'type': 'areaspline', 'data': cap[-20:]},
     ]
     return data
 
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'column', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'line', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data

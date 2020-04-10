@@ -847,11 +847,11 @@ def filterChart(request):
     params = json.loads(request.body)
     if params['chart'] == 'power':
         data = [
-            {'name': '预期产量', 'type': 'column', 'data': list(map(lambda obj:  len(
+            {'name': '预期产量', 'type': 'line', 'data': list(map(lambda obj:  len(
                 WorkOrder.objects.filter(Q(order=obj))), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
             {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
                 WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
-            {'name': '合格率', 'type': 'column', 'data': list(map(lambda obj: round(len(Product.objects.filter(
+            {'name': '合格率', 'type': 'line', 'data': list(map(lambda obj: round(len(Product.objects.filter(
                 Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
         ]
     if params['chart'] == 'qual':
@@ -875,7 +875,7 @@ def filterChart(request):
         )
         data = [
             {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
-            {'name': '合格率', 'type': 'spline', 'color': 'gold',
+            {'name': '合格率', 'type': 'line', 'color': 'gold',
                 'yAxis': 1, 'data': goodRate},
             {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
             {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
@@ -918,13 +918,13 @@ def filterChart(request):
                     blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
                 ))
         data = [
-            {'name': '瓶盖', 'type': 'spline', 'data': cap},
+            {'name': '红粒', 'type': 'column', 'data': red},
             {'name': '红瓶', 'type': 'column', 'data': redBottle},
-            {'name': '绿瓶', 'type': 'column',  'data': greenBottle},
+            {'name': '绿粒', 'type': 'column',  'data': green},
+            {'name': '绿瓶', 'type': 'column', 'data': greenBottle},
+            {'name': '蓝粒', 'type': 'column',  'data': blue},
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
-            {'name': '红粒', 'type': 'spline', 'yAxis': 1, 'data': red},
-            {'name': '绿粒', 'type': 'spline', 'yAxis': 1, 'data': green},
-            {'name': '蓝粒', 'type': 'spline', 'yAxis': 1, 'data': blue},
+            {'name': '瓶盖', 'type': 'areaspline', 'data': cap},
         ]
     return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))})
 
