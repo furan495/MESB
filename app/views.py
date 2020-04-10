@@ -832,7 +832,7 @@ def exportData(request):
 @csrf_exempt
 def queryPoweranaChart(request):
     data = powerAna()
-    return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.all()))})
+    return JsonResponse({'res': data})
 
 
 @csrf_exempt
@@ -855,7 +855,7 @@ def filterChart(request):
         data = [
             {'name': '预期产量', 'type': 'column', 'data': expectData},
             {'name': '实际产量', 'type': 'column', 'data': realData},
-            {'name': '合格率', 'type': 'line', 'color': 'gold','yAxis': 1, 'data': goodRate},
+            {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
         ]
     if params['chart'] == 'qual':
         product = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
@@ -871,10 +871,10 @@ def filterChart(request):
                 .values('reason', 'count'))
         )
         data = [
-            {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
-            {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
-            {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
-                'center': [150, 50], 'size':150}
+            {'name': '合格', 'type': 'column', 'data': goodData},
+            {'name': '不合格', 'type': 'column', 'data': badData},
+            {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,'innerSize': '50%',
+                'center': [150, 80], 'size':200}
         ]
     if params['chart'] == 'mate':
         redBottle = list(
@@ -921,7 +921,7 @@ def filterChart(request):
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
             {'name': '瓶盖', 'type': 'areaspline', 'data': cap},
         ]
-    return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.filter(Q(createTime__gte=start, createTime__lte=stop))))})
+    return JsonResponse({'res': data})
 
 
 @csrf_exempt
@@ -1019,7 +1019,7 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     
-    return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna()})
+    return JsonResponse({ 'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
 @csrf_exempt

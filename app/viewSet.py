@@ -243,8 +243,8 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
         product = Product.objects.get(
             Q(workOrder__number=request.data['product'].split('/')[1]))
         product.result = '1' if str(request.data['result']) == '1' else '2'
-        product.reason = '%s未达到%s的预期结果' % (
-            request.data['name'], request.data['expectValue'])
+        product.reason = '%s%s' % (
+            request.data['name'], request.data['realValue'])
         product.save()
 
         serializer = self.get_serializer(

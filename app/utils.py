@@ -26,17 +26,18 @@ def powerAna():
     data = [
         {'name': '预期产量', 'type': 'column', 'data': expectData[-20:]},
         {'name': '实际产量', 'type': 'column', 'data': realData[-20:]},
-        {'name': '合格率', 'type': 'line', 'color': 'gold','yAxis': 1, 'data': goodRate[-20:]},
+        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate[-20:]},
     ]
     return data
 
 
-def qualAna():
+def qualAna(all=False):
     data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
         map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(Q(result='2'))
@@ -45,10 +46,16 @@ def qualAna():
             .values('reason', 'count'))
     )
     data = [
-        {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData[-20:]},
-        {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData[-20:]},
-        {'name': '总计', 'type': 'pie', 'data': reasonData,
-            'center': [150, 50], 'size':150}
+        {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
+        {'name': '不合格', 'type': 'column','data': badData[-20:]},
+        {'name': '原因汇总', 'type': 'pie', 'data': reasonData,'innerSize': '50%',
+            'center': [150, 80], 'size':200}
+    ]
+    if all:
+        data = [
+        {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
+        {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
+        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate[-20:]},
     ]
    
     return data
