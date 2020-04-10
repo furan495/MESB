@@ -845,27 +845,24 @@ def queryMateanaChart(request):
 def filterChart(request):
     data = []
     params = json.loads(request.body)
+    start=datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+    stop=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')
     if params['chart'] == 'power':
+        data = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch',filter=Q(workOrder__status__name='已完成')),expects=Count('batch'),good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad','expects','reals')
+        expectData=list(map(lambda obj: [dataX(obj['batch']),obj['expects']],data))
+        realData=list(map(lambda obj: [dataX(obj['batch']),obj['reals']],data))
+        goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
         data = [
-            {'name': '预期产量', 'type': 'line', 'data': list(map(lambda obj:  len(
-                WorkOrder.objects.filter(Q(order=obj))), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
-            {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
-                WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
-            {'name': '合格率', 'type': 'line', 'data': list(map(lambda obj: round(len(Product.objects.filter(
-                Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))},
+            {'name': '预期产量', 'type': 'column', 'data': expectData},
+            {'name': '实际产量', 'type': 'column', 'data': realData},
+            {'name': '合格率', 'type': 'line', 'color': 'gold','yAxis': 1, 'data': goodRate},
         ]
     if params['chart'] == 'qual':
-        product = Product.objects.filter(Q(workOrder__order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), workOrder__order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('batch').annotate(good=Count('result', filter=Q(
-            result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+        product = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
         goodData = list(
-            map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                             * 1000+8*60*60*1000, obj['good']], product))
+            map(lambda obj: [dataX(obj['batch']), obj['good']], product))
         badData = list(
-            map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                             * 1000+8*60*60*1000, obj['bad']], product))
-        goodRate = list(
-            map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                             * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], product))
+            map(lambda obj: [dataX(obj['batch']), obj['bad']], product))
         reasonData = list(
             map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
                 Product.objects.filter(Q(result='2'))
@@ -875,46 +872,44 @@ def filterChart(request):
         )
         data = [
             {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData},
-            {'name': '合格率', 'type': 'line', 'color': 'gold',
-                'yAxis': 1, 'data': goodRate},
             {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData},
             {'name': '总计', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,
                 'center': [150, 50], 'size':150}
         ]
     if params['chart'] == 'mate':
         redBottle = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-                Bottle.objects.filter(Q(color='红瓶', order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='红瓶', order__createTime__gte=start, order__createTime__lte=stop)).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
                 ))
         greenBottle = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-                Bottle.objects.filter(Q(color='绿瓶', order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='绿瓶', order__createTime__gte=start, order__createTime__lte=stop)).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
                 ))
         blueBottle = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-                Bottle.objects.filter(Q(color='蓝瓶', order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='蓝瓶', order__createTime__gte=start, order__createTime__lte=stop)).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
                 ))
         cap = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
-                Bottle.objects.filter(Q(order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(order__createTime__gte=start, order__createTime__lte=stop)).values('createTime').annotate(
                 count=Count('createTime')).values('createTime', 'count')
                 ))
         red = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['reds'], 1],
-                Bottle.objects.filter(Q(order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime', 'order', 'red').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['reds']],
+                Bottle.objects.filter(Q(order__createTime__gte=start, order__createTime__lte=stop)).values('createTime', 'order', 'red').annotate(
                     reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
                 ))
         green = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['greens'], 1],
-                Bottle.objects.filter(Q(order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime', 'order', 'green').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['greens']],
+                Bottle.objects.filter(Q(order__createTime__gte=start, order__createTime__lte=stop)).values('createTime', 'order', 'green').annotate(
                     greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
                 ))
         blue = list(
-            map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['blues'], 1],
-                Bottle.objects.filter(Q(order__createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), order__createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d'))).values('createTime', 'order', 'blue').annotate(
+            map(lambda obj: [dataX(obj['createTime']), obj['blues']],
+                Bottle.objects.filter(Q(order__createTime__gte=start, order__createTime__lte=stop)).values('createTime', 'order', 'blue').annotate(
                     blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
                 ))
         data = [
@@ -926,7 +921,7 @@ def filterChart(request):
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
             {'name': '瓶盖', 'type': 'areaspline', 'data': cap},
         ]
-    return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.filter(Q(createTime__gte=datetime.datetime.strptime(params['start'], '%Y/%m/%d'), createTime__lte=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')))))})
+    return JsonResponse({'res': data, 'xaxis': list(map(lambda obj: obj.number, Order.objects.filter(Q(createTime__gte=start, createTime__lte=stop))))})
 
 
 @csrf_exempt

@@ -14,12 +14,11 @@ def positionSelect(obj, position):
 def dataX(date):
         return int(time.mktime(date.timetuple()))* 1000+8*60*60*1000
 
-def powerAna():
-    def rateY(obj):
+def rateY(obj):
         return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
+def powerAna():
     data = Product.objects.all().values('batch').annotate(reals=Count('batch',filter=Q(workOrder__status__name='已完成')),expects=Count('batch'),good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad','expects','reals')
-
     expectData=list(map(lambda obj: [dataX(obj['batch']),obj['expects']],data))
     realData=list(map(lambda obj: [dataX(obj['batch']),obj['reals']],data))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
@@ -77,17 +76,17 @@ def mateAna():
             count=Count('createTime')).values('createTime', 'count')
             ))
     red = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['reds'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['reds']],
             Bottle.objects.all().values('createTime', 'order', 'red').annotate(
                 reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
             ))
     green = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['greens'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['greens']],
             Bottle.objects.all().values('createTime', 'order', 'green').annotate(
                 greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
             ))
     blue = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['blues'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['blues']],
             Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
                 blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
             ))
