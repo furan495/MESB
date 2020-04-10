@@ -11,31 +11,33 @@ def positionSelect(obj, position):
     except:
         return ''
 
+def dataX(date):
+        return int(time.mktime(date.timetuple()))* 1000+8*60*60*1000
 
 def powerAna():
+    def rateY(obj):
+        return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
+
+    data = Product.objects.all().values('batch').annotate(reals=Count('batch',filter=Q(workOrder__status__name='已完成')),expects=Count('batch'),good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad','expects','reals')
+
+    expectData=list(map(lambda obj: [dataX(obj['batch']),obj['expects']],data))
+    realData=list(map(lambda obj: [dataX(obj['batch']),obj['reals']],data))
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
+
     data = [
-        {'name': '预期产量', 'type': 'line', 'data': list(map(lambda obj:  len(
-            WorkOrder.objects.filter(Q(order=obj))), Order.objects.all()))[-20:]},
-        {'name': '实际产量', 'type': 'column', 'data':  list(map(lambda obj:   len(
-            WorkOrder.objects.filter(Q(status__name='已完成', order=obj))), Order.objects.all()))[-20:]},
-        {'name': '合格率', 'type': 'line', 'data': list(map(lambda obj: round(len(Product.objects.filter(
-            Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))[-20:]},
+        {'name': '预期产量', 'type': 'column', 'data': expectData[-20:]},
+        {'name': '实际产量', 'type': 'column', 'data': realData[-20:]},
+        {'name': '合格率', 'type': 'line', 'color': 'gold','yAxis': 1, 'data': goodRate[-20:]},
     ]
     return data
 
 
 def qualAna():
-    data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(
-        result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+    data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, obj['good']], data))
+        map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, obj['bad']], data))
-    goodRate = list(
-        map(lambda obj: [int(time.mktime(obj['batch'].timetuple()))
-                         * 1000+8*60*60*1000, round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 1, 2)], data))
+        map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(Q(result='2'))
@@ -46,47 +48,46 @@ def qualAna():
     data = [
         {'name': '合格', 'type': 'column', 'yAxis': 0, 'data': goodData[-20:]},
         {'name': '不合格', 'type': 'column', 'yAxis': 0, 'data': badData[-20:]},
-        {'name': '合格率', 'type': 'line', 'color': 'gold',
-            'yAxis': 1, 'data': goodRate[-20:]},
         {'name': '总计', 'type': 'pie', 'data': reasonData,
             'center': [150, 50], 'size':150}
     ]
+   
     return data
 
 
 def mateAna():
     redBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+        map(lambda obj: [dataX(obj['createTime']), obj['count']],
             Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
             count=Count('createTime')).values('createTime', 'count')
             ))
     greenBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+        map(lambda obj: [dataX(obj['createTime']), obj['count']],
             Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
             count=Count('createTime')).values('createTime', 'count')
             ))
     blueBottle = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+        map(lambda obj: [dataX(obj['createTime']), obj['count']],
             Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
             count=Count('createTime')).values('createTime', 'count')
             ))
     cap = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['count']],
+        map(lambda obj: [dataX(obj['createTime']), obj['count']],
             Bottle.objects.all().values('createTime').annotate(
             count=Count('createTime')).values('createTime', 'count')
             ))
     red = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['reds'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['reds'], 1],
             Bottle.objects.all().values('createTime', 'order', 'red').annotate(
                 reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
             ))
     green = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['greens'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['greens'], 1],
             Bottle.objects.all().values('createTime', 'order', 'green').annotate(
                 greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
             ))
     blue = list(
-        map(lambda obj: [int(time.mktime(obj['createTime'].timetuple()))*1000+8*60*60*1000, obj['blues'], 1],
+        map(lambda obj: [dataX(obj['createTime']), obj['blues'], 1],
             Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
                 blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
             ))
@@ -105,7 +106,7 @@ def mateAna():
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'line', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'column', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data

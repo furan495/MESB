@@ -1023,6 +1023,7 @@ def queryProducing(request):
 
 @csrf_exempt
 def queryCharts(request):
+    
     return JsonResponse({'xaxis': list(map(lambda obj: obj.number, Order.objects.all())), 'powerana': powerAna(), 'qualana': qualAna(), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
