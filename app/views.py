@@ -485,32 +485,52 @@ def orderSplit(request):
     order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     order.save()
-    for description in orderDesc:
-        if len(description.split(',')) > 1:
-            for i in range(int(description.split(',')[-1].split(':')[1])):
-                workOrder = WorkOrder()
-                workOrder.order = order
-                time.sleep(0.1)
-                workOrder.number = str(time.time()*1000000)[:15]
-                workOrder.status = WorkOrderStatus.objects.get(name='等待中')
-                workOrder.description = ','.join(description.split(',')[:4])
-                workOrder.save()
+    if params['orderType']=='灌装':
+        for description in orderDesc:
+            if len(description.split(',')) > 1:
+                for i in range(int(description.split(',')[-1].split(':')[1])):
+                    workOrder = WorkOrder()
+                    workOrder.order = order
+                    time.sleep(0.1)
+                    workOrder.number = str(time.time()*1000000)[:15]
+                    workOrder.status = WorkOrderStatus.objects.get(name='等待中')
+                    workOrder.description = ','.join(description.split(',')[:4])
+                    workOrder.save()
 
-                product = Product()
-                product.name = '%s/%s' % (workOrder.description.split(',')[
-                    0].split(':')[1], workOrder.number)
-                product.number = str(time.time()*1000000)
-                product.workOrder = workOrder
-                product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=workOrder.description.split(',')[
-                    0].split(':')[1]))
-                product.save()
+                    product = Product()
+                    product.name = '%s/%s' % (workOrder.description.split(',')[
+                        0].split(':')[1], workOrder.number)
+                    product.number = str(time.time()*1000000)
+                    product.workOrder = workOrder
+                    product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=workOrder.description.split(',')[
+                        0].split(':')[1]))
+                    product.save()
 
-                standard = ProductStandard()
-                standard.name = '重量'
-                standard.expectValue = str(np.sum(list(map(lambda obj: int(obj)*5, re.findall(
-                    '\d+', description[:description.index('份数')])))))
-                standard.product = product
-                standard.save()
+                    standard = ProductStandard()
+                    standard.name = '重量'
+                    standard.expectValue = str(np.sum(list(map(lambda obj: int(obj)*5, re.findall(
+                        '\d+', description[:description.index('份数')])))))
+                    standard.product = product
+                    standard.save()
+    if params['orderType']=='机加':
+        for description in orderDesc:
+            if len(description.split('x')) > 1:
+                for i in range(int(description.split('x')[1])):
+                    workOrder = WorkOrder()
+                    workOrder.order = order
+                    time.sleep(0.1)
+                    workOrder.number = str(time.time()*1000000)[:15]
+                    workOrder.status = WorkOrderStatus.objects.get(name='等待中')
+                    workOrder.description = description.split('x')[0]
+                    workOrder.save()
+
+                    product = Product()
+                    product.name = '%s/%s' % (description.split('x')[0], workOrder.number)
+                    product.number = str(time.time()*1000000)
+                    product.workOrder = workOrder
+                    product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=description.split('x')[0]))
+                    product.save()
+
     return JsonResponse({'res': 'ok'})
 
 
@@ -927,42 +947,42 @@ def filterChart(request):
 @csrf_exempt
 def splitCheck(request):
     params = json.loads(request.body)
-    descriptions = params['description'].split(';')[:-1]
     res, material = 'ok', ''
-    rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
-    for desc in descriptions:
-        count = desc.split(',')[-1].split(':')[1]
-        red = red+int(desc.split(',')[1].split(':')[1])*int(count)
-        green = green+int(desc.split(',')[2].split(':')[1])*int(count)
-        blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
-        if desc.split(',')[0].split(':')[1] == '红瓶':
-            rbot = rbot+int(count)
-        if desc.split(',')[0].split(':')[1] == '绿瓶':
-            gbot = gbot+int(count)
-        if desc.split(',')[0].split(':')[1] == '蓝瓶':
-            bbot = bbot+int(count)
-    if red > Material.objects.filter(Q(name='红粒')).count():
-        res = 'err'
-        material = '红粒不足，无法排产'
-    if green > Material.objects.filter(Q(name='绿粒')).count():
-        res = 'err'
-        material = '绿粒不足，无法排产'
-    if blue > Material.objects.filter(Q(name='蓝粒')).count():
-        res = 'err'
-        material = '蓝粒不足，无法排产'
-    if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
-        res = 'err'
-        material = '瓶盖不足，无法排产'
-    if rbot > Material.objects.filter(Q(name='红瓶')).count():
-        res = 'err'
-        material = '红瓶不足，无法排产'
-    if gbot > Material.objects.filter(Q(name='绿瓶')).count():
-        res = 'err'
-        material = '绿瓶不足，无法排产'
-    if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
-        res = 'err'
-        material = '蓝瓶不足，无法排产'
-
+    if params['orderType']=='灌装':
+        descriptions = params['description'].split(';')[:-1]
+        rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
+        for desc in descriptions:
+            count = desc.split(',')[-1].split(':')[1]
+            red = red+int(desc.split(',')[1].split(':')[1])*int(count)
+            green = green+int(desc.split(',')[2].split(':')[1])*int(count)
+            blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
+            if desc.split(',')[0].split(':')[1] == '红瓶':
+                rbot = rbot+int(count)
+            if desc.split(',')[0].split(':')[1] == '绿瓶':
+                gbot = gbot+int(count)
+            if desc.split(',')[0].split(':')[1] == '蓝瓶':
+                bbot = bbot+int(count)
+        if red > Material.objects.filter(Q(name='红粒')).count():
+            res = 'err'
+            material = '红粒不足，无法排产'
+        if green > Material.objects.filter(Q(name='绿粒')).count():
+            res = 'err'
+            material = '绿粒不足，无法排产'
+        if blue > Material.objects.filter(Q(name='蓝粒')).count():
+            res = 'err'
+            material = '蓝粒不足，无法排产'
+        if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
+            res = 'err'
+            material = '瓶盖不足，无法排产'
+        if rbot > Material.objects.filter(Q(name='红瓶')).count():
+            res = 'err'
+            material = '红瓶不足，无法排产'
+        if gbot > Material.objects.filter(Q(name='绿瓶')).count():
+            res = 'err'
+            material = '绿瓶不足，无法排产'
+        if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
+            res = 'err'
+            material = '蓝瓶不足，无法排产'
     return JsonResponse({'res': res, 'material': material})
 
 
