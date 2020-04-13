@@ -8,7 +8,7 @@ def positionSelect(obj, position):
     try:
         return Event.objects.get(workOrder=obj, source=position).time.strftime(
             '%Y-%m-%d %H:%M:%S')
-    except:
+    except Exception as e:
         return ''
 
 def dataX(date):

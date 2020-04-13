@@ -50,6 +50,31 @@ def recordWeight(request):
 
 
 @csrf_exempt
+def wincc2(request):
+    title = {'startB': 'B模块出库', 'startC': 'C模块加工', 'startD': 'D模块加工','stopB': 'B模块入库'}
+    position = {'startB': 'B出库', 'startC': 'C加工', 'startD': 'D加工','stopB': 'B入库'}
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
+
+    print(params)
+
+    if position[params[0]] == 'B出库':
+        workOrder =  WorkOrder.objects.get(number=params[2])
+        workOrder.startTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+        workOrder.save()
+        order = workOrder.order
+        order.status = OrderStatus.objects.get(Q(name='加工中'))
+        order.save()
+    event = Event()
+    event.workOrder = WorkOrder.objects.get(number=params[2])
+    event.source = position[params[0]]
+    event.title = title[params[0]]
+    event.save()
+    return JsonResponse({'res':'res'})
+
+
+@csrf_exempt
 def wincc(request):
 
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
@@ -1031,7 +1056,7 @@ def queryProducing(request):
     workOrderList = WorkOrder.objects.filter(
         Q(status__name='等待中') | Q(status__name='加工中'))
     producing = list(
-        map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
+        map(lambda obj: {'key': obj.key,'workOrder': obj.number,'startB': positionSelect(obj, 'B出库'),'startC':positionSelect(obj, 'C加工'),'startD': positionSelect(obj, 'D加工'),'stopB': positionSelect(obj, 'B入库'),'description': obj.description, 'bottle': obj.bottle,'orderType':obj.order.orderType.name ,'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
 
     return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
 
