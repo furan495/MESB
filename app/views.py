@@ -342,68 +342,7 @@ def checkUserState(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ for i in range(20):
-        user=User()
-        user.name='用户%s' % str(i+1)
-        user.password='123456'
-        user.role=Role.objects.get(Q(name='管理员'))
-        user.gender='1'
-        user.post='软件工程师'
-        user.department=Organization.objects.get(Q(name='研发部'))
-        user.phone='user-%s' % str(i+1)
-        user.save() """
-
-    """ for i in range(500):
-        material = Material()
-        material.name = '蓝粒'
-        material.unit = '个'
-        material.size = 'blue'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save() """
-    """ for i in range(500):
-        material = Material()
-        material.name = '红粒'
-        material.unit = '个'
-        material.size = 'red'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save()
-    for i in range(500):
-        material = Material()
-        material.name = '红瓶'
-        material.unit = '个'
-        material.size = 'rbottle'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save()
-    for i in range(500):
-        material = Material()
-        material.name = '绿瓶'
-        material.unit = '个'
-        material.size = 'gbottle'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save()
-    for i in range(500):
-        material = Material()
-        material.name = '蓝瓶'
-        material.unit = '个'
-        material.size = 'bbottle'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save()
-    for i in range(500):
-        material = Material()
-        material.name = '绿粒'
-        material.unit = '个'
-        material.size = 'green'
-        material.mateType = '2'
-        material.store = Store.objects.get(name='原料库')
-        material.save() """
-
     """ data = Order.objects.filter(Q(status__name='等待中')).values('number', 'scheduling', 'status__name').annotate(rbot=Count('bottles', filter=Q(bottles__color='红瓶')), gbot=Count('bottles', filter=Q(bottles__color='绿瓶')), bbot=Count('bottles', filter=Q(bottles__color='蓝瓶')), rred=Sum('bottles__red', filter=Q(bottles__color='红瓶')) if Sum('bottles__red', filter=Q(bottles__color='红瓶'))==1 else Avg('bottles__red', filter=Q(bottles__color='红瓶')), gred=Sum('bottles__red', filter=Q(bottles__color='绿瓶')), bred=Sum('bottles__red', filter=Q(bottles__color='蓝瓶')), rgreen=Sum('bottles__green', filter=Q(bottles__color='红瓶')), ggreen=Sum('bottles__green', filter=Q(bottles__color='绿瓶')), bgreen=Sum('bottles__green', filter=Q(bottles__color='蓝瓶')), rblue=Sum('bottles__blue', filter=Q(bottles__color='红瓶')), gblue=Sum('bottles__blue', filter=Q(bottles__color='绿瓶')), bblue=Sum('bottles__blue', filter=Q(bottles__color='蓝瓶'))).values('number', 'scheduling', 'status__name', 'rbot', 'gbot', 'bbot', 'rred', 'gred', 'bred', 'rgreen', 'ggreen', 'bgreen', 'rblue', 'gblue', 'bblue')
-
     print(data.query.__str__()) """
 
     params = json.loads(request.body)
@@ -1059,8 +998,22 @@ def queryProducing(request):
 
 @csrf_exempt
 def queryCharts(request):
-    
-    return JsonResponse({'rate':[{'data':[random.randint(50,60)]}] ,'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
+    data=Pallet.objects.filter(Q(rate__gt=0)).values('hole1','hole2','hole3','hole4','hole5','hole6','hole7','hole8','hole9').annotate(hole1Counts=Count('hole1',filter=Q(hole1=True)),hole2Counts=Count('hole2',filter=Q(hole2=True)),hole3Counts=Count('hole3',filter=Q(hole3=True)),hole4Counts=Count('hole4',filter=Q(hole4=True)),hole5Counts=Count('hole5',filter=Q(hole5=True)),hole6Counts=Count('hole6',filter=Q(hole6=True)),hole7Counts=Count('hole7',filter=Q(hole7=True)),hole8Counts=Count('hole8',filter=Q(hole8=True)),hole9Counts=Count('hole9',filter=Q(hole9=True))).values('hole1Counts','hole2Counts','hole3Counts','hole4Counts','hole5Counts','hole6Counts','hole7Counts','hole8Counts','hole9Counts')
+
+    count1,count2,count3,count4,count5,count6,count7,count8,count9=0,0,0,0,0,0,0,0,0
+    for d in data:
+        count1=count1+d['hole1Counts']
+        count2=count2+d['hole2Counts']
+        count3=count3+d['hole3Counts']
+        count4=count4+d['hole4Counts']
+        count5=count5+d['hole5Counts']
+        count6=count6+d['hole6Counts']
+        count7=count7+d['hole7Counts']
+        count8=count8+d['hole8Counts']
+        count9=count9+d['hole9Counts']
+
+    storeRate=count1+count2+count3+count4+count5+count6+count7+count8+count9
+    return JsonResponse({'linerate':[{'data':[random.random()]}],'storerate':[{'data':[storeRate/180]}] ,'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
 @csrf_exempt
