@@ -352,10 +352,6 @@ def querySelect(request):
         user.department=Organization.objects.get(Q(name='研发部'))
         user.phone='user-%s' % str(i+1)
         user.save() """
-    """ data = Order.objects.filter(Q(status__name='已完成')).values('customer', 'number').annotate(
-        workOrders=Count('workOrders'),startTime=Min('workOrders__startTime'),endTime=Max('workOrders__endTime'),times=Max('workOrders__endTime')-Min('workOrders__startTime'),rate=Count('workOrders__workOrder')/Count('workOrders__workOrder')).values('customer__name', 'customer__level', 'customer__number','number','batch','createTime','scheduling','workOrders','status__name','startTime','endTime','times','rate')
-
-    print(data.query.__str__()) """
 
     """ for i in range(500):
         material = Material()
@@ -1064,7 +1060,7 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     
-    return JsonResponse({ 'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
+    return JsonResponse({'rate':[{'data':[random.randint(50,60)]}] ,'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
 @csrf_exempt
