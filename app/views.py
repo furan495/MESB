@@ -343,6 +343,13 @@ def checkUserState(request):
 
 
 @csrf_exempt
+def queryInterviewChart(request):
+    data = list(map(lambda obj: [dataX(obj.time.date()), Operate.objects.filter(
+        Q(time__gte=obj.time.date(), time__lte=obj.time.date()+datetime.timedelta(hours=24))).count()], Operate.objects.filter(Q(name='登陆系统')).order_by('time')))
+    return JsonResponse({'res': data})
+
+
+@csrf_exempt
 def querySelect(request):
     """ data = Order.objects.filter(Q(status__name='已排产',orderType__name='灌装')).values('number', 'scheduling', 'status__name').annotate(
         rbot=Count('bottles', filter=Q(bottles__color='红瓶')),
