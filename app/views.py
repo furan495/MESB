@@ -51,6 +51,7 @@ def recordWeight(request):
 
 @csrf_exempt
 def wincc2(request):
+    global outPosition, inPosition
     title = {'startB': 'B模块出库', 'startC': 'C模块加工',
              'startD': 'D模块加工', 'stopB': 'B模块入库'}
     position = {'startB': 'B出库', 'startC': 'C加工',
@@ -61,15 +62,43 @@ def wincc2(request):
     print(params)
 
     if position[params[0]] == 'B出库':
-        workOrder = WorkOrder.objects.get(number=params[2])
+        pos = outPosition.pop(0)
+        store = Store.objects.get(
+            Q(storeType__name='成品库', name__icontains='机加'))
+        storePosition = StorePosition.objects.get(
+            Q(number='%s-%s' % (pos, store.key)))
+        storePosition.status = '4'
+        storePosition.save()
+        workOrder = WorkOrder.objects.get(number=params[1])
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
+    if position[params[0]] == 'B入库':
+        pos = inPosition.pop(0)
+        store = Store.objects.get(
+            Q(storeType__name='成品库', name__icontains='机加'))
+        storePosition = StorePosition.objects.get(
+            Q(number='%s-%s' % (pos, store.key)))
+        storePosition.status = '3'
+        storePosition.save()
+        workOrder = WorkOrder.objects.get(number=params[1])
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+        workOrder.save()
+        """ product = workOrder.workOrder
+        product.pallet = pallet
+        product.save() """
+
+        order = workOrder.order
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
+            order.status = OrderStatus.objects.get(Q(name='已完成'))
+            order.save()
+
     event = Event()
-    event.workOrder = WorkOrder.objects.get(number=params[2])
+    event.workOrder = WorkOrder.objects.get(number=params[1])
     event.source = position[params[0]]
     event.title = title[params[0]]
     event.save()
@@ -171,13 +200,13 @@ def storeOperate(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     print(params)
-    store = Store.objects.get(Q(storeType__name='成品库'))
+    store = Store.objects.get(Q(storeType__name='成品库', name__icontains='灌装'))
     storePosition = StorePosition.objects.get(
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
     storePosition.save()
     pallet = Pallet.objects.get(
-        Q(number=params[-2], position__store__storeType__name='成品库'))
+        Q(number=params[-2], position__store__storeType__name='成品库', position__store__name__icontains='灌装'))
     pallet.position = storePosition
     pallet.hole1 = updatePalletHole(pallet.hole1, params[2])
     pallet.hole2 = updatePalletHole(pallet.hole2, params[3])
@@ -270,6 +299,28 @@ def queryPallet(request):
     pallets = ','.join(list(map(lambda obj: obj.position.number, list(
         Pallet.objects.filter(Q(rate__lt=0.67)))[:num])))
     print('%s,' % pallets.split('-')[0])
+    return JsonResponse({'res': '8,'})
+
+
+outPosition, inPosition = [], []
+
+
+@csrf_exempt
+def queryMW(request):
+    global outPosition, inPosition
+    params = json.loads(request.body)
+    workOrder = WorkOrder.objects.filter(
+        Q(order__number=params['number'])).count()
+    outPos = list(StorePosition.objects.filter(
+        Q(store__name__icontains='机加', status='3')))[:workOrder]
+    outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
+    inPos = list(StorePosition.objects.filter(
+        Q(store__name__icontains='机加', status='4')).order_by('-key'))[:workOrder]
+    inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
+
+    print('出库:'+','.join(outPosition))
+    print('入库:'+','.join(inPosition))
+
     return JsonResponse({'res': '8,'})
 
 
@@ -611,19 +662,28 @@ def updatePWD(request):
 
 @csrf_exempt
 def createStore(request):
+    def selectStatus(params, index):
+        if '灌装' in params['name']:
+            return '1'
+        if '机加' in params['name']:
+            if index <= 19:
+                return '3'
+            else:
+                return '4'
     params = json.loads(request.body)
     count = params['row']*params['column']
     for i in range(count):
         position = StorePosition()
         position.store = Store.objects.get(key=params['key'])
         position.number = '%s-%s' % (str(i+1), params['key'])
-        position.status = '1'
+        position.status = selectStatus(params, i)
         position.save()
-        pallet = Pallet()
-        pallet.position = StorePosition.objects.get(
-            number='%s-%s' % (str(i+1), params['key']))
-        pallet.number = str(i+1)
-        pallet.save()
+        if '灌装' in params['name']:
+            pallet = Pallet()
+            pallet.position = StorePosition.objects.get(
+                number='%s-%s' % (str(i+1), params['key']))
+            pallet.number = str(i+1)
+            pallet.save()
     return JsonResponse({'res': 'ok'})
 
 
@@ -858,7 +918,7 @@ def filterChart(request):
     start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
     stop = datetime.datetime.strptime(params['stop'], '%Y/%m/%d')
     if params['chart'] == 'power':
-        data = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
+        data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装', workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
             workOrder__status__name='已完成')), expects=Count('batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
         expectData = list(
             map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
@@ -872,7 +932,7 @@ def filterChart(request):
             {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
         ]
     if params['chart'] == 'qual':
-        product = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
+        product = Product.objects.filter(Q(workOrder__order__orderType__name='灌装', workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
             'batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
         goodData = list(
             map(lambda obj: [dataX(obj['batch']), obj['good']], product))

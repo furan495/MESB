@@ -11,16 +11,21 @@ def positionSelect(obj, position):
     except Exception as e:
         return ''
 
+
 def dataX(date):
-        return int(time.mktime(date.timetuple()))* 1000+8*60*60*1000
+    return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
+
 
 def rateY(obj):
-        return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
+    return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
+
 
 def powerAna():
-    data = Product.objects.all().values('batch').annotate(reals=Count('batch',filter=Q(workOrder__status__name='已完成')),expects=Count('batch'),good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad','expects','reals')
-    expectData=list(map(lambda obj: [dataX(obj['batch']),obj['expects']],data))
-    realData=list(map(lambda obj: [dataX(obj['batch']),obj['reals']],data))
+    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+        'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
+    expectData = list(
+        map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
+    realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     data = [
@@ -32,7 +37,8 @@ def powerAna():
 
 
 def qualAna(all=False):
-    data = Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(good=Count(
+        'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
@@ -47,17 +53,18 @@ def qualAna(all=False):
     )
     data = [
         {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
-        {'name': '不合格', 'type': 'column','data': badData[-20:]},
-        {'name': '原因汇总', 'type': 'pie', 'data': reasonData,'innerSize': '50%',
+        {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
+        {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
     if all:
         data = [
-        {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
-        {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
-        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate[-20:]},
-    ]
-   
+            {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
+            {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
+            {'name': '合格率', 'type': 'line',
+                'yAxis': 1, 'data': goodRate[-20:]},
+        ]
+
     return data
 
 
