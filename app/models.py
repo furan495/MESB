@@ -570,6 +570,8 @@ class Product(models.Model):
     batch = models.DateField(auto_now_add=True, verbose_name='产品批次')
     result = models.CharField(choices=PRODUCT_RESULT,
                               max_length=2, verbose_name='检测结果', blank=True, null=True)
+    mwPosition = models.CharField(
+        max_length=200, verbose_name='机加成品位', blank=True, null=True)
     reason = models.CharField(
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
 

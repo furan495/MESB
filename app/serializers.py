@@ -372,11 +372,13 @@ class ProductSerializer(serializers.ModelSerializer):
             if obj.pallet.hole9Content == obj.workOrder.bottle:
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '9')
+        else:
+            res = obj.mwPosition
         return res
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'result', 'pallet',
+        fields = ('key', 'prodType', 'workOrder', 'result', 'pallet', 'mwPosition',
                   'name', 'number',  'batch', 'palletStr', 'reason',  'stateList')
 
 

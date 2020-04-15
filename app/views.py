@@ -53,9 +53,9 @@ def recordWeight(request):
 def wincc2(request):
     global outPosition, inPosition
     title = {'startB': 'B模块出库', 'startC': 'C模块加工',
-             'startD': 'D模块加工', 'stopB': 'B模块入库'}
+             'startD': 'D模块加工', 'stopB': 'B模块入库', 'check': '质检'}
     position = {'startB': 'B出库', 'startC': 'C加工',
-                'startD': 'D加工', 'stopB': 'B入库'}
+                'startD': 'D加工', 'stopB': 'B入库', 'check': '质检'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
@@ -76,6 +76,14 @@ def wincc2(request):
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
+    if position[params[0]] == '质检':
+        workOrder = WorkOrder.objects.get(number=params[1])
+        product = workOrder.workOrder
+        if random.random() > 0.5:
+            product.result = '1'
+        else:
+            product.result = '2'
+        product.save()
     if position[params[0]] == 'B入库':
         pos = inPosition.pop(0)
         store = Store.objects.get(
@@ -88,9 +96,9 @@ def wincc2(request):
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
-        """ product = workOrder.workOrder
-        product.pallet = pallet
-        product.save() """
+        product = workOrder.workOrder
+        product.mwPosition = '%s-%s号位' % (store.name, pos)
+        product.save()
 
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -940,7 +948,7 @@ def filterChart(request):
             map(lambda obj: [dataX(obj['batch']), obj['bad']], product))
         reasonData = list(
             map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-                Product.objects.filter(Q(result='2'))
+                Product.objects.filter(Q(result='2',workOrder__order__orderType__name='灌装'))
                 .values('reason')
                 .annotate(count=Count('reason'))
                 .values('reason', 'count'))

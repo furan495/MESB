@@ -46,7 +46,8 @@ def qualAna(all=False):
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-            Product.objects.filter(Q(result='2'))
+            Product.objects.filter(
+                Q(result='2', workOrder__order__orderType__name='灌装'))
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))
