@@ -51,15 +51,17 @@ def recordWeight(request):
 
 @csrf_exempt
 def wincc2(request):
-    title = {'startB': 'B模块出库', 'startC': 'C模块加工', 'startD': 'D模块加工','stopB': 'B模块入库'}
-    position = {'startB': 'B出库', 'startC': 'C加工', 'startD': 'D加工','stopB': 'B入库'}
+    title = {'startB': 'B模块出库', 'startC': 'C模块加工',
+             'startD': 'D模块加工', 'stopB': 'B模块入库'}
+    position = {'startB': 'B出库', 'startC': 'C加工',
+                'startD': 'D加工', 'stopB': 'B入库'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
     print(params)
 
     if position[params[0]] == 'B出库':
-        workOrder =  WorkOrder.objects.get(number=params[2])
+        workOrder = WorkOrder.objects.get(number=params[2])
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
@@ -71,7 +73,7 @@ def wincc2(request):
     event.source = position[params[0]]
     event.title = title[params[0]]
     event.save()
-    return JsonResponse({'res':'res'})
+    return JsonResponse({'res': 'res'})
 
 
 @csrf_exempt
@@ -331,10 +333,10 @@ def logout(request):
 @csrf_exempt
 def checkUserState(request):
     params = json.loads(request.body)
-    res=''
+    res = ''
     try:
         user = User.objects.get(key=params['key'])
-        res=user.state
+        res = user.state
     except:
         pass
     return JsonResponse({'res': res, 'count': User.objects.filter(Q(state='2')).count()})
@@ -342,7 +344,25 @@ def checkUserState(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ data = Order.objects.filter(Q(status__name='等待中')).values('number', 'scheduling', 'status__name').annotate(rbot=Count('bottles', filter=Q(bottles__color='红瓶')), gbot=Count('bottles', filter=Q(bottles__color='绿瓶')), bbot=Count('bottles', filter=Q(bottles__color='蓝瓶')), rred=Sum('bottles__red', filter=Q(bottles__color='红瓶')) if Sum('bottles__red', filter=Q(bottles__color='红瓶'))==1 else Avg('bottles__red', filter=Q(bottles__color='红瓶')), gred=Sum('bottles__red', filter=Q(bottles__color='绿瓶')), bred=Sum('bottles__red', filter=Q(bottles__color='蓝瓶')), rgreen=Sum('bottles__green', filter=Q(bottles__color='红瓶')), ggreen=Sum('bottles__green', filter=Q(bottles__color='绿瓶')), bgreen=Sum('bottles__green', filter=Q(bottles__color='蓝瓶')), rblue=Sum('bottles__blue', filter=Q(bottles__color='红瓶')), gblue=Sum('bottles__blue', filter=Q(bottles__color='绿瓶')), bblue=Sum('bottles__blue', filter=Q(bottles__color='蓝瓶'))).values('number', 'scheduling', 'status__name', 'rbot', 'gbot', 'bbot', 'rred', 'gred', 'bred', 'rgreen', 'ggreen', 'bgreen', 'rblue', 'gblue', 'bblue')
+    """ data = Order.objects.filter(Q(status__name='已排产',orderType__name='灌装')).values('number', 'scheduling', 'status__name').annotate(
+        rbot=Count('bottles', filter=Q(bottles__color='红瓶')),
+        rred=Avg('bottles__red', filter=Q(bottles__color='红瓶')),
+        rgreen=Avg('bottles__green', filter=Q(bottles__color='红瓶')),
+        rblue=Avg('bottles__blue', filter=Q(bottles__color='红瓶')),
+        gbot=Count('bottles', filter=Q(bottles__color='绿瓶')),
+        gred=Avg('bottles__red', filter=Q(bottles__color='绿瓶')),
+        ggreen=Avg('bottles__green', filter=Q(bottles__color='绿瓶')),
+        gblue=Avg('bottles__blue', filter=Q(bottles__color='绿瓶')),
+        bbot=Count('bottles', filter=Q(bottles__color='蓝瓶')),
+        bred=Avg('bottles__red', filter=Q(bottles__color='蓝瓶')),
+        bgreen=Avg('bottles__green', filter=Q(bottles__color='蓝瓶')),
+        bblue=Avg('bottles__blue', filter=Q(bottles__color='蓝瓶')),
+    ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',)
+
+    print(data.query.__str__()) """
+
+    """ data = WorkOrder.objects.filter(Q(order__status__name='已排产',order__orderType__name='机加')).values('number').annotate(countA=Count('key', filter=Q(description='A类产品')), countB=Count('key', filter=Q(description='B类产品')),countC=Count('key', filter=Q(description='C类产品')),countD=Count('key', filter=Q(description='D类产品'))).values('order__number','number','countA','countB','countC','countD')
+
     print(data.query.__str__()) """
 
     params = json.loads(request.body)
@@ -445,7 +465,7 @@ def orderSplit(request):
     order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     order.save()
-    if params['orderType']=='灌装':
+    if params['orderType'] == '灌装':
         for description in orderDesc:
             if len(description.split(',')) > 1:
                 for i in range(int(description.split(',')[-1].split(':')[1])):
@@ -454,7 +474,8 @@ def orderSplit(request):
                     time.sleep(0.1)
                     workOrder.number = str(time.time()*1000000)[:15]
                     workOrder.status = WorkOrderStatus.objects.get(name='等待中')
-                    workOrder.description = ','.join(description.split(',')[:4])
+                    workOrder.description = ','.join(
+                        description.split(',')[:4])
                     workOrder.save()
 
                     product = Product()
@@ -472,7 +493,7 @@ def orderSplit(request):
                         '\d+', description[:description.index('份数')])))))
                     standard.product = product
                     standard.save()
-    if params['orderType']=='机加':
+    if params['orderType'] == '机加':
         for description in orderDesc:
             if len(description.split('x')) > 1:
                 for i in range(int(description.split('x')[1])):
@@ -485,10 +506,12 @@ def orderSplit(request):
                     workOrder.save()
 
                     product = Product()
-                    product.name = '%s/%s' % (description.split('x')[0], workOrder.number)
+                    product.name = '%s/%s' % (description.split('x')
+                                              [0], workOrder.number)
                     product.number = str(time.time()*1000000)
                     product.workOrder = workOrder
-                    product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=description.split('x')[0]))
+                    product.prodType = ProductType.objects.get(
+                        Q(orderType=order.orderType, name__icontains=description.split('x')[0]))
                     product.save()
 
     return JsonResponse({'res': 'ok'})
@@ -825,20 +848,25 @@ def queryMateanaChart(request):
 def filterChart(request):
     data = []
     params = json.loads(request.body)
-    start=datetime.datetime.strptime(params['start'], '%Y/%m/%d')
-    stop=datetime.datetime.strptime(params['stop'], '%Y/%m/%d')
+    start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+    stop = datetime.datetime.strptime(params['stop'], '%Y/%m/%d')
     if params['chart'] == 'power':
-        data = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch',filter=Q(workOrder__status__name='已完成')),expects=Count('batch'),good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad','expects','reals')
-        expectData=list(map(lambda obj: [dataX(obj['batch']),obj['expects']],data))
-        realData=list(map(lambda obj: [dataX(obj['batch']),obj['reals']],data))
-        goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
+        data = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
+            workOrder__status__name='已完成')), expects=Count('batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
+        expectData = list(
+            map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
+        realData = list(
+            map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
+        goodRate = list(
+            map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
         data = [
             {'name': '预期产量', 'type': 'column', 'data': expectData},
             {'name': '实际产量', 'type': 'column', 'data': realData},
             {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
         ]
     if params['chart'] == 'qual':
-        product = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+        product = Product.objects.filter(Q(workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
+            'batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
         goodData = list(
             map(lambda obj: [dataX(obj['batch']), obj['good']], product))
         badData = list(
@@ -853,7 +881,7 @@ def filterChart(request):
         data = [
             {'name': '合格', 'type': 'column', 'data': goodData},
             {'name': '不合格', 'type': 'column', 'data': badData},
-            {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData,'innerSize': '50%',
+            {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData, 'innerSize': '50%',
                 'center': [150, 80], 'size':200}
         ]
     if params['chart'] == 'mate':
@@ -908,7 +936,7 @@ def filterChart(request):
 def splitCheck(request):
     params = json.loads(request.body)
     res, material = 'ok', ''
-    if params['orderType']=='灌装':
+    if params['orderType'] == '灌装':
         descriptions = params['description'].split(';')[:-1]
         rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
         for desc in descriptions:
@@ -991,29 +1019,30 @@ def queryProducing(request):
     workOrderList = WorkOrder.objects.filter(
         Q(status__name='等待中') | Q(status__name='加工中'))
     producing = list(
-        map(lambda obj: {'key': obj.key,'workOrder': obj.number,'startB': positionSelect(obj, 'B出库'),'startC':positionSelect(obj, 'C加工'),'startD': positionSelect(obj, 'D加工'),'stopB': positionSelect(obj, 'B入库'),'description': obj.description, 'bottle': obj.bottle,'orderType':obj.order.orderType.name ,'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
+        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B出库'), 'startC': positionSelect(obj, 'C加工'), 'startD': positionSelect(obj, 'D加工'), 'stopB': positionSelect(obj, 'B入库'), 'description': obj.description, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
 
     return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
 
 
 @csrf_exempt
 def queryCharts(request):
-    data=Pallet.objects.filter(Q(rate__gt=0)).values('hole1','hole2','hole3','hole4','hole5','hole6','hole7','hole8','hole9').annotate(hole1Counts=Count('hole1',filter=Q(hole1=True)),hole2Counts=Count('hole2',filter=Q(hole2=True)),hole3Counts=Count('hole3',filter=Q(hole3=True)),hole4Counts=Count('hole4',filter=Q(hole4=True)),hole5Counts=Count('hole5',filter=Q(hole5=True)),hole6Counts=Count('hole6',filter=Q(hole6=True)),hole7Counts=Count('hole7',filter=Q(hole7=True)),hole8Counts=Count('hole8',filter=Q(hole8=True)),hole9Counts=Count('hole9',filter=Q(hole9=True))).values('hole1Counts','hole2Counts','hole3Counts','hole4Counts','hole5Counts','hole6Counts','hole7Counts','hole8Counts','hole9Counts')
+    data = Pallet.objects.filter(Q(rate__gt=0)).values('hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9').annotate(hole1Counts=Count('hole1', filter=Q(hole1=True)), hole2Counts=Count('hole2', filter=Q(hole2=True)), hole3Counts=Count('hole3', filter=Q(hole3=True)), hole4Counts=Count('hole4', filter=Q(hole4=True)), hole5Counts=Count(
+        'hole5', filter=Q(hole5=True)), hole6Counts=Count('hole6', filter=Q(hole6=True)), hole7Counts=Count('hole7', filter=Q(hole7=True)), hole8Counts=Count('hole8', filter=Q(hole8=True)), hole9Counts=Count('hole9', filter=Q(hole9=True))).values('hole1Counts', 'hole2Counts', 'hole3Counts', 'hole4Counts', 'hole5Counts', 'hole6Counts', 'hole7Counts', 'hole8Counts', 'hole9Counts')
 
-    count1,count2,count3,count4,count5,count6,count7,count8,count9=0,0,0,0,0,0,0,0,0
+    count1, count2, count3, count4, count5, count6, count7, count8, count9 = 0, 0, 0, 0, 0, 0, 0, 0, 0
     for d in data:
-        count1=count1+d['hole1Counts']
-        count2=count2+d['hole2Counts']
-        count3=count3+d['hole3Counts']
-        count4=count4+d['hole4Counts']
-        count5=count5+d['hole5Counts']
-        count6=count6+d['hole6Counts']
-        count7=count7+d['hole7Counts']
-        count8=count8+d['hole8Counts']
-        count9=count9+d['hole9Counts']
+        count1 = count1+d['hole1Counts']
+        count2 = count2+d['hole2Counts']
+        count3 = count3+d['hole3Counts']
+        count4 = count4+d['hole4Counts']
+        count5 = count5+d['hole5Counts']
+        count6 = count6+d['hole6Counts']
+        count7 = count7+d['hole7Counts']
+        count8 = count8+d['hole8Counts']
+        count9 = count9+d['hole9Counts']
 
-    storeRate=count1+count2+count3+count4+count5+count6+count7+count8+count9
-    return JsonResponse({'linerate':[{'data':[random.random()]}],'storerate':[{'data':[storeRate/180]}] ,'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
+    storeRate = count1+count2+count3+count4+count5+count6+count7+count8+count9
+    return JsonResponse({'linerate': [{'data': [random.random()]}], 'storerate': [{'data': [storeRate/180]}], 'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
 @csrf_exempt
