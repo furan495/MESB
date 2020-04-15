@@ -310,6 +310,17 @@ def queryPallet(request):
     return JsonResponse({'res': '8,'})
 
 
+@csrf_exempt
+def queryMWPosition(request):
+    params = json.loads(request.body)
+    try:
+        product = Product.objects.get(mwPosition=params['number'])
+        res=product.name.split('/')[0]
+    except:
+        res=''
+    return JsonResponse({'res': res})
+
+
 outPosition, inPosition = [], []
 
 
@@ -948,7 +959,8 @@ def filterChart(request):
             map(lambda obj: [dataX(obj['batch']), obj['bad']], product))
         reasonData = list(
             map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-                Product.objects.filter(Q(result='2',workOrder__order__orderType__name='灌装'))
+                Product.objects.filter(
+                    Q(result='2', workOrder__order__orderType__name='灌装'))
                 .values('reason')
                 .annotate(count=Count('reason'))
                 .values('reason', 'count'))
