@@ -937,7 +937,8 @@ def filterChart(request):
     data = []
     params = json.loads(request.body)
     start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
-    stop = datetime.datetime.strptime(params['stop'], '%Y/%m/%d')
+    stop = datetime.datetime.strptime(
+        params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
     if params['chart'] == 'power':
         data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装', workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
             workOrder__status__name='已完成')), expects=Count('batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
