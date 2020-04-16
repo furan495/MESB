@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from app.utils import *
 from app.models import *
+from functools import reduce
 from app.serializers import *
 from itertools import product
 from django.db.models import Q
@@ -315,9 +316,9 @@ def queryMWPosition(request):
     params = json.loads(request.body)
     try:
         product = Product.objects.get(mwPosition=params['number'])
-        res=product.name.split('/')[0]
+        res = product.name.split('/')[0]
     except:
-        res=''
+        res = ''
     return JsonResponse({'res': res})
 
 
@@ -416,7 +417,7 @@ def checkUserState(request):
 def queryInterviewChart(request):
     data = list(map(lambda obj: [dataX(obj.time.date()), Operate.objects.filter(
         Q(time__gte=obj.time.date(), time__lte=obj.time.date()+datetime.timedelta(hours=24))).count()], Operate.objects.filter(Q(name='登陆系统')).order_by('time')))
-    return JsonResponse({'res': data})
+    return JsonResponse({'res': reduce(lambda x, y: x if y in x else x+[y], [[], ]+data)})
 
 
 @csrf_exempt

@@ -541,7 +541,8 @@ class ProductType(models.Model):
         max_length=20, verbose_name='产品编号', blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='产品图片', blank=True, null=True)
-    errorRange = models.FloatField(verbose_name='误差范围', blank=True, null=True)
+    errorRange = models.FloatField(
+        verbose_name='误差范围', blank=True, null=True)
     orderType = models.ForeignKey(OrderType, related_name='products',
                                   on_delete=models.CASCADE, verbose_name='关联订单', blank=True, null=True)
 
