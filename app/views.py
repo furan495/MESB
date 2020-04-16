@@ -747,7 +747,9 @@ def queryOperateChart(request):
 
 @csrf_exempt
 def queryQualanaChart(request):
-    data = qualAna(all=False)
+    params = json.loads(request.body)
+    orderType = params['order']
+    data = qualAna(orderType, all=False)
     return JsonResponse({'res': data})
 
 
@@ -922,7 +924,8 @@ def exportData(request):
 
 @csrf_exempt
 def queryPoweranaChart(request):
-    data = powerAna()
+    params = json.loads(request.body)
+    data = powerAna(params['order'])
     return JsonResponse({'res': data})
 
 
@@ -940,7 +943,7 @@ def filterChart(request):
     stop = datetime.datetime.strptime(
         params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
     if params['chart'] == 'power':
-        data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装', workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
+        data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'], workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(
             workOrder__status__name='已完成')), expects=Count('batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
         expectData = list(
             map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
@@ -954,7 +957,7 @@ def filterChart(request):
             {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
         ]
     if params['chart'] == 'qual':
-        product = Product.objects.filter(Q(workOrder__order__orderType__name='灌装', workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
+        product = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'], workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
             'batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
         goodData = list(
             map(lambda obj: [dataX(obj['batch']), obj['good']], product))
@@ -974,6 +977,11 @@ def filterChart(request):
             {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData, 'innerSize': '50%',
                 'center': [150, 80], 'size':200}
         ]
+        if params['order'] == '机加':
+            data = [
+                {'name': '合格', 'type': 'column', 'data': goodData},
+                {'name': '不合格', 'type': 'column', 'data': badData},
+            ]
     if params['chart'] == 'mate':
         redBottle = list(
             map(lambda obj: [dataX(obj['createTime']), obj['count']],
@@ -1132,7 +1140,7 @@ def queryCharts(request):
         count9 = count9+d['hole9Counts']
 
     storeRate = count1+count2+count3+count4+count5+count6+count7+count8+count9
-    return JsonResponse({'linerate': [{'data': [random.random()]}], 'storerate': [{'data': [storeRate/180]}], 'qualana': qualAna(all=True), 'mateana': mateAna(), 'storeana': storeAna()})
+    return JsonResponse({'linerate': [{'data': [random.random()]}], 'storerate': [{'data': [storeRate/180]}], 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'storeana': storeAna()})
 
 
 @csrf_exempt

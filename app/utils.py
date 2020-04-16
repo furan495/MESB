@@ -26,8 +26,8 @@ def rateY(obj):
     return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
 
-def powerAna():
-    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+def powerAna(orderType):
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
@@ -42,8 +42,8 @@ def powerAna():
     return data
 
 
-def qualAna(all=False):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(good=Count(
+def qualAna(orderType, all=False):
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
@@ -70,6 +70,11 @@ def qualAna(all=False):
             {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
             {'name': '合格率', 'type': 'line',
                 'yAxis': 1, 'data': goodRate[-20:]},
+        ]
+    if orderType == '机加':
+        data = [
+            {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
+            {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
         ]
 
     return data
