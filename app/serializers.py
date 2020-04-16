@@ -393,12 +393,19 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
+    batch = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
 
+    def get_batch(self, obj):
+        try:
+            return obj.product.batch.strftime('%Y-%m-%d')
+        except:
+            return ''
+
     class Meta:
         model = ProductStandard
-        fields = ('key', 'product', 'name',
+        fields = ('key', 'product', 'name', 'batch',
                   'expectValue', 'realValue', 'result')
 
 

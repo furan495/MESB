@@ -415,8 +415,9 @@ def checkUserState(request):
 
 @csrf_exempt
 def queryInterviewChart(request):
-    data = list(map(lambda obj: [dataX(obj.time.date()), Operate.objects.filter(
-        Q(time__gte=obj.time.date(), time__lte=obj.time.date()+datetime.timedelta(hours=24))).count()], Operate.objects.filter(Q(name='登陆系统')).order_by('time')))
+    data = list(map(lambda obj: [dataX(obj.time.date()), dataY(obj.time)], Operate.objects.filter(
+        Q(name='登陆系统')).order_by('time')))
+
     return JsonResponse({'res': reduce(lambda x, y: x if y in x else x+[y], [[], ]+data)})
 
 
@@ -746,7 +747,7 @@ def queryOperateChart(request):
 
 @csrf_exempt
 def queryQualanaChart(request):
-    data = qualAna()
+    data = qualAna(all=False)
     return JsonResponse({'res': data})
 
 

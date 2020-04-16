@@ -139,6 +139,9 @@ class OperateViewSet(viewsets.ModelViewSet):
     queryset = Operate.objects.all().order_by('-time')
     serializer_class = OperateSerializer
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name']
+
 
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')

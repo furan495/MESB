@@ -16,6 +16,12 @@ def dataX(date):
     return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
 
 
+def dataY(date):
+    start = date.date()
+    stop = date.date()+datetime.timedelta(hours=24)
+    return Operate.objects.filter(Q(name='登陆系统', time__gte=start, time__lte=stop)).count()
+
+
 def rateY(obj):
     return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
