@@ -1126,14 +1126,22 @@ def queryProducing(request):
 def queryCharts(request):
     data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
-    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
-    rate = [{'name': '合格率', 'type': 'areaspline',
-             'color': 'rgb(24,144,255)', 'data': goodRate[-20:]}]
+    goodRate = list(
+        map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
+    badRate = list(
+        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data))
+
+    rate = [
+        {'name': '合格率', 'type': 'areaspline',
+            'color': 'rgb(24,144,255)', 'data': goodRate[-20:]},
+        {'name': '不合格率', 'type': 'areaspline',
+            'color': 'rgb(255,77,79)', 'data': badRate[-20:]}
+    ]
 
     times = [
-        {'name': '生产耗时', 'type': 'column', 'data': list(
-            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name='灌装')))[-20:]))}
+        {'name': '生产耗时', 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
+            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name='灌装', status__name='已完成')))[-20:]))}
     ]
 
     product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
@@ -1145,7 +1153,7 @@ def queryCharts(request):
             Q(color='蓝瓶', status__name='入库')).count()},
     ]}]
 
-    return JsonResponse({'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
+    return JsonResponse({'pallet':list(map(lambda obj: obj.rate*100, Pallet.objects.all())),'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
 
 
 @csrf_exempt

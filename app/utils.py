@@ -13,7 +13,10 @@ def positionSelect(obj, position):
 
 
 def dataX(date):
-    return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
+    try:
+        return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
+    except:
+        return 0
 
 
 def dataY(date):
