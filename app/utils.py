@@ -26,7 +26,7 @@ def rateY(obj):
     return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
 
-def powerAna(orderType):
+def powerAna(orderType, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
@@ -35,14 +35,23 @@ def powerAna(orderType):
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     data = [
-        {'name': '预期产量', 'type': 'column', 'data': expectData[-20:]},
-        {'name': '实际产量', 'type': 'column', 'data': realData[-20:]},
+        {'name': '预期产量', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': expectData[-20:]},
+        {'name': '实际产量', 'type': 'column',
+            'color': 'rgb(255,77,79)', 'data': realData[-20:]},
         {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate[-20:]},
     ]
+    if all:
+        data = [
+            {'name': '预期产量', 'type': 'column',
+             'color': 'rgb(24,144,255)', 'data': expectData[-20:]},
+            {'name': '实际产量', 'type': 'column',
+             'color': 'rgb(255,77,79)', 'data': realData[-20:]},
+        ]
     return data
 
 
-def qualAna(orderType, all=False):
+def qualAna(orderType, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
@@ -59,22 +68,19 @@ def qualAna(orderType, all=False):
             .values('reason', 'count'))
     )
     data = [
-        {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
-        {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
+        {'name': '合格', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': goodData[-20:]},
+        {'name': '不合格', 'type': 'column',
+            'color': 'rgb(255,77,79)', 'data': badData[-20:]},
         {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
-    if all:
+    if all or orderType == '机加':
         data = [
-            {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
-            {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
-            {'name': '合格率', 'type': 'line',
-                'yAxis': 1, 'data': goodRate[-20:]},
-        ]
-    if orderType == '机加':
-        data = [
-            {'name': '合格', 'type': 'column', 'data': goodData[-20:]},
-            {'name': '不合格', 'type': 'column', 'data': badData[-20:]},
+            {'name': '合格', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': goodData[-20:]},
+            {'name': '不合格', 'type': 'column',
+                'color': 'rgb(255,77,79)', 'data': badData[-20:]},
         ]
 
     return data
@@ -118,20 +124,27 @@ def mateAna():
             ))
 
     data = [
-        {'name': '红粒', 'type': 'column', 'data': red[-20:]},
-        {'name': '红瓶', 'type': 'column', 'data': redBottle[-20:]},
-        {'name': '绿粒', 'type': 'column',  'data': green[-20:]},
-        {'name': '绿瓶', 'type': 'column', 'data': greenBottle[-20:]},
-        {'name': '蓝粒', 'type': 'column',  'data': blue[-20:]},
-        {'name': '蓝瓶', 'type': 'column', 'data': blueBottle[-20:]},
-        {'name': '瓶盖', 'type': 'areaspline', 'data': cap[-20:]},
+        {'name': '红粒', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': red[-20:]},
+        {'name': '红瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': redBottle[-20:]},
+        {'name': '绿粒', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': green[-20:]},
+        {'name': '绿瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': greenBottle[-20:]},
+        {'name': '蓝粒', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': blue[-20:]},
+        {'name': '蓝瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': blueBottle[-20:]},
+        {'name': '瓶盖', 'type': 'areaspline',
+            'color': 'rgb(24,144,255)', 'data': cap[-20:]},
     ]
     return data
 
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'column', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data

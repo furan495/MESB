@@ -925,7 +925,7 @@ def exportData(request):
 @csrf_exempt
 def queryPoweranaChart(request):
     params = json.loads(request.body)
-    data = powerAna(params['order'])
+    data = powerAna(params['order'], all=False)
     return JsonResponse({'res': data})
 
 
@@ -1124,23 +1124,28 @@ def queryProducing(request):
 
 @csrf_exempt
 def queryCharts(request):
-    data = Pallet.objects.filter(Q(rate__gt=0)).values('hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9').annotate(hole1Counts=Count('hole1', filter=Q(hole1=True)), hole2Counts=Count('hole2', filter=Q(hole2=True)), hole3Counts=Count('hole3', filter=Q(hole3=True)), hole4Counts=Count('hole4', filter=Q(hole4=True)), hole5Counts=Count(
-        'hole5', filter=Q(hole5=True)), hole6Counts=Count('hole6', filter=Q(hole6=True)), hole7Counts=Count('hole7', filter=Q(hole7=True)), hole8Counts=Count('hole8', filter=Q(hole8=True)), hole9Counts=Count('hole9', filter=Q(hole9=True))).values('hole1Counts', 'hole2Counts', 'hole3Counts', 'hole4Counts', 'hole5Counts', 'hole6Counts', 'hole7Counts', 'hole8Counts', 'hole9Counts')
+    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+        'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
-    count1, count2, count3, count4, count5, count6, count7, count8, count9 = 0, 0, 0, 0, 0, 0, 0, 0, 0
-    for d in data:
-        count1 = count1+d['hole1Counts']
-        count2 = count2+d['hole2Counts']
-        count3 = count3+d['hole3Counts']
-        count4 = count4+d['hole4Counts']
-        count5 = count5+d['hole5Counts']
-        count6 = count6+d['hole6Counts']
-        count7 = count7+d['hole7Counts']
-        count8 = count8+d['hole8Counts']
-        count9 = count9+d['hole9Counts']
+    rate = [{'name': '合格率', 'type': 'areaspline',
+             'color': 'rgb(24,144,255)', 'data': goodRate[-20:]}]
 
-    storeRate = count1+count2+count3+count4+count5+count6+count7+count8+count9
-    return JsonResponse({'linerate': [{'data': [random.random()]}], 'storerate': [{'data': [storeRate/180]}], 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'storeana': storeAna()})
+    times = [
+        {'name': '生产耗时', 'type': 'column', 'data': list(
+            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name='灌装')))[-20:]))}
+    ]
+
+    product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
+        {'name': '红瓶', 'y': Bottle.objects.filter(
+            Q(color='红瓶', status__name='入库',)).count()},
+        {'name': '绿瓶', 'y': Bottle.objects.filter(
+            Q(color='绿瓶', status__name='入库')).count()},
+        {'name': '蓝瓶', 'y': Bottle.objects.filter(
+            Q(color='蓝瓶', status__name='入库')).count()},
+    ]}]
+
+    return JsonResponse({'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
 
 
 @csrf_exempt
