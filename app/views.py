@@ -51,6 +51,16 @@ def recordWeight(request):
 
 
 @csrf_exempt
+def queryStores(request):
+    params = json.loads(request.body)
+    gz = Store.objects.filter(
+        Q(storeType__name=params['type'], workShop__name=params['shop'], productLine__name=params['line'])).count()
+    mw = Store.objects.filter(
+        Q(storeType__name=params['type'], workShop__name=params['shop'], productLine__name=params['line'])).count()
+    return JsonResponse({'gz': gz, 'mw': mw})
+
+
+@csrf_exempt
 def wincc2(request):
     global outPosition, inPosition
     title = {'startB': 'B模块出库', 'startC': 'C模块加工',
@@ -63,7 +73,7 @@ def wincc2(request):
     print(params)
 
     store = Store.objects.get(
-        Q(storeType__name='成品库', productLine__lineType__name='机加'))
+        Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
 
     if position[params[0]] == 'B出库':
         pos = outPosition.pop(0)
@@ -209,7 +219,7 @@ def storeOperate(request):
         'str'].split(',')
     print(params)
     store = Store.objects.get(
-        Q(storeType__name='成品库', productLine__lineType__name='灌装'))
+        Q(storeType__name='成品库', productLine=Order.objects.get(number=params[1]).line))
     storePosition = StorePosition.objects.get(
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
