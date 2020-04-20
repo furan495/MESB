@@ -332,10 +332,10 @@ def queryMW(request):
     workOrder = WorkOrder.objects.filter(
         Q(order__number=params['number'])).count()
     outPos = list(StorePosition.objects.filter(
-        Q(store__name__icontains='机加', status='3')))[:workOrder]
+        Q(store__productLine__lineType__name='机加', status='3')))[:workOrder]
     outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
     inPos = list(StorePosition.objects.filter(
-        Q(store__name__icontains='机加', status='4')).order_by('-key'))[:workOrder]
+        Q(store__productLine__lineType__name='机加', status='4')).order_by('-key'))[:workOrder]
     inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
 
     print('出库:'+','.join(outPosition))
@@ -690,23 +690,24 @@ def updatePWD(request):
 
 @csrf_exempt
 def createStore(request):
-    def selectStatus(params, index):
-        if '灌装' in params['name']:
+    def selectStatus(storeType, index):
+        if '灌装' == storeType:
             return '1'
-        if '机加' in params['name']:
+        if '机加' == storeType:
             if index <= 19:
                 return '3'
             else:
                 return '4'
     params = json.loads(request.body)
+    storeType = Store.objects.get(key=params['key']).productLine.lineType.name
     count = params['row']*params['column']
     for i in range(count):
         position = StorePosition()
         position.store = Store.objects.get(key=params['key'])
         position.number = '%s-%s' % (str(i+1), params['key'])
-        position.status = selectStatus(params, i)
+        position.status = selectStatus(storeType, i)
         position.save()
-        if '灌装' in params['name']:
+        if storeType == '灌装':
             pallet = Pallet()
             pallet.position = StorePosition.objects.get(
                 number='%s-%s' % (str(i+1), params['key']))
@@ -722,30 +723,16 @@ def queryOperateChart(request):
     for x, y in product(range(10), range(10)):
         dikaer.append([x, y])
 
-    def valueSelect(name):
-        if '新增' in name:
-            return 1
-        if '删除' in name:
-            return 3
-        if '预览' in name:
-            return 5
-        if '上传' in name:
-            return 7
-        if '排产' in name:
-            return 9
-        if '登陆' in name:
-            return 11
-
     series = []
     data = [{'data': series}]
     operateList = Operate.objects.all().order_by('-time')
     for i in range(len(operateList) if len(operateList) <= 100 else 100):
         ope = {}
+        ope['value'] = 1
         ope['x'] = dikaer[i][0]
         ope['y'] = dikaer[i][1]
         ope['operate'] = operateList[i].name
         ope['operator'] = operateList[i].operator
-        ope['value'] = valueSelect(operateList[i].name)
         ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
         series.append(ope)
 
@@ -1041,9 +1028,9 @@ def filterChart(request):
 def splitCheck(request):
     params = json.loads(request.body)
     res, info = 'ok', ''
-    line = params['line']
-    route = params['route']
-    if params['orderType'] in line and params['orderType'] in route:
+    line = ProductLine.objects.get(name=params['line'])
+    route = ProcessRoute.objects.get(name=params['route'])
+    if params['orderType'] == line.lineType.name and params['orderType'] == route.routeType.name:
         if params['orderType'] == '灌装':
             descriptions = params['description'].split(';')[:-1]
             rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0

@@ -290,9 +290,17 @@ class StoreSerializer(serializers.ModelSerializer):
         queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
     positions = serializers.StringRelatedField(many=True, read_only=True)
 
+    lineType = serializers.SerializerMethodField()
+
+    def get_lineType(self, obj):
+        try:
+            return obj.productLine.lineType.name
+        except:
+            return ''
+
     class Meta:
         model = Store
-        fields = ('key', 'workShop', 'name', 'dimensions', 'productLine',
+        fields = ('key', 'workShop', 'name', 'dimensions', 'productLine', 'lineType',
                   'number', 'storeType', 'positions')
 
 
