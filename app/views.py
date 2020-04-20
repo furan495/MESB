@@ -62,10 +62,11 @@ def wincc2(request):
 
     print(params)
 
+    store = Store.objects.get(
+        Q(storeType__name='成品库', productLine__lineType__name='机加'))
+
     if position[params[0]] == 'B出库':
         pos = outPosition.pop(0)
-        store = Store.objects.get(
-            Q(storeType__name='成品库', name__icontains='机加'))
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (pos, store.key)))
         storePosition.status = '4'
@@ -87,8 +88,6 @@ def wincc2(request):
         product.save()
     if position[params[0]] == 'B入库':
         pos = inPosition.pop(0)
-        store = Store.objects.get(
-            Q(storeType__name='成品库', name__icontains='机加'))
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (pos, store.key)))
         storePosition.status = '3'
@@ -209,13 +208,14 @@ def storeOperate(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
     print(params)
-    store = Store.objects.get(Q(storeType__name='成品库', name__icontains='灌装'))
+    store = Store.objects.get(
+        Q(storeType__name='成品库', productLine__lineType__name='灌装'))
     storePosition = StorePosition.objects.get(
         Q(number='%s-%s' % (params[-1], store.key)))
     storePosition.status = '3'
     storePosition.save()
     pallet = Pallet.objects.get(
-        Q(number=params[-2], position__store__storeType__name='成品库', position__store__name__icontains='灌装'))
+        Q(number=params[-2], position__store=store))
     pallet.position = storePosition
     pallet.hole1 = updatePalletHole(pallet.hole1, params[2])
     pallet.hole2 = updatePalletHole(pallet.hole2, params[3])
