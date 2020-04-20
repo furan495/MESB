@@ -448,6 +448,7 @@ def querySelect(request):
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
         selectList = {
+            'line': list(map(lambda obj: obj.name, ProductLine.objects.all())),
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
             'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
@@ -458,15 +459,21 @@ def querySelect(request):
             'materials': list(set(list(map(lambda obj: obj.name, Material.objects.all())))),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
         }
+    if params['model'] == 'processRoute':
+        selectList = {
+            'routeType': list(set(list(map(lambda obj: obj.name, OrderType.objects.all())))),
+        }
     if params['model'] == 'store':
         selectList = {
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
             'storeType': list(map(lambda obj: obj.name, StoreType.objects.all())),
+            'productLine': list(map(lambda obj: obj.name, ProductLine.objects.all())),
         }
     if params['model'] == 'productLine':
         selectList = {
             'state': list(map(lambda obj: obj.name, LineState.objects.all())),
-            'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all()))
+            'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
+            'lineType': list(set(list(map(lambda obj: obj.name, OrderType.objects.all())))),
         }
     if params['model'] == 'device':
         selectList = {
@@ -781,12 +788,12 @@ def exportData(request):
     if params['model'] == 'productLine':
         excel = list(
             map(lambda obj: {
-                '产线名称': obj.name, '隶属车间': obj.workShop.name, '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
+                '产线名称': obj.name, '产线类别': obj.lineType, '隶属车间': obj.workShop.name, '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
         )
     if params['model'] == 'processRoute':
         excel = list(
             map(lambda obj: {
-                '工艺名称': obj.name, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
+                '工艺名称': obj.name, '工艺类别': obj.routeType, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
                 '包含工序': ('->').join(list(
                     map(lambda obj: obj.name,
                         Process.objects.filter(Q(route=obj))
@@ -797,7 +804,7 @@ def exportData(request):
     if params['model'] == 'store':
         excel = list(
             map(lambda obj: {
-                '仓库名称': obj.name, '隶属车间': obj.workShop.name, '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions},
+                '仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,  '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions},
                 Store.objects.all())
         )
     if params['model'] == 'device':
@@ -1033,43 +1040,50 @@ def filterChart(request):
 @csrf_exempt
 def splitCheck(request):
     params = json.loads(request.body)
-    res, material = 'ok', ''
-    if params['orderType'] == '灌装':
-        descriptions = params['description'].split(';')[:-1]
-        rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
-        for desc in descriptions:
-            count = desc.split(',')[-1].split(':')[1]
-            red = red+int(desc.split(',')[1].split(':')[1])*int(count)
-            green = green+int(desc.split(',')[2].split(':')[1])*int(count)
-            blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
-            if desc.split(',')[0].split(':')[1] == '红瓶':
-                rbot = rbot+int(count)
-            if desc.split(',')[0].split(':')[1] == '绿瓶':
-                gbot = gbot+int(count)
-            if desc.split(',')[0].split(':')[1] == '蓝瓶':
-                bbot = bbot+int(count)
-        if red > Material.objects.filter(Q(name='红粒')).count():
-            res = 'err'
-            material = '红粒不足，无法排产'
-        if green > Material.objects.filter(Q(name='绿粒')).count():
-            res = 'err'
-            material = '绿粒不足，无法排产'
-        if blue > Material.objects.filter(Q(name='蓝粒')).count():
-            res = 'err'
-            material = '蓝粒不足，无法排产'
-        if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
-            res = 'err'
-            material = '瓶盖不足，无法排产'
-        if rbot > Material.objects.filter(Q(name='红瓶')).count():
-            res = 'err'
-            material = '红瓶不足，无法排产'
-        if gbot > Material.objects.filter(Q(name='绿瓶')).count():
-            res = 'err'
-            material = '绿瓶不足，无法排产'
-        if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
-            res = 'err'
-            material = '蓝瓶不足，无法排产'
-    return JsonResponse({'res': res, 'material': material})
+    res, info = 'ok', ''
+    line = params['line']
+    route = params['route']
+    if params['orderType'] in line and params['orderType'] in route:
+        if params['orderType'] == '灌装':
+            descriptions = params['description'].split(';')[:-1]
+            rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
+            for desc in descriptions:
+                count = desc.split(',')[-1].split(':')[1]
+                red = red+int(desc.split(',')[1].split(':')[1])*int(count)
+                green = green+int(desc.split(',')[2].split(':')[1])*int(count)
+                blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
+                if desc.split(',')[0].split(':')[1] == '红瓶':
+                    rbot = rbot+int(count)
+                if desc.split(',')[0].split(':')[1] == '绿瓶':
+                    gbot = gbot+int(count)
+                if desc.split(',')[0].split(':')[1] == '蓝瓶':
+                    bbot = bbot+int(count)
+            if red > Material.objects.filter(Q(name='红粒')).count():
+                res = 'err'
+                info = '红粒不足，无法排产'
+            if green > Material.objects.filter(Q(name='绿粒')).count():
+                res = 'err'
+                info = '绿粒不足，无法排产'
+            if blue > Material.objects.filter(Q(name='蓝粒')).count():
+                res = 'err'
+                info = '蓝粒不足，无法排产'
+            if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
+                res = 'err'
+                info = '瓶盖不足，无法排产'
+            if rbot > Material.objects.filter(Q(name='红瓶')).count():
+                res = 'err'
+                info = '红瓶不足，无法排产'
+            if gbot > Material.objects.filter(Q(name='绿瓶')).count():
+                res = 'err'
+                info = '绿瓶不足，无法排产'
+            if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
+                res = 'err'
+                info = '蓝瓶不足，无法排产'
+    else:
+        res = 'err'
+        info = '产线或工艺不符，无法排产'
+
+    return JsonResponse({'res': res, 'info': info})
 
 
 @csrf_exempt
@@ -1153,7 +1167,7 @@ def queryCharts(request):
             Q(color='蓝瓶', status__name='入库')).count()},
     ]}]
 
-    return JsonResponse({'pallet':list(map(lambda obj: obj.rate*100, Pallet.objects.all())),'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
+    return JsonResponse({'pallet': list(map(lambda obj: obj.rate*100, Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
 
 
 @csrf_exempt

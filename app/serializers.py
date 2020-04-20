@@ -184,11 +184,13 @@ class ProductLineSerializer(serializers.ModelSerializer):
         queryset=WorkShop.objects.all(), label='隶属车间', slug_field='name', required=False)
     state = serializers.SlugRelatedField(
         queryset=LineState.objects.all(), label='产线状态', slug_field='name', required=False)
+    lineType = serializers.SlugRelatedField(
+        queryset=OrderType.objects.all(), label='产线类别', slug_field='name', required=False)
 
     class Meta:
         model = ProductLine
         fields = ('key', 'workShop', 'name', 'state',
-                  'number', 'description')
+                  'number', 'description', 'lineType')
 
 
 class BottleStateSerializer(serializers.ModelSerializer):
@@ -209,6 +211,8 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
     devices = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     processes = serializers.StringRelatedField(many=True, read_only=True)
+    routeType = serializers.SlugRelatedField(
+        queryset=OrderType.objects.all(), label='工艺类别', slug_field='name', required=False)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
@@ -220,7 +224,7 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcessRoute
-        fields = ('key', 'name', 'data', 'description',
+        fields = ('key', 'name', 'data', 'description', 'routeType',
                   'createTime', 'creator', 'processes', 'devices')
 
 
@@ -282,11 +286,13 @@ class StoreSerializer(serializers.ModelSerializer):
         queryset=WorkShop.objects.all(), label='隶属车间', slug_field='name', required=False)
     storeType = serializers.SlugRelatedField(
         queryset=StoreType.objects.all(), label='仓库类型', slug_field='name', required=False)
+    productLine = serializers.SlugRelatedField(
+        queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
     positions = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Store
-        fields = ('key', 'workShop', 'name', 'dimensions',
+        fields = ('key', 'workShop', 'name', 'dimensions', 'productLine',
                   'number', 'storeType', 'positions')
 
 
