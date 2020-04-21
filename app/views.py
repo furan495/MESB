@@ -427,7 +427,6 @@ def checkUserState(request):
 def queryInterviewChart(request):
     data = list(map(lambda obj: [dataX(obj.time.date()), dataY(obj.time)], Operate.objects.filter(
         Q(name='登陆系统')).order_by('time')))
-
     return JsonResponse({'res': reduce(lambda x, y: x if y in x else x+[y], [[], ]+data)})
 
 
@@ -700,11 +699,11 @@ def updatePWD(request):
 
 @csrf_exempt
 def createStore(request):
-    def selectStatus(storeType, index):
+    def selectStatus(storeType, index, count):
         if '灌装' == storeType:
             return '1'
         if '机加' == storeType:
-            if index <= 19:
+            if index < int(count/2):
                 return '3'
             else:
                 return '4'
@@ -715,7 +714,7 @@ def createStore(request):
         position = StorePosition()
         position.store = Store.objects.get(key=params['key'])
         position.number = '%s-%s' % (str(i+1), params['key'])
-        position.status = selectStatus(storeType, i)
+        position.status = selectStatus(storeType, i, count)
         position.save()
         if storeType == '灌装':
             pallet = Pallet()
