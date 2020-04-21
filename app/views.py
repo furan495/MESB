@@ -1144,18 +1144,46 @@ def queryCharts(request):
 
     rate = [
         {'name': '合格率', 'type': 'areaspline',
-            'color': 'rgb(24,144,255)', 'data': goodRate[-20:]},
+            'color': {
+                'linearGradient': {
+                    'x1': 0,
+                    'y1': 0,
+                    'x2': 0,
+                    'y2': 1
+                },
+                'stops': [
+                    [0, 'rgba(24,144,255,1)'],
+                    [1, 'rgba(24,144,255,0)']
+                ]
+            }, 'data': goodRate[-20:]},
         {'name': '不合格率', 'type': 'areaspline',
-            'color': 'rgb(255,77,79)', 'data': badRate[-20:]}
+            'color': {
+                'linearGradient': {
+                    'x1': 0,
+                    'y1': 0,
+                    'x2': 0,
+                    'y2': 1
+                },
+                'stops': [
+                    [0, 'rgba(255,77,79,1)'],
+                    [1, 'rgba(255,77,79,0)']
+                ]
+            }, 'data': badRate[-20:]}
     ]
 
     times = [
-        {'name': '生产耗时', 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
+        {'name': '生产耗时', 'type': 'column', 'color': {
+                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'stops': [
+                     [0, 'rgba(244,144,255,0)'],
+                     [1, 'rgba(244,144,255,1)']
+                 ]
+        }, 'data': list(
             map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name='灌装', status__name='已完成')))[-20:]))}
     ]
 
     product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
-        {'name': '红瓶', 'y': Bottle.objects.filter(
+        {'name': '红瓶', 'sliced': True, 'y': Bottle.objects.filter(
             Q(color='红瓶', status__name='入库',)).count()},
         {'name': '绿瓶', 'y': Bottle.objects.filter(
             Q(color='绿瓶', status__name='入库')).count()},

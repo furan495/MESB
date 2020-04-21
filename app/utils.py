@@ -47,9 +47,21 @@ def powerAna(orderType, all):
     if all:
         data = [
             {'name': '预期产量', 'type': 'column',
-             'color': 'rgb(24,144,255)', 'data': expectData[-20:]},
+             'color': {
+                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'stops': [
+                     [0, 'rgba(24,144,255,0)'],
+                     [1, 'rgba(24,144,255,1)']
+                 ]
+             }, 'data': expectData[-20:]},
             {'name': '实际产量', 'type': 'column',
-             'color': 'rgb(255,77,79)', 'data': realData[-20:]},
+             'color': {
+                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'stops': [
+                     [0, 'rgba(255,77,79,0)'],
+                     [1, 'rgba(255,77,79,1)']
+                 ]
+             }, 'data': realData[-20:]},
         ]
     return data
 
@@ -81,9 +93,21 @@ def qualAna(orderType, all):
     if all or orderType == '机加':
         data = [
             {'name': '合格', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': goodData[-20:]},
+                'color': {
+                    'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                    'stops': [
+                     [0, 'rgba(24,144,255,0)'],
+                     [1, 'rgba(24,144,255,1)']
+                    ]
+                }, 'data': goodData[-20:]},
             {'name': '不合格', 'type': 'column',
-                'color': 'rgb(255,77,79)', 'data': badData[-20:]},
+                'color': {
+                    'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                    'stops': [
+                     [0, 'rgba(255,77,79,0)'],
+                     [1, 'rgba(255,77,79,1)']
+                    ]
+                }, 'data': badData[-20:]},
         ]
 
     return data
@@ -147,7 +171,7 @@ def mateAna():
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: [obj['name'], obj['counts']], Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'sliced': True if obj['name'] == '蓝粒' else False, 'y':obj['counts']}, Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
