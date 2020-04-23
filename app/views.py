@@ -1127,9 +1127,17 @@ def queryProducing(request):
     workOrderList = WorkOrder.objects.filter(
         Q(status__name='等待中') | Q(status__name='加工中'))
     producing = list(
-        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B出库'), 'startC': positionSelect(obj, 'C加工'), 'startD': positionSelect(obj, 'D加工'), 'stopB': positionSelect(obj, 'B入库'), 'description': obj.description, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'order': obj.order.number}, workOrderList))
+        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B出库'), 'startC': positionSelect(obj, 'C加工'), 'startD': positionSelect(obj, 'D加工'), 'stopB': positionSelect(obj, 'B入库'), 'description': obj.description, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'name': obj.number, 'data': [obj.events.count()], 'order': obj.order.number}, workOrderList))
+    try:
+        route = workOrderList[0].order.route
+        processList = list(
+            map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
+        order = workOrderList[0].order.number[-4:]
+    except:
+        processList = []
+        order = ''
 
-    return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
+    return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'processes': processList, 'order': order, 'info': info})
 
 
 @csrf_exempt
