@@ -1181,7 +1181,7 @@ def queryCharts(request):
 
     times = [
         {'name': '生产耗时', 'type': 'column', 'color': {
-                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                  'stops': [
                      [0, 'rgba(244,144,255,0)'],
                      [1, 'rgba(244,144,255,1)']
@@ -1191,7 +1191,7 @@ def queryCharts(request):
     ]
 
     product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
-        {'name': '红瓶', 'sliced': True, 'y': Product.objects.filter(
+        {'name': '红瓶', 'y': Product.objects.filter(
             Q(name__icontains='红瓶')).count()},
         {'name': '绿瓶', 'y':  Product.objects.filter(
             Q(name__icontains='绿瓶')).count()},

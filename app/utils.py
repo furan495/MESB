@@ -48,7 +48,7 @@ def powerAna(orderType, all):
         data = [
             {'name': '预期产量', 'type': 'column',
              'color': {
-                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                  'stops': [
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
@@ -56,7 +56,7 @@ def powerAna(orderType, all):
              }, 'data': expectData[-20:]},
             {'name': '实际产量', 'type': 'column',
              'color': {
-                 'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                  'stops': [
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
@@ -94,7 +94,7 @@ def qualAna(orderType, all):
         data = [
             {'name': '合格', 'type': 'column',
                 'color': {
-                    'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                    'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                     'stops': [
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
@@ -102,7 +102,7 @@ def qualAna(orderType, all):
                 }, 'data': goodData[-20:]},
             {'name': '不合格', 'type': 'column',
                 'color': {
-                    'linearGradient': {'x1': 1, 'x2': 0, 'y1': 1, 'y2': 0},
+                    'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                     'stops': [
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
@@ -171,7 +171,7 @@ def mateAna():
 
 def storeAna():
     data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'sliced': True if obj['name'] == '蓝粒' else False, 'y':obj['counts']}, Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
