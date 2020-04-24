@@ -1191,12 +1191,12 @@ def queryCharts(request):
     ]
 
     product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
-        {'name': '红瓶', 'sliced': True, 'y': Bottle.objects.filter(
-            Q(color='红瓶', status__name='入库',)).count()},
-        {'name': '绿瓶', 'y': Bottle.objects.filter(
-            Q(color='绿瓶', status__name='入库')).count()},
-        {'name': '蓝瓶', 'y': Bottle.objects.filter(
-            Q(color='蓝瓶', status__name='入库')).count()},
+        {'name': '红瓶', 'sliced': True, 'y': Product.objects.filter(
+            Q(name__icontains='红瓶')).count()},
+        {'name': '绿瓶', 'y':  Product.objects.filter(
+            Q(name__icontains='绿瓶')).count()},
+        {'name': '蓝瓶', 'y':  Product.objects.filter(
+            Q(name__icontains='蓝瓶')).count()},
     ]}]
 
     return JsonResponse({'pallet': list(map(lambda obj: obj.rate*100, Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
