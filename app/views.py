@@ -699,19 +699,11 @@ def updatePWD(request):
 
 @csrf_exempt
 def createStore(request):
-    def selectStatus(storeType, index, count):
-        if '灌装' == storeType:
-            return '1'
-        if '机加' == storeType:
-            if index < int(count/2):
-                return '3'
-            else:
-                return '4'
     params = json.loads(request.body)
-    store=Store.objects.get(key=params['key'])
+    store = Store.objects.get(key=params['key'])
     storeType = store.productLine.lineType.name
-    store.direction=params['direction']
-    store.dimensions=params['dimensions']
+    store.direction = params['direction']
+    store.dimensions = params['dimensions']
     store.save()
     count = params['row']*params['column']
     for i in range(count):
@@ -719,6 +711,7 @@ def createStore(request):
         position.store = Store.objects.get(key=params['key'])
         position.number = '%s-%s' % (str(i+1), params['key'])
         position.status = selectStatus(storeType, i, count)
+        position.description = selectDescription(storeType, i, count)
         position.save()
         if storeType == '灌装':
             pallet = Pallet()
@@ -1203,7 +1196,7 @@ def queryCharts(request):
             Q(name__icontains='蓝瓶')).count()},
     ]}]
 
-    return JsonResponse({'pallet': list(map(lambda obj: [obj.rate*100,obj.number], Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
+    return JsonResponse({'pallet': list(map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
 
 
 @csrf_exempt
@@ -1229,4 +1222,45 @@ def addMaterialOrTool(request):
             tool.toolType = '1' if params['toolType'] == '自制' else '2'
             tool.store = Store.objects.get(name=params['store__name'])
             tool.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def addMaterialToStore(request):
+    params = json.loads(request.body)
+    stores = Store.objects.filter(
+        Q(productLine__name=params['productLine'], storeType__name='原料库'))
+    counts = 0
+    for store in stores:
+        counts = counts+Material.objects.filter(Q(store=store)).count()
+    return JsonResponse({'res': counts})
+
+
+@csrf_exempt
+def addMaterialToStoreResult(request):
+    params = json.loads(request.body)
+    position = StorePosition.objects.get(
+        Q(number=params['item'].split('/')[0]))
+    position.status = '3'
+    position.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def removeMaterial(request):
+    params = json.loads(request.body)
+    position = StorePosition.objects.get(
+        Q(number=params['item'].split('/')[0]))
+    position.status = '4'
+    position.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def positionGroup(request):
+    params = json.loads(request.body)
+    position = StorePosition.objects.get(
+        Q(number=params['item'].split('/')[0]))
+    position.description = params['value']
+    position.save()
     return JsonResponse({'res': 'ok'})

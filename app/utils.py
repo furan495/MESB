@@ -4,6 +4,21 @@ from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
 
 
+def selectStatus(storeType, index, count):
+    if '灌装' == storeType:
+        return '1'
+    if '机加' == storeType:
+        return '4'
+
+
+def selectDescription(storeType, index, count):
+    if '机加' == storeType:
+        if index <= int(count/2):
+            return '原料'
+        else:
+            return '成品'
+
+
 def positionSelect(obj, position):
     try:
         return Event.objects.get(workOrder=obj, source=position).time.strftime(

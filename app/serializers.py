@@ -308,7 +308,7 @@ class StorePositionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StorePosition
-        fields = ('key', 'store', 'number', 'status')
+        fields = ('key', 'store', 'number', 'status', 'description')
 
 
 class OperateSerializer(serializers.ModelSerializer):
