@@ -289,8 +289,11 @@ class StoreSerializer(serializers.ModelSerializer):
     productLine = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
     positions = serializers.StringRelatedField(many=True, read_only=True)
-
     lineType = serializers.SerializerMethodField()
+    materials = serializers.SerializerMethodField()
+
+    def get_materials(self, obj):
+        return list(set(list(map(lambda obj: obj.name, Material.objects.filter(Q(store__storeType__name='原料库', store__productLine__lineType__name='机加'))))))
 
     def get_lineType(self, obj):
         try:
@@ -301,14 +304,14 @@ class StoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = ('key', 'workShop', 'name', 'dimensions', 'direction', 'productLine', 'lineType',
-                  'number', 'storeType', 'positions')
+                  'number', 'storeType', 'positions', 'materials')
 
 
 class StorePositionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StorePosition
-        fields = ('key', 'store', 'number', 'status', 'description')
+        fields = ('key', 'store', 'number', 'status', 'description', 'content')
 
 
 class OperateSerializer(serializers.ModelSerializer):
@@ -387,12 +390,13 @@ class ProductSerializer(serializers.ModelSerializer):
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '9')
         else:
-            res = obj.mwPosition
+            pos = StorePosition.objects.get(content=obj.name)
+            res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         return res
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'result', 'pallet', 'mwPosition',
+        fields = ('key', 'prodType', 'workOrder', 'result', 'pallet',
                   'name', 'number',  'batch', 'palletStr', 'reason',  'stateList')
 
 

@@ -73,7 +73,7 @@ def wincc2(request):
     print(params)
 
     store = Store.objects.get(
-        Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
+        Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
 
     if position[params[0]] == 'B出库':
         pos = outPosition.pop(0)
@@ -88,6 +88,7 @@ def wincc2(request):
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
+        Material.objects.filter(Q(store=store))[0].delete()
     if position[params[0]] == '质检':
         workOrder = WorkOrder.objects.get(number=params[1])
         product = workOrder.workOrder
@@ -98,17 +99,16 @@ def wincc2(request):
         product.save()
     if position[params[0]] == 'B入库':
         pos = inPosition.pop(0)
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (pos, store.key)))
-        storePosition.status = '3'
-        storePosition.save()
         workOrder = WorkOrder.objects.get(number=params[1])
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
         product = workOrder.workOrder
-        product.mwPosition = '%s-%s号位' % (store.name, pos)
-        product.save()
+        storePosition = StorePosition.objects.get(
+            Q(number='%s-%s' % (pos, store.key)))
+        storePosition.status = '3'
+        storePosition.content = product.name
+        storePosition.save()
 
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -324,12 +324,9 @@ def queryPallet(request):
 @csrf_exempt
 def queryMWPosition(request):
     params = json.loads(request.body)
-    try:
-        product = Product.objects.get(mwPosition=params['number'])
-        res = product.name.split('/')[0]
-    except:
-        res = ''
-    return JsonResponse({'res': res})
+    mwPosition = StorePosition.objects.get(
+        number=params['item'].split('/')[0]).content
+    return JsonResponse({'res': mwPosition})
 
 
 outPosition, inPosition = [], []
@@ -342,10 +339,10 @@ def queryMW(request):
     workOrder = WorkOrder.objects.filter(
         Q(order__number=params['number'])).count()
     outPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', status='3')))[:workOrder]
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3')))[:workOrder]
     outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
     inPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', status='4')).order_by('-key'))[:workOrder]
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4')).order_by('-key'))[:workOrder]
     inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
 
     print('出库:'+','.join(outPosition))
@@ -1072,6 +1069,14 @@ def splitCheck(request):
             if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
                 res = 'err'
                 info = '蓝瓶不足，无法排产'
+        if params['orderType'] == '机加':
+            descriptions = params['description']
+            count = 0
+            for desc in descriptions.split(';')[:-1]:
+                count = count+int(desc.split('x')[1])
+            if Material.objects.filter(Q(store__storeType__name='混合库')).count() < count:
+                res = 'err'
+                info = '原料不足，无法排产'
     else:
         res = 'err'
         info = '产线或工艺不符，无法排产'
@@ -1242,7 +1247,12 @@ def addMaterialToStoreResult(request):
     position = StorePosition.objects.get(
         Q(number=params['item'].split('/')[0]))
     position.status = '3'
+    position.content = params['material']
     position.save()
+    material = Material.objects.filter(
+        Q(name=params['material'], store__storeType__name='原料库'))[0]
+    material.store = position.store
+    material.save()
     return JsonResponse({'res': 'ok'})
 
 

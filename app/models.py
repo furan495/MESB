@@ -476,6 +476,8 @@ class StorePosition(models.Model):
     number = models.CharField(max_length=20, verbose_name='仓位编号')
     description = models.CharField(
         max_length=20, verbose_name='仓位描述', blank=True, null=True, default='分组')
+    content = models.CharField(
+        max_length=20, verbose_name='存放物料', blank=True, null=True, default='')
 
     def __str__(self):
         return self.number+'/'+self.status+'/'+str(self.key)+'/'+self.description
@@ -580,8 +582,6 @@ class Product(models.Model):
     batch = models.DateField(auto_now_add=True, verbose_name='产品批次')
     result = models.CharField(choices=PRODUCT_RESULT,
                               max_length=2, verbose_name='检测结果', blank=True, null=True)
-    mwPosition = models.CharField(
-        max_length=200, verbose_name='机加成品位', blank=True, null=True)
     reason = models.CharField(
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
 
