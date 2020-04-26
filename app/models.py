@@ -451,6 +451,8 @@ class Store(models.Model):
         max_length=20, verbose_name='仓库编号', blank=True, null=True)
     dimensions = models.CharField(
         max_length=20, verbose_name='仓库规模',  blank=True, null=True)
+    direction = models.CharField(
+        max_length=20, verbose_name='仓库排向', default='row')
 
     def __str__(self):
         return self.name

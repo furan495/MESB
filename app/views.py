@@ -465,7 +465,7 @@ def querySelect(request):
         }
     if params['model'] == 'bom':
         selectList = {
-            'materials': list(set(list(map(lambda obj: obj.name, Material.objects.all())))),
+            'materials': list(set(list(map(lambda obj: obj.name+'/'+obj.size, Material.objects.all())))),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
         }
     if params['model'] == 'processRoute':
@@ -708,7 +708,11 @@ def createStore(request):
             else:
                 return '4'
     params = json.loads(request.body)
-    storeType = Store.objects.get(key=params['key']).productLine.lineType.name
+    store=Store.objects.get(key=params['key'])
+    storeType = store.productLine.lineType.name
+    store.direction=params['direction']
+    store.dimensions=params['dimensions']
+    store.save()
     count = params['row']*params['column']
     for i in range(count):
         position = StorePosition()
@@ -1199,7 +1203,7 @@ def queryCharts(request):
             Q(name__icontains='蓝瓶')).count()},
     ]}]
 
-    return JsonResponse({'pallet': list(map(lambda obj: obj.rate*100, Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
+    return JsonResponse({'pallet': list(map(lambda obj: [obj.rate*100,obj.number], Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
 
 
 @csrf_exempt
