@@ -13,7 +13,7 @@ def selectStatus(storeType, index, count):
 
 def selectDescription(storeType, index, count):
     if '机加' == storeType:
-        if index <= int(count/2):
+        if index < int(count/2):
             return '原料'
         else:
             return '成品'

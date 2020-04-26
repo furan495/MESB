@@ -77,7 +77,6 @@ urlpatterns = [
     url(r'^api/positionGroup/',  views.positionGroup),
     url(r'^api/queryProducing/',  views.queryProducing),
     url(r'^api/checkUserState/',  views.checkUserState),
-    url(r'^api/removeMaterial/',  views.removeMaterial),
     url(r'^api/queryMWPosition/',  views.queryMWPosition),
     url(r'^api/updateUserState/',  views.updateUserState),
     url(r'^api/annotateDataList/',  views.annotateDataList),

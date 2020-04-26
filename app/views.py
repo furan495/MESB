@@ -1257,16 +1257,6 @@ def addMaterialToStoreResult(request):
 
 
 @csrf_exempt
-def removeMaterial(request):
-    params = json.loads(request.body)
-    position = StorePosition.objects.get(
-        Q(number=params['item'].split('/')[0]))
-    position.status = '4'
-    position.save()
-    return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
 def positionGroup(request):
     params = json.loads(request.body)
     position = StorePosition.objects.get(
