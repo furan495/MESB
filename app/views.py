@@ -339,10 +339,10 @@ def queryMW(request):
     workOrder = WorkOrder.objects.filter(
         Q(order__number=params['number'])).count()
     outPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3')))[:workOrder]
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')))[:workOrder]
     outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
     inPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4')).order_by('-key'))[:workOrder]
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4', description='成品')).order_by('-key'))[:workOrder]
     inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
 
     print('出库:'+','.join(outPosition))
