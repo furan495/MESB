@@ -663,7 +663,6 @@ def upload(request):
     document.save()
     operate = Operate()
     operate.name = '上传文档'
-    operate.target = f.name
     operate.operator = up
     operate.save()
     return JsonResponse({'ok': 'ok'})

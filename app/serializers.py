@@ -323,7 +323,7 @@ class OperateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Operate
-        fields = ('key', 'operator', 'name', 'time', 'target')
+        fields = ('key', 'operator', 'name', 'time')
 
 
 class PalletSerializer(serializers.ModelSerializer):

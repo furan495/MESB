@@ -533,8 +533,6 @@ class Operate(models.Model):
         max_length=20, verbose_name='操作名称')
     operator = models.CharField(
         max_length=20, verbose_name='操作人')
-    target = models.CharField(
-        max_length=200, verbose_name='操作对象')
     time = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
 
     def __str__(self):
