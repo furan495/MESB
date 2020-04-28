@@ -63,10 +63,10 @@ def queryStores(request):
 @csrf_exempt
 def wincc2(request):
     global outPosition, inPosition
-    title = {'startB': 'B模块出库', 'startC': 'C模块加工',
-             'startD': 'D模块加工', 'stopB': 'B模块入库', 'check': '质检'}
-    position = {'startB': 'B出库', 'startC': 'C加工',
-                'startD': 'D加工', 'stopB': 'B入库', 'check': '质检'}
+    title = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
+             'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检'}
+    position = {'startB': 'B出库', 'startC': 'C加工开始', 'stopC': 'C加工结束',
+                'startD': 'D加工开始', 'stopD': 'D加工结束', 'stopB': 'B入库', 'check': '质检'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
@@ -446,9 +446,18 @@ def querySelect(request):
 
     print(data.query.__str__()) """
 
-    """ data = WorkOrder.objects.filter(Q(order__status__name='已排产',order__orderType__name='机加')).values('number').annotate(countA=Count('key', filter=Q(description='A类产品')), countB=Count('key', filter=Q(description='B类产品')),countC=Count('key', filter=Q(description='C类产品')),countD=Count('key', filter=Q(description='D类产品'))).values('order__number','number','countA','countB','countC','countD')
+    """ product = ProductType.objects.filter(
+        Q(orderType__name='机加'))
+    kward = {}
+    for prod in product:
+        kward[prod.name] = Count('workOrders__workOrder__name',
+                                 filter=Q(workOrders__workOrder__name=prod.name))
+    productList = list(map(lambda obj: obj.name, product))
 
-    print(data.query.__str__()) """
+    orders = Order.objects.filter(
+        Q(status__name='已排产', orderType__name='机加')).values('number').annotate(**kward).values('number','status__name',*productList)
+
+    print(orders.query.__str__()) """
 
     params = json.loads(request.body)
     selectList = {}
@@ -571,8 +580,8 @@ def orderSplit(request):
                     workOrder.save()
 
                     product = Product()
-                    product.name = '%s/%s' % (workOrder.description.split(',')[
-                        0].split(':')[1], workOrder.number)
+                    product.name = workOrder.description.split(',')[
+                        0].split(':')[1]
                     product.number = str(time.time()*1000000)
                     product.workOrder = workOrder
                     product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=workOrder.description.split(',')[
@@ -598,8 +607,7 @@ def orderSplit(request):
                     workOrder.save()
 
                     product = Product()
-                    product.name = '%s/%s' % (description.split('x')
-                                              [0], workOrder.number)
+                    product.name = description.split('x')[0]
                     product.number = str(time.time()*1000000)
                     product.workOrder = workOrder
                     product.prodType = ProductType.objects.get(
@@ -1128,7 +1136,7 @@ def queryProducing(request):
     workOrderList = WorkOrder.objects.filter(
         Q(status__name='等待中') | Q(status__name='加工中'))
     producing = list(
-        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B出库'), 'startC': positionSelect(obj, 'C加工'), 'startD': positionSelect(obj, 'D加工'), 'stopB': positionSelect(obj, 'B入库'), 'description': obj.description, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'name': obj.number, 'data': [obj.events.count()], 'order': obj.order.number}, workOrderList))
+        map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B出库'), 'startC': positionSelect(obj, 'C加工开始'), 'stopC': positionSelect(obj, 'C加工结束'), 'startD': positionSelect(obj, 'D加工开始'), 'stopD': positionSelect(obj, 'D加工结束'), 'stopB': positionSelect(obj, 'B入库'), 'description': obj.description, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架'), 'name': obj.number, 'data': [obj.events.count()], 'order': obj.order.number}, workOrderList))
     try:
         route = workOrderList[0].order.route
         processList = list(
