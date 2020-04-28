@@ -390,8 +390,11 @@ class ProductSerializer(serializers.ModelSerializer):
                 res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
                                         obj.pallet.position.number.split('-')[0], '9')
         else:
-            pos = StorePosition.objects.get(content=obj.name)
-            res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
+            try:
+                pos = StorePosition.objects.get(content=obj.name)
+                res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
+            except:
+                res = ''
         return res
 
     class Meta:
