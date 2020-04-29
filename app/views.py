@@ -12,7 +12,7 @@ from app.models import *
 from functools import reduce
 from app.serializers import *
 from itertools import product
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -93,11 +93,19 @@ def wincc2(request):
     if position[params[0]] == '质检':
         workOrder = WorkOrder.objects.get(number=params[1])
         product = workOrder.workOrder
+        standard = ProductStandard.objects.get(
+            Q(name='外观', product=product))
         if random.random() > 0.5:
             product.result = '1'
+            standard.result = '1'
+            standard.realValue = '合格'
         else:
             product.result = '2'
+            product.reason = '检测不合格'
+            standard.result = '2'
+            standard.realValue = '不合格'
         product.save()
+        standard.save()
     if position[params[0]] == 'B入库':
         pos = inPosition.pop(0)
         workOrder = WorkOrder.objects.get(number=params[1])
@@ -108,7 +116,8 @@ def wincc2(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (pos, store.key)))
         storePosition.status = '3'
-        storePosition.content = product.name
+        storePosition.content = '%s-%s' % (product.name,
+                                           product.workOrder.number)
         storePosition.save()
 
         order = workOrder.order
@@ -624,6 +633,12 @@ def orderSplit(request):
                     product.prodType = ProductType.objects.get(
                         Q(orderType=order.orderType, name__icontains=description.split('x')[0]))
                     product.save()
+
+                    standard = ProductStandard()
+                    standard.name = '外观'
+                    standard.expectValue = '合格'
+                    standard.product = product
+                    standard.save()
 
     return JsonResponse({'res': 'ok'})
 
