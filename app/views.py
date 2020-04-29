@@ -13,6 +13,7 @@ from functools import reduce
 from app.serializers import *
 from itertools import product
 from django.db.models import Q
+from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
@@ -428,6 +429,29 @@ def queryInterviewChart(request):
 
 
 @csrf_exempt
+def updateDataView(request):
+    params = json.loads(request.body)
+    product = ProductType.objects.filter(
+        Q(orderType__name=params['orderType']))
+    kward = {}
+    for prod in product:
+        kward[prod.name] = Count('workOrders__workOrder__name',
+                                 filter=Q(workOrders__workOrder__name=prod.name))
+    productList = list(map(lambda obj: obj.name, product))
+
+    orders = Order.objects.filter(
+        Q(status__key=2, orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(**kward).values('number', 'status__name', *productList)
+
+    dv = DataView.objects.all()[0]
+    if params['orderType'] == '机加':
+        dv.mwContent = formatSql(orders.query.__str__().split(' '))
+    if params['orderType'] == '灌装':
+        dv.gzContent = formatSql(orders.query.__str__().split(' '))
+    dv.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def querySelect(request):
     """ data = Order.objects.filter(Q(status__name='已排产',orderType__name='灌装')).values('number', 'scheduling', 'status__name').annotate(
         rbot=Count('bottles', filter=Q(bottles__color='红瓶')),
@@ -445,19 +469,6 @@ def querySelect(request):
     ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',)
 
     print(data.query.__str__()) """
-
-    """ product = ProductType.objects.filter(
-        Q(orderType__name='机加'))
-    kward = {}
-    for prod in product:
-        kward[prod.name] = Count('workOrders__workOrder__name',
-                                 filter=Q(workOrders__workOrder__name=prod.name))
-    productList = list(map(lambda obj: obj.name, product))
-
-    orders = Order.objects.filter(
-        Q(status__name='已排产', orderType__name='机加')).values('number').annotate(**kward).values('number','status__name',*productList)
-
-    print(orders.query.__str__()) """
 
     params = json.loads(request.body)
     selectList = {}

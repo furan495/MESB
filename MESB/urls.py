@@ -27,6 +27,7 @@ router.register(r'api/materials', viewSet.MaterialViewSet)
 router.register(r'api/workShops', viewSet.WorkShopViewSet)
 router.register(r'api/customers', viewSet.CustomerViewSet)
 router.register(r'api/documents', viewSet.DocumentViewSet)
+router.register(r'api/dataViews', viewSet.DataViewViewSet)
 router.register(r'api/orgaLevels', viewSet.OrgaLevelViewSet)
 router.register(r'api/lineStates', viewSet.LineStateViewSet)
 router.register(r'api/storeTypes', viewSet.StoreTypeViewSet)
@@ -75,6 +76,7 @@ urlpatterns = [
     url(r'^api/OutputPallet/',  views.OutputPallet),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/positionGroup/',  views.positionGroup),
+    url(r'^api/updateDataView/',  views.updateDataView),
     url(r'^api/queryProducing/',  views.queryProducing),
     url(r'^api/removeMaterial/',  views.removeMaterial),
     url(r'^api/checkUserState/',  views.checkUserState),

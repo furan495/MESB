@@ -4,6 +4,13 @@ from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
 
 
+def formatSql(sqlList):
+    for sql in sqlList:
+        if u'\u4e00' <= sql <= u'\u9fff':
+            sqlList[sqlList.index(sql)] = '\'%s\'' % sql
+    return ' '.join(sqlList)
+
+
 def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'

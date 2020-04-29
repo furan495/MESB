@@ -215,6 +215,11 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
     serializer_class = ProductTypeSerializer
 
 
+class DataViewViewSet(viewsets.ModelViewSet):
+    queryset = DataView.objects.all()
+    serializer_class = DataViewSerializer
+
+
 class ProductStandardViewSet(viewsets.ModelViewSet):
     queryset = ProductStandard.objects.all().order_by('-key')
     serializer_class = ProductStandardSerializer
