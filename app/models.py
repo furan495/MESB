@@ -338,17 +338,17 @@ class Device(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='设备编号', blank=True, null=True, default=str(time.time()*1000))
+        max_length=20, verbose_name='设备编号', blank=True, null=True)
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
-        max_length=20, verbose_name='设备厂家', blank=True, null=True, default='XXX工厂')
+        max_length=20, verbose_name='设备厂家', blank=True, null=True)
     facTime = models.CharField(
-        max_length=20, verbose_name='出厂日期', blank=True, null=True, default='2020-02-13')
+        max_length=20, verbose_name='出厂日期', blank=True, null=True)
     facPeo = models.CharField(
-        max_length=20, verbose_name='厂家联系人', blank=True, null=True, default='XXX先生')
+        max_length=20, verbose_name='厂家联系人', blank=True, null=True)
     facPho = models.CharField(
-        max_length=20, verbose_name='厂家电话', blank=True, null=True, default='13312345678')
+        max_length=20, verbose_name='厂家电话', blank=True, null=True)
 
     def __str__(self):
         return self.name
