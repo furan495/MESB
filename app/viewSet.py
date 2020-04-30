@@ -24,11 +24,6 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     serializer_class = OrganizationSerializer
 
 
-class OrgaLevelViewSet(viewsets.ModelViewSet):
-    queryset = OrgaLevel.objects.all()
-    serializer_class = OrgaLevelSerializer
-
-
 class OrderTypeViewSet(viewsets.ModelViewSet):
     queryset = OrderType.objects.all()
     serializer_class = OrderTypeSerializer

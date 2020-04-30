@@ -53,28 +53,12 @@ class WorkShop(models.Model):
         verbose_name = '车间'
 
 
-class OrgaLevel(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=10, verbose_name='等级名称', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '组织等级'
-
-
 class Organization(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
         max_length=20, verbose_name='组织名称', blank=True, null=True)
     parent = models.CharField(
         max_length=20, verbose_name='上级组织', blank=True, null=True)
-    duty = models.CharField(
-        max_length=20, verbose_name='组织职责', blank=True, null=True)
-    level = models.ForeignKey(
-        OrgaLevel, related_name='organizations', on_delete=models.CASCADE, verbose_name='组织等级', blank=True, null=True)
 
     def __str__(self):
         return self.name

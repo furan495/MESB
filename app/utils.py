@@ -4,7 +4,20 @@ from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
 
 
+def loopOrganization(organization):
+    def renderChildren(name):
+        if Organization.objects.filter(Q(parent=name)).count() != 0:
+            return loopOrganization(name)
+        else:
+            return list(map(lambda obj: {'key': obj.key, 'title': obj.name, }, User.objects.filter(Q(department__name=name))))
+    data = list(map(lambda obj: {
+                'key': obj.key, 'title': obj.name, 'children': renderChildren(obj.name)}, Organization.objects.filter(Q(parent=organization))))
+    return data
+
+
 def formatSql(sqlList):
+    sqlList.insert(
+        1, 'ROW_NUMBER() OVER(ORDER BY [app_order].[number]) AS 编号,')
     for sql in sqlList:
         if u'\u4e00' <= sql <= u'\u9fff':
             sqlList[sqlList.index(sql)] = '\'%s\'' % sql

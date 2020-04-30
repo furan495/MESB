@@ -13,19 +13,9 @@ class WorkShopSerializer(serializers.ModelSerializer):
 
 class OrganizationSerializer(serializers.ModelSerializer):
 
-    level = serializers.SlugRelatedField(
-        queryset=OrgaLevel.objects.all(), label='组织等级', slug_field='name', required=False)
-
     class Meta:
         model = Organization
-        fields = ('key', 'name', 'level', 'parent', 'duty')
-
-
-class OrgaLevelSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = OrgaLevel
-        fields = ('key', 'name')
+        fields = ('key', 'name', 'parent')
 
 
 class RoleSerializer(serializers.ModelSerializer):

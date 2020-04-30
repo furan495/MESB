@@ -13,8 +13,8 @@ from functools import reduce
 from app.serializers import *
 from itertools import product
 from django.db.models import Q, F
-from django.db import connection
 from django.http import JsonResponse
+from django.db.models.functions import RowNumber
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 
@@ -449,7 +449,7 @@ def updateDataView(request):
     productList = list(map(lambda obj: obj.name, product))
 
     orders = Order.objects.filter(
-        Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单状态=F('status__name'), 订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), **kward).values('订单编号', '订单批次', '排产时间', '订单状态', *productList)
+        Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), 订单状态=F('status__name'),  **kward).values('订单编号', '订单批次', '排产时间', '订单状态', *productList)
 
     dv = DataView.objects.all()[0]
     if params['orderType'] == '机加':
@@ -534,16 +534,11 @@ def querySelect(request):
             'toolType': ['自制', '外采'],
             'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
         }
-    if params['model'] == 'organization':
-        selectList = {
-            'level': list(map(lambda obj: obj.name, OrgaLevel.objects.all())),
-            'parent': list(map(lambda obj: obj['parent'], Organization.objects.all().values('parent').distinct())),
-        }
     if params['model'] == 'user':
         selectList = {
             'gender': ['男', '女'],
             'role': list(map(lambda obj: obj.name,  Role.objects.all())),
-            'department': list(map(lambda obj: obj.name, Organization.objects.filter(Q(level__name='部门'))))
+            'department': list(map(lambda obj: obj.name, Organization.objects.filter(~Q(parent=None))))
         }
     return JsonResponse({'res': selectList})
 
@@ -1119,29 +1114,17 @@ def splitCheck(request):
 
 @csrf_exempt
 def queryOrganization(request):
-    data = list(
-        map(lambda company: {'title': company.name, 'key': company.key, 'children': list(
-            map(lambda department: {'title': department.name, 'key': department.key, 'children': list(
-                map(lambda member: {'title': member.name, 'key': member.key}, User.objects.filter(
-                    Q(department__name=department.name)))
-            )}, Organization.objects.filter(
-                Q(level__name='部门', parent=company.name)))
-        )}, Organization.objects.filter(Q(level__name='公司')))
-    )
 
-    series = list(map(lambda obj: [obj.parent, obj.name],
-                      Organization.objects.filter(Q(level__name='部门'))))
-    seriesId = list(map(lambda obj: [obj.name, obj.key],
-                        Organization.objects.filter(Q(level__name='部门'))))
+    data = list(map(lambda obj: {
+        'key': obj.key,
+        'title': obj.name,
+        'children': loopOrganization(obj.name)
+    }, Organization.objects.filter(Q(parent=None))))
 
-    nodes = list(map(lambda obj: {'id': obj.name, 'name': obj.name,
-                                  'title': User.objects.filter(Q(department__name=obj.name, post='部长'))[0].name if len(User.objects.filter(Q(department__name=obj.name, post='部长'))) == 1 else ''}, Organization.objects.filter(Q(level__name='部门'))))
-    nodesId = list(map(lambda obj: {'id': obj.key, 'name': obj.duty},
-                       Organization.objects.filter(Q(level__name='部门'))))
-    list(map(lambda obj: series.append(obj), seriesId))
-    list(map(lambda obj: nodes.append(obj), nodesId))
+    series = list(map(lambda obj: [obj.parent if obj.parent else obj.name, obj.name],
+                      Organization.objects.filter(~Q(parent=None))))
 
-    return JsonResponse({'tree': data, 'series': series, 'nodes': nodes})
+    return JsonResponse({'tree': data, 'series': series, 'parent': list(map(lambda obj: [obj.key, obj.name], Organization.objects.all()))})
 
 
 errTime = 0
