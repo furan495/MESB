@@ -449,7 +449,7 @@ def updateDataView(request):
     productList = list(map(lambda obj: obj.name, product))
 
     orders = Order.objects.filter(
-        Q(status__key=2, orderType=OrderType.objects.get(name=params['orderType']))).annotate(订单状态=F('status__name'), 订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), **kward).values('订单编号', '订单批次', '排产时间', '订单状态', *productList)
+        Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单状态=F('status__name'), 订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), **kward).values('订单编号', '订单批次', '排产时间', '订单状态', *productList)
 
     dv = DataView.objects.all()[0]
     if params['orderType'] == '机加':
@@ -478,14 +478,6 @@ def querySelect(request):
     ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',)
 
     print(data.query.__str__()) """
-
-    product = ProductType.objects.filter(
-        Q(orderType__name='机加'))
-    kward = {}
-    for prod in product:
-        kward[prod.name] = Count('workOrders__workOrder__name',
-                                 filter=Q(workOrders__workOrder__name=prod.name))
-    productList = list(map(lambda obj: obj.name, product))
 
     params = json.loads(request.body)
     selectList = {}
