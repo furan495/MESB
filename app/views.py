@@ -998,16 +998,17 @@ def filterChart(request):
                 .annotate(count=Count('reason'))
                 .values('reason', 'count'))
         )
-        data = [
-            {'name': '合格', 'type': 'column', 'data': goodData},
-            {'name': '不合格', 'type': 'column', 'data': badData},
-            {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData, 'innerSize': '50%',
-                'center': [150, 80], 'size':200}
-        ]
         if params['order'] == '机加':
             data = [
                 {'name': '合格', 'type': 'column', 'data': goodData},
                 {'name': '不合格', 'type': 'column', 'data': badData},
+            ]
+        else:
+            data = [
+                {'name': '合格', 'type': 'column', 'data': goodData},
+                {'name': '不合格', 'type': 'column', 'data': badData},
+                {'name': '原因汇总', 'type': 'pie', 'color': '#00C1FF', 'data': reasonData, 'innerSize': '50%',
+                 'center': [150, 80], 'size':200}
             ]
     if params['chart'] == 'mate':
         redBottle = list(
@@ -1104,7 +1105,9 @@ def splitCheck(request):
             count = 0
             for desc in descriptions.split(';')[:-1]:
                 count = count+int(desc.split('x')[1])
-            if Material.objects.filter(Q(store__storeType__name='混合库')).count() < count:
+            occupy = WorkOrder.objects.filter(
+                Q(order__status__name='已排产')).count()
+            if Material.objects.filter(Q(store__storeType__name='混合库')).count()-occupy < count:
                 res = 'err'
                 info = '原料不足，无法排产'
     else:
@@ -1162,7 +1165,8 @@ def queryProducing(request):
 
 @csrf_exempt
 def queryCharts(request):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name='灌装')).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    params = json.loads(request.body)
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
@@ -1207,19 +1211,33 @@ def queryCharts(request):
                      [1, 'rgba(244,144,255,1)']
                  ]
         }, 'data': list(
-            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name='灌装', status__name='已完成')))[-20:]))}
+            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['orderType'], status__name='已完成')))[-20:]))}
     ]
 
-    product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
-        {'name': '红瓶', 'y': Product.objects.filter(
-            Q(name__icontains='红瓶')).count()},
-        {'name': '绿瓶', 'y':  Product.objects.filter(
-            Q(name__icontains='绿瓶')).count()},
-        {'name': '蓝瓶', 'y':  Product.objects.filter(
-            Q(name__icontains='蓝瓶')).count()},
-    ]}]
+    if params['orderType'] == '灌装':
+        product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
+            {'name': '红瓶', 'y': Product.objects.filter(
+                Q(name__icontains='红瓶')).count()},
+            {'name': '绿瓶', 'y':  Product.objects.filter(
+                Q(name__icontains='绿瓶')).count()},
+            {'name': '蓝瓶', 'y':  Product.objects.filter(
+                Q(name__icontains='蓝瓶')).count()},
+        ]}]
+        position = list(
+            map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
+    else:
+        product = [
+            {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data':
+             list(map(lambda obj:
+                      {'name': obj.name, 'y': Product.objects.filter(
+                          Q(name__icontains=obj.name)).count()},
+                      ProductType.objects.filter(Q(orderType__name='机加'))
+                      ))}
+        ]
+        position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
+            Q(store__storeType__name='混合库'))))
 
-    return JsonResponse({'pallet': list(map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all())), 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna('灌装', all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna('灌装', all=True)})
+    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['orderType'], all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna(params['orderType'], all=True)})
 
 
 @csrf_exempt
