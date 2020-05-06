@@ -54,7 +54,6 @@ urlpatterns = [
     url(r'^api/wincc2/',  views.wincc2),
     url(r'^api/logout/',  views.logout),
     url(r'^api/upload/',  views.upload),
-    url(r'^api/queryMW/',  views.queryMW),
     url(r'^api/uploadPic/',  views.uploadPic),
     url(r'^api/updatePWD/',  views.updatePWD),
     url(r'^api/addBottle/',  views.addBottle),

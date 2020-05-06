@@ -63,7 +63,6 @@ def queryStores(request):
 
 @csrf_exempt
 def wincc2(request):
-    global outPosition, inPosition
     title = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
              'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检'}
     position = {'startB': 'B出库', 'startC': 'C加工开始', 'stopC': 'C加工结束',
@@ -77,15 +76,14 @@ def wincc2(request):
         Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
 
     if position[params[0]] == 'B出库':
-        pos = outPosition.pop(0)
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (pos, store.key)))
-        storePosition.status = '4'
-        storePosition.save()
         workOrder = WorkOrder.objects.get(number=params[1])
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
+        storePosition = StorePosition.objects.get(
+            Q(number='%s-%s' % (workOrder.workOrder.outPos, store.key)))
+        storePosition.status = '4'
+        storePosition.save()
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
@@ -107,14 +105,13 @@ def wincc2(request):
         product.save()
         standard.save()
     if position[params[0]] == 'B入库':
-        pos = inPosition.pop(0)
         workOrder = WorkOrder.objects.get(number=params[1])
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
         product = workOrder.workOrder
         storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (pos, store.key)))
+            Q(number='%s-%s' % (workOrder.workOrder.inPos, store.key)))
         storePosition.status = '3'
         storePosition.content = '%s-%s' % (product.name,
                                            product.workOrder.number)
@@ -339,28 +336,6 @@ def queryMWPosition(request):
     return JsonResponse({'res': mwPosition})
 
 
-outPosition, inPosition = [], []
-
-
-@csrf_exempt
-def queryMW(request):
-    global outPosition, inPosition
-    params = json.loads(request.body)
-    workOrder = WorkOrder.objects.filter(
-        Q(order__number=params['number'])).count()
-    outPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')))[:workOrder]
-    outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
-    inPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4', description='成品')).order_by('-key'))[:workOrder]
-    inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
-
-    print('出库:'+','.join(outPosition))
-    print('入库:'+','.join(inPosition))
-
-    return JsonResponse({'res': '8,'})
-
-
 @csrf_exempt
 def OutputPallet(request):
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
@@ -478,11 +453,6 @@ def querySelect(request):
     ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',)
 
     print(data.query.__str__()) """
-
-    data = WorkOrder.objects.filter(
-        Q(order__number='1588729736150')).values('number', 'description').annotate(工件号=F('number'), 工件类型=F('description'), 出库=F('workOrder__outPos'), 入库=F('workOrder__inPos')).values('工件号', '工件类型', '出库', '入库')
-
-    print(formatSql(data.query.__str__().split(' ')))
 
     params = json.loads(request.body)
     selectList = {}
@@ -621,7 +591,7 @@ def orderSplit(request):
                     workOrder = WorkOrder()
                     workOrder.order = order
                     time.sleep(0.1)
-                    workOrder.number = random.randint(0,255)
+                    workOrder.number = random.randint(0, 255)
                     workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                     workOrder.description = description.split('x')[0]
                     workOrder.save()
