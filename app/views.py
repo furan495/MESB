@@ -548,6 +548,18 @@ def updateProcessByRoute(request):
 
 
 @csrf_exempt
+def deleteOrganization(request):
+    params = json.loads(request.body)
+    organization = Organization.objects.get(key=params['key'])
+    if organization.parent:
+        Organization.objects.filter(Q(key=params['key']) | Q(
+            parent=organization.name)).delete()
+    else:
+        Organization.objects.all().delete()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def orderSplit(request):
     params = json.loads(request.body)
     orderDesc = params['description'].split(';')
