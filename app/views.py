@@ -479,6 +479,11 @@ def querySelect(request):
 
     print(data.query.__str__()) """
 
+    data = WorkOrder.objects.filter(
+        Q(order__number='1588729736150')).values('number', 'description').annotate(工件号=F('number'), 工件类型=F('description'), 出库=F('workOrder__outPos'), 入库=F('workOrder__inPos')).values('工件号', '工件类型', '出库', '入库')
+
+    print(formatSql(data.query.__str__().split(' ')))
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
@@ -616,25 +621,40 @@ def orderSplit(request):
                     workOrder = WorkOrder()
                     workOrder.order = order
                     time.sleep(0.1)
-                    workOrder.number = str(time.time()*1000000)[:15]
+                    workOrder.number = random.randint(0,255)
                     workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                     workOrder.description = description.split('x')[0]
                     workOrder.save()
+    return JsonResponse({'res': 'ok'})
 
-                    product = Product()
-                    product.name = description.split('x')[0]
-                    product.number = str(time.time()*1000000)
-                    product.workOrder = workOrder
-                    product.prodType = ProductType.objects.get(
-                        Q(orderType=order.orderType, name__icontains=description.split('x')[0]))
-                    product.save()
 
-                    standard = ProductStandard()
-                    standard.name = '外观'
-                    standard.expectValue = '合格'
-                    standard.product = product
-                    standard.save()
+@csrf_exempt
+def bandProduct(request):
+    params = json.loads(request.body)
+    workOrder = WorkOrder.objects.filter(
+        Q(order__number=params['number']))
+    outPos = list(StorePosition.objects.filter(
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')))[:workOrder.count()]
+    outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
+    inPos = list(StorePosition.objects.filter(
+        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4', description='成品')).order_by('-key'))[:workOrder.count()]
+    inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
+    for i in range(workOrder.count()):
+        product = Product()
+        product.name = workOrder[i].description
+        product.number = str(time.time()*1000000)
+        product.workOrder = workOrder[i]
+        product.outPos = outPosition[i]
+        product.inPos = inPosition[i]
+        product.prodType = ProductType.objects.get(
+            Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
+        product.save()
 
+        standard = ProductStandard()
+        standard.name = '外观'
+        standard.expectValue = '合格'
+        standard.product = product
+        standard.save()
     return JsonResponse({'res': 'ok'})
 
 

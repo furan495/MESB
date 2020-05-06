@@ -70,6 +70,7 @@ urlpatterns = [
     url(r'^api/updateCount/',  views.updateCount),
     url(r'^api/createStore/',  views.createStore),
     url(r'^api/querySelect/',  views.querySelect),
+    url(r'^api/bandProduct/',  views.bandProduct),
     url(r'^api/recordWeight/',  views.recordWeight),
     url(r'^api/updateDevice/',  views.updateDevice),
     url(r'^api/OutputPallet/',  views.OutputPallet),
