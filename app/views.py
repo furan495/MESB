@@ -381,18 +381,18 @@ def loginCheck(request):
     user = User.objects.get(phone=params['phone'])
     res = ''
     if user.password == params['password']:
-        res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'state': user.state,
+        res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'status': user.status,
                'role': user.role.name, 'phone': user.phone}
     else:
         res = 'err'
-    return JsonResponse({'res': res})
+    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(), })
 
 
 @csrf_exempt
 def updateUserState(request):
     params = json.loads(request.body)
     user = User.objects.get(key=params['key'])
-    user.state = params['state']
+    user.status = params['status']
     user.save()
     return JsonResponse({'res': 'ok'})
 
@@ -402,7 +402,7 @@ def logoutUser(request):
     params = json.loads(request.body)
     user = User.objects.get(
         Q(phone=params['phone'], password=params['password']))
-    user.state = '1'
+    user.status = '1'
     user.save()
     return JsonResponse({'res': 'ok'})
 
@@ -413,7 +413,7 @@ def logout(request):
     print(params)
     """ user = User.objects.get(
         Q(phone=params['phone'], password=params['password']))
-    user.state = '1'
+    user.status = '1'
     user.save() """
     return JsonResponse({'res': 'ok'})
 
@@ -424,10 +424,10 @@ def checkUserState(request):
     res = ''
     try:
         user = User.objects.get(key=params['key'])
-        res = user.state
+        res = user.status
     except:
         pass
-    return JsonResponse({'res': res, 'count': User.objects.filter(Q(state='2')).count()})
+    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count()})
 
 
 @csrf_exempt
