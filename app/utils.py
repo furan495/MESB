@@ -148,59 +148,68 @@ def qualAna(orderType, all):
     return data
 
 
-def mateAna():
-    redBottle = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['count']],
-            Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    greenBottle = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['count']],
-            Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    blueBottle = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['count']],
-            Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    cap = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['count']],
-            Bottle.objects.all().values('createTime').annotate(
-            count=Count('createTime')).values('createTime', 'count')
-            ))
-    red = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['reds']],
-            Bottle.objects.all().values('createTime', 'order', 'red').annotate(
-                reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
-            ))
-    green = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['greens']],
-            Bottle.objects.all().values('createTime', 'order', 'green').annotate(
-                greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
-            ))
-    blue = list(
-        map(lambda obj: [dataX(obj['createTime']), obj['blues']],
-            Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
-                blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
-            ))
+def mateAna(orderType, all):
+    if orderType == '灌装':
+        redBottle = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
+                count=Count('createTime')).values('createTime', 'count')
+                ))
+        greenBottle = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
+                count=Count('createTime')).values('createTime', 'count')
+                ))
+        blueBottle = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
+                count=Count('createTime')).values('createTime', 'count')
+                ))
+        cap = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['count']],
+                Bottle.objects.all().values('createTime').annotate(
+                count=Count('createTime')).values('createTime', 'count')
+                ))
+        red = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['reds']],
+                Bottle.objects.all().values('createTime', 'order', 'red').annotate(
+                    reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
+                ))
+        green = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['greens']],
+                Bottle.objects.all().values('createTime', 'order', 'green').annotate(
+                    greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
+                ))
+        blue = list(
+            map(lambda obj: [dataX(obj['createTime']), obj['blues']],
+                Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
+                    blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
+                ))
 
-    data = [
-        {'name': '红粒', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': red[-20:]},
-        {'name': '红瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': redBottle[-20:]},
-        {'name': '绿粒', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': green[-20:]},
-        {'name': '绿瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': greenBottle[-20:]},
-        {'name': '蓝粒', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': blue[-20:]},
-        {'name': '蓝瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': blueBottle[-20:]},
-        {'name': '瓶盖', 'type': 'areaspline',
-            'color': 'rgb(24,144,255)', 'data': cap[-20:]},
-    ]
+        data = [
+            {'name': '红粒', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': red[-20:]},
+            {'name': '红瓶', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': redBottle[-20:]},
+            {'name': '绿粒', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': green[-20:]},
+            {'name': '绿瓶', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': greenBottle[-20:]},
+            {'name': '蓝粒', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': blue[-20:]},
+            {'name': '蓝瓶', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': blueBottle[-20:]},
+            {'name': '瓶盖', 'type': 'areaspline',
+                'color': 'rgb(24,144,255)', 'data': cap[-20:]},
+        ]
+    else:
+        data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
+            count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
+        day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
+        data = [
+            {'name': '原料棒', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': day[-20:]},
+        ]
     return data
 
 

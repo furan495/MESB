@@ -958,7 +958,8 @@ def queryPoweranaChart(request):
 
 @csrf_exempt
 def queryMateanaChart(request):
-    data = mateAna()
+    params = json.loads(request.body)
+    data = mateAna(params['order'], all=False)
     return JsonResponse({'res': data})
 
 
@@ -1237,7 +1238,7 @@ def queryCharts(request):
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
             Q(store__storeType__name='混合库'))))
 
-    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['orderType'], all=True), 'mateana': mateAna(), 'goodRate': rate, 'power': powerAna(params['orderType'], all=True)})
+    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['orderType'], all=True), 'mateana': mateAna(params['orderType'], all=False), 'goodRate': rate, 'power': powerAna(params['orderType'], all=True)})
 
 
 @csrf_exempt
