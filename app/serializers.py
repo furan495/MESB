@@ -97,6 +97,17 @@ class DeviceFaultSerializer(serializers.ModelSerializer):
                   'endTime', 'operator', 'result')
 
 
+class ProcessParamsSerializer(serializers.ModelSerializer):
+
+    process = serializers.SlugRelatedField(
+        queryset=Process.objects.all(), label='对应工序', slug_field='name', required=False)
+
+    class Meta:
+        model = ProcessParams
+        fields = ('key', 'name', 'tagName', 'value',
+                  'topLimit', 'lowLimit', 'process','unit')
+
+
 class DeviceSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
     joinTime = serializers.SerializerMethodField()
@@ -220,11 +231,15 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
 
 class ProcessSerializer(serializers.ModelSerializer):
 
+    params = serializers.SerializerMethodField()
     devices = serializers.StringRelatedField(many=True, read_only=True)
+
+    def get_params(self, obj):
+        return list(map(lambda param: param.name+':'+str(param.value)+param.unit, obj.params.all()))
 
     class Meta:
         model = Process
-        fields = ('key', 'route', 'name', 'skip', 'path', 'devices')
+        fields = ('key', 'route', 'name', 'skip', 'path', 'devices', 'params')
 
 
 class BottleSerializer(serializers.ModelSerializer):

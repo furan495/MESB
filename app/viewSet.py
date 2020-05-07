@@ -24,6 +24,11 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     serializer_class = OrganizationSerializer
 
 
+class ProcessParamsViewSet(viewsets.ModelViewSet):
+    queryset = ProcessParams.objects.all()
+    serializer_class = ProcessParamsSerializer
+
+
 class OrderTypeViewSet(viewsets.ModelViewSet):
     queryset = OrderType.objects.all()
     serializer_class = OrderTypeSerializer

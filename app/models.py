@@ -285,7 +285,6 @@ class Bottle(models.Model):
 
 
 class Process(models.Model):
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
     skip = models.BooleanField(verbose_name='可否跳过', default=False)
     route = models.ForeignKey(ProcessRoute, related_name='processes',
@@ -299,6 +298,25 @@ class Process(models.Model):
 
     class Meta:
         verbose_name = '工序'
+
+
+class ProcessParams(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    process = models.ForeignKey(Process, related_name='params',
+                                on_delete=models.CASCADE, verbose_name='对应工序')
+    name = models.CharField(max_length=20, verbose_name='参数名称')
+    tagName = models.CharField(max_length=20, verbose_name='参数标签')
+    value = models.FloatField(verbose_name='参数值')
+    unit = models.CharField(
+        max_length=20, verbose_name='参数单位', blank=True, null=True)
+    topLimit = models.FloatField(verbose_name='参数上限')
+    lowLimit = models.FloatField(verbose_name='参数下限')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '工艺参数'
 
 
 class DeviceType(models.Model):

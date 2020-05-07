@@ -41,6 +41,7 @@ router.register(r'api/productTypes', viewSet.ProductTypeViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/organizations', viewSet.OrganizationViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
+router.register(r'api/processParams', viewSet.ProcessParamsViewSet)
 router.register(r'api/storePositions', viewSet.StorePositionViewSet)
 router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
 router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
@@ -89,6 +90,7 @@ urlpatterns = [
     url(r'^api/deleteOrganization/',  views.deleteOrganization),
     url(r'^api/queryPoweranaChart/',  views.queryPoweranaChart),
     url(r'^api/queryInterviewChart/',  views.queryInterviewChart),
+    url(r'^api/processParamsSetting/',  views.processParamsSetting),
     url(r'^upload/(?P<path>.*)$', serve,
         {'document_root': BASE_DIR+'/upload'}),
     url(r'^api/updateProcessByRoute/',  views.updateProcessByRoute),

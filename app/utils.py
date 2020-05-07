@@ -27,12 +27,12 @@ def formatSql(sqlList):
 def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'
-    if '机加' == storeType:
+    if '机加' == storeType or '电子装配' == storeType:
         return '4'
 
 
 def selectDescription(storeType, index, count):
-    if '机加' == storeType:
+    if '机加' == storeType or '电子装配' == storeType:
         if index < int(count/2):
             return '原料'
         else:

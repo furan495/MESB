@@ -1284,3 +1284,18 @@ def positionGroup(request):
     position.description = params['value']
     position.save()
     return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def processParamsSetting(request):
+    params = json.loads(request.body)
+    processParam=ProcessParams()
+    processParam.name=params['name']
+    processParam.value=params['value']
+    processParam.tagName=params['tagName']
+    processParam.topLimit=params['topLimit']
+    processParam.lowLimit=params['lowLimit']
+    processParam.unit='' if params['unit']=='无' else params['unit']
+    processParam.process=Process.objects.get(Q(name=params['process'],route__key=params['route']))
+    processParam.save()
+    return JsonResponse({'res': 'ok'})
