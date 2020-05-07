@@ -440,6 +440,8 @@ def updateDataView(request):
         dv.mwContent = formatSql(orders.query.__str__().split(' '))
     if params['orderType'] == '灌装':
         dv.gzContent = formatSql(orders.query.__str__().split(' '))
+    if params['orderType'] == '电子装配':
+        dv.eaContent = formatSql(orders.query.__str__().split(' '))
     dv.save()
     return JsonResponse({'res': 'ok'})
 
@@ -471,7 +473,7 @@ def querySelect(request):
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
             'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
-            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))
+            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom=None))))
         }
     if params['model'] == 'bom':
         selectList = {
@@ -605,7 +607,7 @@ def orderSplit(request):
                         '\d+', description[:description.index('份数')])))))
                     standard.product = product
                     standard.save()
-    if params['orderType'] == '机加':
+    else:
         for description in orderDesc:
             if len(description.split('x')) > 1:
                 for i in range(int(description.split('x')[1])):
@@ -676,8 +678,8 @@ def updateCount(request):
 @csrf_exempt
 def deviceUnband(request):
     params = json.loads(request.body)
-    for device in Device.objects.filter(Q(process__name=params['process'],process__route__key=params['route'])):
-        device.process=None
+    for device in Device.objects.filter(Q(process__name=params['process'], process__route__key=params['route'])):
+        device.process = None
         device.save()
     return JsonResponse({'res': 'ok'})
 
@@ -1120,15 +1122,29 @@ def splitCheck(request):
                 res = 'err'
                 info = '蓝瓶不足，无法排产'
         if params['orderType'] == '机加':
-            descriptions = params['description']
             count = 0
+            descriptions = params['description']
             for desc in descriptions.split(';')[:-1]:
                 count = count+int(desc.split('x')[1])
             occupy = WorkOrder.objects.filter(
                 Q(order__status__name='已排产')).count()
-            if Material.objects.filter(Q(store__storeType__name='混合库')).count()-occupy < count:
+            if StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description='原料')).count() < count or Material.objects.filter(Q(store__storeType__name='混合库', store__productLine__lineType__name=params['orderType'])).count()-occupy < count:
                 res = 'err'
                 info = '原料不足，无法排产'
+        else:
+            descriptions = params['description']
+            occupy = WorkOrder.objects.filter(
+                Q(order__status__name='已排产')).count()
+            for desc in descriptions.split(';')[:-1]:
+                count = desc.split('x')[1]
+                product = desc.split('x')[0]
+                bom = BOM.objects.get(Q(product__name=product))
+                for content in bom.content.split(';'):
+                    if Material.objects.filter(Q(name=content.split(':')[0].split('/')[0])).count()-occupy < int(count)*int(content.split(':')[1]):
+                        res = 'err'
+                        info = '%s不足，无法排产' % content.split(
+                            ':')[0].split('/')[0]
     else:
         res = 'err'
         info = '产线或工艺不符，无法排产'
@@ -1298,13 +1314,14 @@ def positionGroup(request):
 @csrf_exempt
 def processParamsSetting(request):
     params = json.loads(request.body)
-    processParam=ProcessParams()
-    processParam.name=params['name']
-    processParam.value=params['value']
-    processParam.tagName=params['tagName']
-    processParam.topLimit=params['topLimit']
-    processParam.lowLimit=params['lowLimit']
-    processParam.unit='' if params['unit']=='无' else params['unit']
-    processParam.process=Process.objects.get(Q(name=params['process'],route__key=params['route']))
+    processParam = ProcessParams()
+    processParam.name = params['name']
+    processParam.value = params['value']
+    processParam.tagName = params['tagName']
+    processParam.topLimit = params['topLimit']
+    processParam.lowLimit = params['lowLimit']
+    processParam.unit = '' if params['unit'] == '无' else params['unit']
+    processParam.process = Process.objects.get(
+        Q(name=params['process'], route__key=params['route']))
     processParam.save()
     return JsonResponse({'res': 'ok'})

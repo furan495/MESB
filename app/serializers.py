@@ -421,7 +421,7 @@ class DataViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataView
-        fields = ('key', 'mwContent', 'gzContent')
+        fields = ('key', 'mwContent', 'gzContent','eaContent')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
