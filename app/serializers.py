@@ -105,7 +105,7 @@ class ProcessParamsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessParams
         fields = ('key', 'name', 'tagName', 'value',
-                  'topLimit', 'lowLimit', 'process','unit')
+                  'topLimit', 'lowLimit', 'process', 'unit')
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -219,9 +219,7 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_devices(self, obj):
-        deviceList = Device.objects.all()
-        serializer = DeviceSerializer(deviceList, many=True)
-        return serializer.data
+        return list(map(lambda device: {'key': device.key, 'name': device.name+'-'+str(device.key)}, Device.objects.filter(Q(process=None))))
 
     class Meta:
         model = ProcessRoute

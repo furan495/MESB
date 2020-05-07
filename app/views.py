@@ -674,7 +674,16 @@ def updateCount(request):
 
 
 @csrf_exempt
-def updateDevice(request):
+def deviceUnband(request):
+    params = json.loads(request.body)
+    for device in Device.objects.filter(Q(process__name=params['process'],process__route__key=params['route'])):
+        device.process=None
+        device.save()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def deviceBand(request):
     params = json.loads(request.body)
     device = Device.objects.get(key=params['key'])
     if params['process'] != '':
