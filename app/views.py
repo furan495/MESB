@@ -66,7 +66,7 @@ def wincc2(request):
     title = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
              'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检'}
     position = {'startB': 'B出库', 'startC': 'C加工开始', 'stopC': 'C加工结束',
-                'startD': 'D加工开始', 'stopD': 'D加工结束', 'stopB': 'B入库', 'check': '质检'}
+                'startD': 'D加工开始', 'stopD': 'D加工结束', 'stopB': 'B入库', 'check': '质检', 'error': '失败'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
@@ -76,7 +76,8 @@ def wincc2(request):
         Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
 
     if position[params[0]] == 'B出库':
-        workOrder = WorkOrder.objects.get(number=params[1])
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
@@ -89,7 +90,8 @@ def wincc2(request):
         order.save()
         Material.objects.filter(Q(store=store))[0].delete()
     if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(number=params[1])
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
         product = workOrder.workOrder
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
@@ -104,8 +106,14 @@ def wincc2(request):
             standard.realValue = '不合格'
         product.save()
         standard.save()
+    if position[params[0]] == '失败':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.status = WorkOrderStatus.objects.get(name='失败')
+        workOrder.save()
     if position[params[0]] == 'B入库':
-        workOrder = WorkOrder.objects.get(number=params[1])
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
@@ -123,7 +131,8 @@ def wincc2(request):
             order.save()
 
     event = Event()
-    event.workOrder = WorkOrder.objects.get(number=params[1])
+    event.workOrder = WorkOrder.objects.get(
+        Q(number=params[1], order__number=params[2]))
     event.source = position[params[0]]
     event.title = title[params[0]]
     event.save()
