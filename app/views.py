@@ -1176,7 +1176,7 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
@@ -1221,10 +1221,10 @@ def queryCharts(request):
                      [1, 'rgba(244,144,255,1)']
                  ]
         }, 'data': list(
-            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['orderType'], status__name='已完成')))[-20:]))}
+            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))[-20:]))}
     ]
 
-    if params['orderType'] == '灌装':
+    if params['order'] == '灌装':
         product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
             {'name': '红瓶', 'y': Product.objects.filter(
                 Q(name__icontains='红瓶')).count()},
@@ -1247,7 +1247,7 @@ def queryCharts(request):
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
             Q(store__storeType__name='混合库'))))
 
-    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['orderType'], all=True), 'mateana': mateAna(params['orderType'], all=False), 'goodRate': rate, 'power': powerAna(params['orderType'], all=True)})
+    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
 
 @csrf_exempt
