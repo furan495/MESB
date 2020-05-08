@@ -1088,7 +1088,8 @@ def splitCheck(request):
     route = ProcessRoute.objects.get(name=params['route'])
     if params['orderType'] == line.lineType.name and params['orderType'] == route.routeType.name:
         if params['orderType'] == '灌装':
-            particles, fieldDict = {}, {}
+            particles = {}
+            fieldDict = {}
             descriptions = params['description'].split(';')[:-1]
             for field in apps.get_model('app', 'Bottle')._meta.fields:
                 fieldDict[field.verbose_name] = field.name
@@ -1113,15 +1114,13 @@ def splitCheck(request):
             for desc in descriptions.split(';')[:-1]:
                 count = count+int(desc.split('x')[1])
             occupy = WorkOrder.objects.filter(
-                Q(order__status__name='已排产', order__orderType__name='机加')).count()
+                Q(order__status__name='已排产',order__orderType__name='机加')).count()
             if StorePosition.objects.filter(
                     Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description='原料')).count() < count or Material.objects.filter(Q(store__storeType__name='混合库', store__productLine__lineType__name=params['orderType'])).count()-occupy < count:
                 res = 'err'
                 info = '原料不足，无法排产'
         if params['orderType'] == '电子装配':
             descriptions = params['description']
-            occupy = WorkOrder.objects.filter(
-                Q(order__status__name='已排产', order__orderType__name='电子装配')).count()
             for desc in descriptions.split(';')[:-1]:
                 count = desc.split('x')[1]
                 product = desc.split('x')[0]

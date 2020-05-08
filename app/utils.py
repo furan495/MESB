@@ -1,3 +1,4 @@
+import re
 import datetime
 from app.models import *
 from django.db.models import Q
@@ -19,7 +20,7 @@ def formatSql(sqlList):
     sqlList.insert(
         1, 'ROW_NUMBER() OVER(ORDER BY [app_order].[number]) AS 编号,')
     for sql in sqlList:
-        if u'\u4e00' <= sql <= u'\u9fff':
+        if u'\u4e00' <= sql <= u'\u9fff' or ('[' not in sql and re.compile(u'[\u4e00-\u9fa5]').search(sql)):
             sqlList[sqlList.index(sql)] = '\'%s\'' % sql
     return ' '.join(sqlList)
 
@@ -28,7 +29,7 @@ def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'
     if '机加' == storeType or '电子装配' == storeType:
-        return '4'
+        return '3' if index < int(count/2) else '4'
 
 
 def selectDescription(storeType, index, count):
@@ -37,6 +38,8 @@ def selectDescription(storeType, index, count):
             return '原料'
         else:
             return '成品'
+    else:
+        return '分组'
 
 
 def positionSelect(obj, position):
