@@ -34,6 +34,11 @@ class OrderTypeViewSet(viewsets.ModelViewSet):
     serializer_class = OrderTypeSerializer
 
 
+class BOMContentViewSet(viewsets.ModelViewSet):
+    queryset = BOMContent.objects.all()
+    serializer_class = BOMContentSerializer
+
+
 class OrderStatusViewSet(viewsets.ModelViewSet):
     queryset = OrderStatus.objects.all()
     serializer_class = OrderStatusSerializer

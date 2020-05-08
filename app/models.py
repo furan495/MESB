@@ -691,8 +691,6 @@ class BOM(models.Model):
                                    on_delete=models.CASCADE, verbose_name='对应产品', blank=True, null=True)
     name = models.CharField(
         max_length=100, verbose_name='BOM名称', blank=True, null=True)
-    content = models.CharField(
-        max_length=1000, verbose_name='BOM内容', blank=True, null=True)
     creator = models.CharField(
         max_length=20, verbose_name='创建人', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -702,6 +700,21 @@ class BOM(models.Model):
 
     class Meta:
         verbose_name = 'BOM'
+
+
+class BOMContent(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    bom = models.ForeignKey(BOM, related_name='contents',
+                            on_delete=models.CASCADE, verbose_name='所属BOM')
+    material = models.CharField(
+        max_length=100, verbose_name='物料名称')
+    counts = models.IntegerField(verbose_name='物料数量', blank=True, null=True)
+
+    def __str__(self):
+        return self.material
+
+    class Meta:
+        verbose_name = 'BOM内容'
 
 
 class DataView(models.Model):

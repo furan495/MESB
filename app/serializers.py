@@ -421,7 +421,7 @@ class DataViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataView
-        fields = ('key', 'mwContent', 'gzContent','eaContent')
+        fields = ('key', 'mwContent', 'gzContent', 'eaContent')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
@@ -475,15 +475,34 @@ class ToolSerializer(serializers.ModelSerializer):
                   'unit', 'toolType', 'store')
 
 
+class BOMContentSerializer(serializers.ModelSerializer):
+
+    bom = serializers.SlugRelatedField(
+        queryset=BOM.objects.all(), label='所属BOM', slug_field='name', required=False)
+
+    class Meta:
+        model = BOMContent
+        fields = ('key', 'bom', 'material', 'counts')
+
+
 class BOMSerializer(serializers.ModelSerializer):
 
     createTime = serializers.SerializerMethodField()
+    contents = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='对应产品', slug_field='name', required=False)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
+    def get_contents(self, obj):
+        contentList = obj.contents.all()
+        if contentList.count() == 1:
+            return contentList[0].material+',数量:'+str(contentList[0].counts)
+        else:
+            return ';'.join(list(map(lambda mat: mat.material+',数量:'+str(mat.counts), contentList)))
+
     class Meta:
         model = BOM
-        fields = ('key', 'product', 'name', 'content', 'creator', 'createTime')
+        fields = ('key', 'product', 'name',
+                  'contents', 'creator', 'createTime')

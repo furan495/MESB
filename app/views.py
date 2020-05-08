@@ -1114,22 +1114,33 @@ def splitCheck(request):
             for desc in descriptions.split(';')[:-1]:
                 count = count+int(desc.split('x')[1])
             occupy = WorkOrder.objects.filter(
-                Q(order__status__name='已排产',order__orderType__name='机加')).count()
+                Q(order__status__name='已排产', order__orderType__name='机加')).count()
             if StorePosition.objects.filter(
                     Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description='原料')).count() < count or Material.objects.filter(Q(store__storeType__name='混合库', store__productLine__lineType__name=params['orderType'])).count()-occupy < count:
                 res = 'err'
                 info = '原料不足，无法排产'
         if params['orderType'] == '电子装配':
             descriptions = params['description']
+            materialStr, materialDict = '', {}
+            for desc in descriptions.split(';')[:-1]:
+                product = desc.split('x')[0]
+                bom = BOM.objects.get(Q(product__name=product))
+                materialStr = materialStr + \
+                    ','.join(
+                        list(map(lambda obj: obj.material, bom.contents.all())))+','
+            for material in list(set(materialStr.split(',')))[1:]:
+                materialDict[material] = 0
             for desc in descriptions.split(';')[:-1]:
                 count = desc.split('x')[1]
                 product = desc.split('x')[0]
                 bom = BOM.objects.get(Q(product__name=product))
-                for content in bom.content.split(';'):
-                    if Material.objects.filter(Q(name=content.split(':')[0].split('/')[0])).count()-occupy < int(count)*int(content.split(':')[1]):
-                        res = 'err'
-                        info = '%s不足，无法排产' % content.split(
-                            ':')[0].split('/')[0]
+                for mat in bom.contents.all():
+                    materialDict[mat.material] = materialDict[mat.material] + \
+                        mat.counts*int(count)
+            for mat in list(set(materialStr.split(',')))[1:]:
+                if Material.objects.filter(Q(name=mat.split('/')[0], size=mat.split('/')[1])).count() < materialDict[mat]:
+                    res = 'err'
+                    info = '%s不足，无法排产' % mat
         else:
             pass
     else:
