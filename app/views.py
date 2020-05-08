@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from app.utils import *
 from app.models import *
+from django.apps import apps
 from functools import reduce
 from app.serializers import *
 from itertools import product
@@ -1087,55 +1088,40 @@ def splitCheck(request):
     route = ProcessRoute.objects.get(name=params['route'])
     if params['orderType'] == line.lineType.name and params['orderType'] == route.routeType.name:
         if params['orderType'] == '灌装':
+            particles, fieldDict = {}, {}
             descriptions = params['description'].split(';')[:-1]
-            rbot, gbot, bbot, cap, red, green, blue = 0, 0, 0, 0, 0, 0, 0
+            for field in apps.get_model('app', 'Bottle')._meta.fields:
+                fieldDict[field.verbose_name] = field.name
             for desc in descriptions:
                 count = desc.split(',')[-1].split(':')[1]
-                red = red+int(desc.split(',')[1].split(':')[1])*int(count)
-                green = green+int(desc.split(',')[2].split(':')[1])*int(count)
-                blue = blue+int(desc.split(',')[3].split(':')[1])*int(count)
-                if desc.split(',')[0].split(':')[1] == '红瓶':
-                    rbot = rbot+int(count)
-                if desc.split(',')[0].split(':')[1] == '绿瓶':
-                    gbot = gbot+int(count)
-                if desc.split(',')[0].split(':')[1] == '蓝瓶':
-                    bbot = bbot+int(count)
-            if red > Material.objects.filter(Q(name='红粒')).count():
-                res = 'err'
-                info = '红粒不足，无法排产'
-            if green > Material.objects.filter(Q(name='绿粒')).count():
-                res = 'err'
-                info = '绿粒不足，无法排产'
-            if blue > Material.objects.filter(Q(name='蓝粒')).count():
-                res = 'err'
-                info = '蓝粒不足，无法排产'
-            if (rbot+gbot+bbot) > Material.objects.filter(Q(name='瓶盖')).count():
-                res = 'err'
-                info = '瓶盖不足，无法排产'
-            if rbot > Material.objects.filter(Q(name='红瓶')).count():
-                res = 'err'
-                info = '红瓶不足，无法排产'
-            if gbot > Material.objects.filter(Q(name='绿瓶')).count():
-                res = 'err'
-                info = '绿瓶不足，无法排产'
-            if bbot > Material.objects.filter(Q(name='蓝瓶')).count():
-                res = 'err'
-                info = '蓝瓶不足，无法排产'
+                bottle = desc.split(',')[0].split(':')[1]
+                if Material.objects.filter(Q(name=bottle)).count() < int(count):
+                    res = 'err'
+                    info = '%s不足，无法排产' % bottle
+                for particle in desc.split(',')[1:-1]:
+                    particles[particle.split(':')[0]] = Sum(
+                        'bottles__%s' % fieldDict[particle.split(':')[0]])
+                particleCounts = Order.objects.filter(key=params['key']).annotate(
+                    **particles).values(*particles.keys())
+                for parti in particleCounts[0].keys():
+                    if Material.objects.filter(Q(name=parti)).count() < particleCounts[0][parti]:
+                        res = 'err'
+                        info = '%s不足，无法排产' % parti
         if params['orderType'] == '机加':
             count = 0
             descriptions = params['description']
             for desc in descriptions.split(';')[:-1]:
                 count = count+int(desc.split('x')[1])
             occupy = WorkOrder.objects.filter(
-                Q(order__status__name='已排产')).count()
+                Q(order__status__name='已排产', order__orderType__name='机加')).count()
             if StorePosition.objects.filter(
                     Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description='原料')).count() < count or Material.objects.filter(Q(store__storeType__name='混合库', store__productLine__lineType__name=params['orderType'])).count()-occupy < count:
                 res = 'err'
                 info = '原料不足，无法排产'
-        else:
+        if params['orderType'] == '电子装配':
             descriptions = params['description']
             occupy = WorkOrder.objects.filter(
-                Q(order__status__name='已排产')).count()
+                Q(order__status__name='已排产', order__orderType__name='电子装配')).count()
             for desc in descriptions.split(';')[:-1]:
                 count = desc.split('x')[1]
                 product = desc.split('x')[0]
@@ -1145,6 +1131,8 @@ def splitCheck(request):
                         res = 'err'
                         info = '%s不足，无法排产' % content.split(
                             ':')[0].split('/')[0]
+        else:
+            pass
     else:
         res = 'err'
         info = '产线或工艺不符，无法排产'

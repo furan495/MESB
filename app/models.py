@@ -272,9 +272,9 @@ class Bottle(models.Model):
         max_length=20, verbose_name='瓶号', blank=True, null=True)
     color = models.CharField(
         max_length=20, verbose_name='颜色', blank=True, null=True)
-    red = models.IntegerField(verbose_name='红粒个数', blank=True, null=True)
-    green = models.IntegerField(verbose_name='绿粒个数', blank=True, null=True)
-    blue = models.IntegerField(verbose_name='蓝粒个数', blank=True, null=True)
+    red = models.IntegerField(verbose_name='红粒', blank=True, null=True)
+    green = models.IntegerField(verbose_name='绿粒', blank=True, null=True)
+    blue = models.IntegerField(verbose_name='蓝粒', blank=True, null=True)
     createTime = models.DateField(auto_now_add=True, verbose_name='创建时间')
 
     def __str__(self):
