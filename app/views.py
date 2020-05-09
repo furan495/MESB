@@ -1135,10 +1135,12 @@ def splitCheck(request):
                 product = desc.split('x')[0]
                 bom = BOM.objects.get(Q(product__name=product))
                 for mat in bom.contents.all():
-                    materialDict[mat.material] = materialDict[mat.material] + \
-                        mat.counts*int(count)
+                    materialDict[mat.material] = materialDict[mat.material] + mat.counts*int(count)
             for mat in list(set(materialStr.split(',')))[1:]:
-                if Material.objects.filter(Q(name=mat.split('/')[0], size=mat.split('/')[1])).count() < materialDict[mat]:
+                bomContents = BOMContent.objects.filter(
+                    Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
+                occupy=list(filter(lambda obj: obj['counts'] != None, bomContents))[0]['counts']
+                if Material.objects.filter(Q(name=mat.split('/')[0], size=mat.split('/')[1])).count()-occupy < materialDict[mat]:
                     res = 'err'
                     info = '%s不足，无法排产' % mat
         else:
