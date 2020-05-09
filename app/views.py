@@ -1096,7 +1096,12 @@ def splitCheck(request):
             for desc in descriptions:
                 count = desc.split(',')[-1].split(':')[1]
                 bottle = desc.split(',')[0].split(':')[1]
-                if Material.objects.filter(Q(name=bottle)).count() < int(count):
+                try:
+                    occupyBot = Bottle.objects.filter(
+                        Q(color=bottle, order__status__name='已排产')).count()
+                except:
+                    occupyBot = 0
+                if Material.objects.filter(Q(name=bottle)).count()-occupyBot < int(count):
                     res = 'err'
                     info = '%s不足，无法排产' % bottle
                 for particle in desc.split(',')[1:-1]:
@@ -1105,7 +1110,12 @@ def splitCheck(request):
                 particleCounts = Order.objects.filter(key=params['key']).annotate(
                     **particles).values(*particles.keys())
                 for parti in particleCounts[0].keys():
-                    if Material.objects.filter(Q(name=parti)).count() < particleCounts[0][parti]:
+                    try:
+                        occupyPar = Order.objects.filter(Q(status__name='已排产')).annotate(counts=Sum(
+                            'bottles__%s' % fieldDict[particle.split(':')[0]])).values('counts')[0]['counts']
+                    except expression as identifier:
+                        occupyPar = 0
+                    if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
                         res = 'err'
                         info = '%s不足，无法排产' % parti
         if params['orderType'] == '机加':
@@ -1135,11 +1145,16 @@ def splitCheck(request):
                 product = desc.split('x')[0]
                 bom = BOM.objects.get(Q(product__name=product))
                 for mat in bom.contents.all():
-                    materialDict[mat.material] = materialDict[mat.material] + mat.counts*int(count)
+                    materialDict[mat.material] = materialDict[mat.material] + \
+                        mat.counts*int(count)
             for mat in list(set(materialStr.split(',')))[1:]:
-                bomContents = BOMContent.objects.filter(
-                    Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
-                occupy=list(filter(lambda obj: obj['counts'] != None, bomContents))[0]['counts']
+                try:
+                    bomContents = BOMContent.objects.filter(
+                        Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
+                    occupy = list(filter(lambda obj: obj['counts'] != None, bomContents))[
+                        0]['counts']
+                except:
+                    occupy = 0
                 if Material.objects.filter(Q(name=mat.split('/')[0], size=mat.split('/')[1])).count()-occupy < materialDict[mat]:
                     res = 'err'
                     info = '%s不足，无法排产' % mat
@@ -1272,7 +1287,7 @@ def queryCharts(request):
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
             Q(store__storeType__name='混合库'))))
 
-    return JsonResponse({'position': position, 'material': storeAna(), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+    return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
 
 @csrf_exempt

@@ -500,7 +500,7 @@ class BOMSerializer(serializers.ModelSerializer):
         if contentList.count() == 1:
             return contentList[0].material+',数量:'+str(contentList[0].counts)
         else:
-            return ';'.join(list(map(lambda mat: mat.material+',数量:'+str(mat.counts), contentList)))
+            return ';'.join(list(map(lambda mat: mat.material+',数量:'+str(mat.counts) if mat.counts else mat.material+',数量:若干', contentList)))
 
     class Meta:
         model = BOM

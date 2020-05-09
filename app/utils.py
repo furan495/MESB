@@ -216,9 +216,9 @@ def mateAna(orderType, all):
     return data
 
 
-def storeAna():
+def storeAna(order):
     data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.all().values('name').annotate(
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
