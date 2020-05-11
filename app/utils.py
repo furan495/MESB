@@ -1,4 +1,5 @@
 import re
+import random
 import datetime
 from app.models import *
 from django.db.models import Q
@@ -28,16 +29,29 @@ def formatSql(sqlList):
 def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'
-    if '机加' == storeType or '电子装配' == storeType:
+    if '机加' == storeType:
         return '3' if index < int(count/2) else '4'
+    if '电子装配' == storeType:
+        return '4'
 
 
-def selectDescription(storeType, index, count):
-    if '机加' == storeType or '电子装配' == storeType:
+def selectDescription(storeType, index, count, row, col):
+    if '机加' == storeType:
         if index < int(count/2):
             return '原料'
         else:
             return '成品'
+    if '电子装配' == storeType:
+        products = ProductType.objects.filter(
+            Q(orderType__name='电子装配')).values_list('name')
+        if index < int(count/2):
+            for i in range(len(products)):
+                if int(i*col/2) <= index < int(i*col/2)+4:
+                    return '%s原料' % products[i][0]
+        else:
+            for i in range(len(products)):
+                if (row+i)*col/2 <= index < (row+i)*col/2+4:
+                    return '%s成品' % products[i][0]
     else:
         return '分组'
 

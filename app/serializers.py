@@ -487,6 +487,7 @@ class BOMContentSerializer(serializers.ModelSerializer):
 
 class BOMSerializer(serializers.ModelSerializer):
 
+    productType = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     contents = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
@@ -494,6 +495,12 @@ class BOMSerializer(serializers.ModelSerializer):
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def get_productType(self, obj):
+        try:
+            return obj.product.orderType.name
+        except:
+            return ''
 
     def get_contents(self, obj):
         contentList = obj.contents.all()
@@ -504,5 +511,5 @@ class BOMSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BOM
-        fields = ('key', 'product', 'name',
+        fields = ('key', 'product', 'name','productType',
                   'contents', 'creator', 'createTime')

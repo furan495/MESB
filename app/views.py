@@ -15,7 +15,6 @@ from app.serializers import *
 from itertools import product
 from django.db.models import Q, F
 from django.http import JsonResponse
-from django.db.models.functions import RowNumber
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 
@@ -427,29 +426,38 @@ def updateDataView(request):
     params = json.loads(request.body)
     product = ProductType.objects.filter(
         Q(orderType__name=params['orderType']))
-    kward = {}
+    productDict, fieldDict, materialStr = {}, {}, ''
+    for field in apps.get_model('app', 'Bottle')._meta.fields:
+        fieldDict[field.verbose_name] = field.name
     for prod in product:
-        kward[prod.name] = Count('workOrders__workOrder__name',
-                                 filter=Q(workOrders__workOrder__name=prod.name))
-    productList = list(map(lambda obj: obj.name, product))
+        productDict[prod.name] = Count('workOrders__workOrder__name', filter=Q(
+            workOrders__workOrder__name=prod.name)) if params['orderType'] != '灌装' else Count('bottles', filter=Q(bottles__color=prod.name))
+        if params['orderType'] == '灌装':
+            boms = BOMContent.objects.filter(
+                Q(bom__product=prod) & ~Q(material__icontains=prod.name) & ~Q(material__icontains='盖'))
+            for bom in boms:
+                materialStr = materialStr+bom.material.split('/')[0]+','
+            for mat in list(filter(lambda obj: obj != '', list(set(materialStr.split(','))))):
+                productDict[prod.name+mat] = Avg(
+                    'bottles__%s' % fieldDict[mat], filter=Q(bottles__color=prod.name))
 
     orders = Order.objects.filter(
-        Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), 订单状态=F('status__name'),  **kward).values('订单编号', '订单批次', '排产时间', '订单状态', *productList)
+        Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), 订单状态=F('status__name'),  **productDict).values('订单编号', '订单批次', '排产时间', '订单状态', *productDict.keys())
 
     dv = DataView.objects.all()[0]
-    if params['orderType'] == '机加':
+    if params['orderType'] != '机加':
         dv.mwContent = formatSql(orders.query.__str__().split(' '))
-    if params['orderType'] == '灌装':
-        dv.gzContent = formatSql(orders.query.__str__().split(' '))
     if params['orderType'] == '电子装配':
         dv.eaContent = formatSql(orders.query.__str__().split(' '))
+    if params['orderType'] == '灌装':
+        dv.gzContent = formatSql(orders.query.__str__().split(' '))
     dv.save()
     return JsonResponse({'res': 'ok'})
 
 
 @csrf_exempt
 def querySelect(request):
-    """ data = Order.objects.filter(Q(status__name='已排产',orderType__name='灌装')).values('number', 'scheduling', 'status__name').annotate(
+    """ data = Order.objects.filter(Q(status__name='已完成',orderType__name='灌装')).values('number').annotate(
         rbot=Count('bottles', filter=Q(bottles__color='红瓶')),
         rred=Avg('bottles__red', filter=Q(bottles__color='红瓶')),
         rgreen=Avg('bottles__green', filter=Q(bottles__color='红瓶')),
@@ -462,9 +470,7 @@ def querySelect(request):
         bred=Avg('bottles__red', filter=Q(bottles__color='蓝瓶')),
         bgreen=Avg('bottles__green', filter=Q(bottles__color='蓝瓶')),
         bblue=Avg('bottles__blue', filter=Q(bottles__color='蓝瓶')),
-    ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',)
-
-    print(data.query.__str__()) """
+    ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',) """
 
     params = json.loads(request.body)
     selectList = {}
@@ -478,12 +484,12 @@ def querySelect(request):
         }
     if params['model'] == 'bom':
         selectList = {
-            'materials': list(set(list(map(lambda obj: obj.name+'/'+obj.size, Material.objects.all())))),
+            'materials': list(set(map(lambda obj: obj.name+'/'+obj.size, Material.objects.all()))),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
         }
     if params['model'] == 'processRoute':
         selectList = {
-            'routeType': list(set(list(map(lambda obj: obj.name, OrderType.objects.all())))),
+            'routeType': list(map(lambda obj: obj.name, OrderType.objects.all())),
         }
     if params['model'] == 'store':
         selectList = {
@@ -495,7 +501,7 @@ def querySelect(request):
         selectList = {
             'state': list(map(lambda obj: obj.name, LineState.objects.all())),
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
-            'lineType': list(set(list(map(lambda obj: obj.name, OrderType.objects.all())))),
+            'lineType': list(map(lambda obj: obj.name, OrderType.objects.all())),
         }
     if params['model'] == 'device':
         selectList = {
@@ -754,19 +760,35 @@ def createStore(request):
     store.dimensions = params['dimensions']
     store.save()
     count = params['row']*params['column']
-    for i in range(count):
-        position = StorePosition()
-        position.store = Store.objects.get(key=params['key'])
-        position.number = '%s-%s' % (str(i+1), params['key'])
-        position.status = selectStatus(storeType, i, count)
-        position.description = selectDescription(storeType, i, count)
-        position.save()
-        if storeType == '灌装':
-            pallet = Pallet()
-            pallet.position = StorePosition.objects.get(
-                number='%s-%s' % (str(i+1), params['key']))
-            pallet.number = str(i+1)
-            pallet.save()
+    if storeType == '电子装配':
+        left = np.arange(
+            0, count/2).reshape(params['row'], int(params['column']/2))
+        right = np.arange(
+            count/2, count).reshape(params['row'], int(params['column']/2))
+        martix = np.hstack((left, right)).reshape(1, count)
+        for i in np.ravel(martix):
+            position = StorePosition()
+            position.store = Store.objects.get(key=params['key'])
+            position.number = '%s-%s' % (str(int(i)+1), params['key'])
+            position.status = selectStatus(storeType, i, count)
+            position.description = selectDescription(
+                storeType, i, count, params['row'], params['column'])
+            position.save()
+    else:
+        for i in range(count):
+            position = StorePosition()
+            position.store = Store.objects.get(key=params['key'])
+            position.number = '%s-%s' % (str(i+1), params['key'])
+            position.status = selectStatus(storeType, i, count)
+            position.description = selectDescription(
+                storeType, i, count, params['row'], params['column'])
+            position.save()
+            if storeType == '灌装':
+                pallet = Pallet()
+                pallet.position = StorePosition.objects.get(
+                    number='%s-%s' % (str(i+1), params['key']))
+                pallet.number = str(i+1)
+                pallet.save()
     return JsonResponse({'res': 'ok'})
 
 
@@ -1098,7 +1120,7 @@ def splitCheck(request):
                 bottle = desc.split(',')[0].split(':')[1]
                 try:
                     occupyBot = Bottle.objects.filter(
-                        Q(color=bottle, order__status__name='已排产')).count()
+                        Q(color=bottle, order__status__name='已排产', order__orderType__name='灌装')).count()
                 except:
                     occupyBot = 0
                 if Material.objects.filter(Q(name=bottle)).count()-occupyBot < int(count):
@@ -1111,9 +1133,9 @@ def splitCheck(request):
                     **particles).values(*particles.keys())
                 for parti in particleCounts[0].keys():
                     try:
-                        occupyPar = Order.objects.filter(Q(status__name='已排产')).annotate(counts=Sum(
+                        occupyPar = Order.objects.filter(Q(status__name='已排产', order__orderType__name='灌装')).annotate(counts=Sum(
                             'bottles__%s' % fieldDict[particle.split(':')[0]])).values('counts')[0]['counts']
-                    except expression as identifier:
+                    except:
                         occupyPar = 0
                     if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
                         res = 'err'

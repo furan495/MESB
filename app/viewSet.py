@@ -216,7 +216,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class ProductTypeViewSet(viewsets.ModelViewSet):
-    queryset = ProductType.objects.all()
+    queryset = ProductType.objects.all().order_by('-key')
     serializer_class = ProductTypeSerializer
 
 
