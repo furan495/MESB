@@ -480,7 +480,8 @@ def querySelect(request):
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
             'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
-            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom=None))))
+            # 'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom__contents__key=None))))
+            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))
         }
     if params['model'] == 'bom':
         selectList = {
@@ -634,21 +635,37 @@ def bandProduct(request):
     workOrder = WorkOrder.objects.filter(
         Q(order__number=params['number']))
     outPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')))[:workOrder.count()]
+        Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料')))[:workOrder.count()]
     outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
     inPos = list(StorePosition.objects.filter(
-        Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='4', description='成品')).order_by('-key'))[:workOrder.count()]
+        Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='4', description__icontains='成品')).order_by('-key'))[:workOrder.count()]
     inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
+
+    eaOutPosition, eaInPosition = {}, {}
+
     for i in range(workOrder.count()):
+        if params['orderType'] == '电子装配':
+            for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
+                eaOutPosition[pro.name] = StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name))
+                eaInPosition[pro.name] = StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name))
         product = Product()
         product.name = workOrder[i].description
         product.number = str(time.time()*1000000)
         product.workOrder = workOrder[i]
-        product.outPos = outPosition[i]
-        product.inPos = inPosition[i]
+        product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split('-')[0]
+        product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split('-')[0]
         product.prodType = ProductType.objects.get(
             Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
         product.save()
+
+        outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
+        outP.status = '4'
+        outP.save()
+        inP = inPos[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0]
+        inP.status = '3'
+        inP.save()
 
         standard = ProductStandard()
         standard.name = '外观'

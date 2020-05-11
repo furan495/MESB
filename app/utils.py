@@ -32,7 +32,7 @@ def selectStatus(storeType, index, count):
     if '机加' == storeType:
         return '3' if index < int(count/2) else '4'
     if '电子装配' == storeType:
-        return '4'
+        return '3' if index < int(count/2) else '4'
 
 
 def selectDescription(storeType, index, count, row, col):
