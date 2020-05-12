@@ -366,7 +366,7 @@ def loginCheck(request):
     res = ''
     if user.password == params['password']:
         res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'status': user.status,
-               'role': user.role.name, 'phone': user.phone}
+               'role': user.role.name, 'phone': user.phone,'post':user.post,'department':user.department.name}
     else:
         res = 'err'
     return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(), })
