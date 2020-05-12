@@ -480,8 +480,7 @@ def querySelect(request):
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
             'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
-            # 'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom__contents__key=None))))
-            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.all()))
+            'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom__contents__key=None))))
         }
     if params['model'] == 'bom':
         selectList = {
@@ -654,8 +653,10 @@ def bandProduct(request):
         product.name = workOrder[i].description
         product.number = str(time.time()*1000000)
         product.workOrder = workOrder[i]
-        product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split('-')[0]
-        product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split('-')[0]
+        product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
+            '-')[0]
+        product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split(
+            '-')[0]
         product.prodType = ProductType.objects.get(
             Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
         product.save()
@@ -1169,14 +1170,25 @@ def splitCheck(request):
                 res = 'err'
                 info = '原料不足，无法排产'
         if params['orderType'] == '电子装配':
+            eaOutPosition, eaInPosition = {}, {}
+            for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
+                eaOutPosition[pro.name] = StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name)).count()
+                eaInPosition[pro.name] = StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).count()
             descriptions = params['description']
             materialStr, materialDict = '', {}
             for desc in descriptions.split(';')[:-1]:
                 product = desc.split('x')[0]
+                productCount = desc.split('x')[1]
                 bom = BOM.objects.get(Q(product__name=product))
-                materialStr = materialStr + \
-                    ','.join(
-                        list(map(lambda obj: obj.material, bom.contents.all())))+','
+                materialStr = materialStr + ','.join(list(map(lambda obj: obj.material, bom.contents.all())))+','
+                if eaOutPosition[product]<int(productCount):
+                    res = 'err'
+                    info = '%s原料底座不足，无法排产' % product
+                if eaInPosition[product]<int(productCount):
+                    res = 'err'
+                    info = '%s成品仓位不足，无法排产' % product
             for material in list(set(materialStr.split(',')))[1:]:
                 materialDict[material] = 0
             for desc in descriptions.split(';')[:-1]:
@@ -1184,8 +1196,7 @@ def splitCheck(request):
                 product = desc.split('x')[0]
                 bom = BOM.objects.get(Q(product__name=product))
                 for mat in bom.contents.all():
-                    materialDict[mat.material] = materialDict[mat.material] + \
-                        mat.counts*int(count)
+                    materialDict[mat.material] = materialDict[mat.material] +  mat.counts*int(count)
             for mat in list(set(materialStr.split(',')))[1:]:
                 try:
                     bomContents = BOMContent.objects.filter(
