@@ -1331,11 +1331,11 @@ def queryCharts(request):
              list(map(lambda obj:
                       {'name': obj.name, 'y': Product.objects.filter(
                           Q(name__icontains=obj.name)).count()},
-                      ProductType.objects.filter(Q(orderType__name='机加'))
+                      ProductType.objects.filter(Q(orderType__name=params['order']))
                       ))}
         ]
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
-            Q(store__storeType__name='混合库'))))
+            Q(store__storeType__name='混合库',store__productLine__lineType__name=params['order']))))
 
     return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
