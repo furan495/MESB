@@ -411,7 +411,7 @@ def checkUserState(request):
         res = user.status
     except:
         pass
-    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count()})
+    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(),'history':Operate.objects.filter(Q(name='登陆系统')).count()})
 
 
 @csrf_exempt
