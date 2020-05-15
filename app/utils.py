@@ -1,6 +1,8 @@
 import re
+import time
 import random
 import datetime
+import numpy as np
 from app.models import *
 from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
@@ -82,19 +84,29 @@ def rateY(obj):
 
 
 def powerAna(orderType, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
-    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data)) """
+
+    expectDataFake, realDataFake, goodRateFake = [], [], []
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
+    start = '%s-%s-20' % (str(year), str(month-1))
+    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        expectDataFake.append([day, random.randint(1, 100)])
+        realDataFake.append([day, random.randint(1, 100)])
+        goodRateFake.append([day, round(random.random(), 2)])
 
     data = [
         {'name': '预期产量', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': expectData[-20:]},
+            'color': 'rgb(24,144,255)', 'data': expectDataFake},
         {'name': '实际产量', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': realData[-20:]},
-        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate[-20:]},
+            'color': 'rgb(255,77,79)', 'data': realDataFake},
+        {'name': '合格率', 'type': 'line', 'color': '#40a9ff',
+            'yAxis': 1, 'data': goodRateFake},
     ]
     if all:
         data = [
@@ -105,7 +117,7 @@ def powerAna(orderType, all):
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
                  ]
-             }, 'data': expectData[-20:]},
+             }, 'data': expectDataFake},
             {'name': '实际产量', 'type': 'column',
              'color': {
                  'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
@@ -113,13 +125,13 @@ def powerAna(orderType, all):
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
                  ]
-             }, 'data': realData[-20:]},
+             }, 'data': realDataFake},
         ]
     return data
 
 
 def qualAna(orderType, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
+    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
@@ -133,13 +145,23 @@ def qualAna(orderType, all):
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))
-    )
+    ) """
+
+    goodDataFake, badDataFake, reasonDataFake = [], [], []
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
+    start = '%s-%s-20' % (str(year), str(month-1))
+    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        goodDataFake.append([day, random.randint(1, 100)])
+        badDataFake.append([day, random.randint(1, 100)])
+    for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
+        reasonDataFake.append({'name': reason, 'y': random.randint(20, 100)})
     data = [
         {'name': '合格', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': goodData[-20:]},
+            'color': 'rgb(24,144,255)', 'data': goodDataFake},
         {'name': '不合格', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': badData[-20:]},
-        {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
+            'color': 'rgb(255,77,79)', 'data': badDataFake},
+        {'name': '原因汇总', 'type': 'pie', 'data': reasonDataFake, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
     if all or orderType == '机加':
@@ -151,7 +173,7 @@ def qualAna(orderType, all):
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
                     ]
-                }, 'data': goodData[-20:]},
+                }, 'data': goodDataFake},
             {'name': '不合格', 'type': 'column',
                 'color': {
                     'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
@@ -159,14 +181,14 @@ def qualAna(orderType, all):
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
                     ]
-                }, 'data': badData[-20:]},
+                }, 'data': badDataFake},
         ]
 
     return data
 
 
 def mateAna(orderType, all):
-    if orderType == '灌装':
+    """ if orderType == '灌装':
         redBottle = list(
             map(lambda obj: [dataX(obj['createTime']), obj['count']],
                 Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
@@ -205,19 +227,17 @@ def mateAna(orderType, all):
 
         data = [
             {'name': '红粒', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': red[-20:]},
+                'color': 'rgb(24,144,255)', 'data': redFake},
             {'name': '红瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': redBottle[-20:]},
+                'color': 'rgb(24,144,255)', 'data': redBottleFake},
             {'name': '绿粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': green[-20:]},
+                'color': 'rgb(24,144,255)',  'data': greenFake},
             {'name': '绿瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': greenBottle[-20:]},
+                'color': 'rgb(24,144,255)', 'data': greenBottleFake},
             {'name': '蓝粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': blue[-20:]},
+                'color': 'rgb(24,144,255)',  'data': blueFake},
             {'name': '蓝瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': blueBottle[-20:]},
-            {'name': '瓶盖', 'type': 'areaspline',
-                'color': 'rgb(24,144,255)', 'data': cap[-20:]},
+                'color': 'rgb(24,144,255)', 'data': blueBottleFake},
         ]
     else:
         data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
@@ -226,14 +246,47 @@ def mateAna(orderType, all):
         data = [
             {'name': '原料棒', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': day[-20:]},
-        ]
+        ] """
+    redFake, redBottleFake, greenFake, greenBottleFake, blueFake, blueBottleFake = [
+    ], [], [], [], [], []
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
+    start = '%s-%s-20' % (str(year), str(month-1))
+    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        redFake.append([day, random.randint(1, 100)])
+        redBottleFake.append([day, random.randint(1, 100)])
+        greenFake.append([day, random.randint(1, 100)])
+        greenBottleFake.append([day, random.randint(1, 100)])
+        blueFake.append([day, random.randint(1, 100)])
+        blueBottleFake.append([day, random.randint(1, 100)])
+    data = [
+        {'name': '红粒', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': redFake},
+        {'name': '红瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': redBottleFake},
+        {'name': '绿粒', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': greenFake},
+        {'name': '绿瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': greenBottleFake},
+        {'name': '蓝粒', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': blueFake},
+        {'name': '蓝瓶', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': blueBottleFake},
+    ]
     return data
 
 
 def storeAna(order):
-    data = [
+    """ data = [
         {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
+    ] """
+    materialFake = []
+    for material in ['物料1', '物料2', '物料3', '物料4', '物料5', '物料6', '物料7', '物料8']:
+        materialFake.append({'name': material, 'y': random.randint(10, 50)})
+    data = [
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%',
+            'name': '库存剩余', 'data': materialFake}
     ]
     return data
 

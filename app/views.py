@@ -62,6 +62,77 @@ def queryStores(request):
 
 
 @csrf_exempt
+def wincc3(request):
+
+    title = {'startB': 'B出库开始', 'startC': 'C加工开始', 'stopC': 'C加工结束',
+             'startD': 'D加工开始', 'stopD': 'D加工结束', 'startE': 'E加工开始', 'stopE': 'E加工结束',
+             'startF': 'F加工开始', 'stopF': 'F加工结束', 'startG': 'G加工开始', 'stopG': 'G加工结束',
+             'stopB': 'B入库结束', 'check': '质检', 'error': '失败'}
+    position = {'startB': 'B模块出库', 'startC': 'C模块', 'stopC': 'C模块',
+                'startD': 'D模块', 'stopD': 'D模块', 'startE': 'E模块', 'stopE': 'E模块',
+                'startF': 'F模块', 'stopF': 'F模块', 'startG': 'G模块', 'stopG': 'G模块',
+                'stopB': 'B模块入库', 'check': '质检', 'error': '失败'}
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
+
+    print(params)
+
+    """ store = Store.objects.get(
+        Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
+
+    if position[params[0]] == 'B模块出库':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.startTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+        workOrder.save()
+        order = workOrder.order
+        order.status = OrderStatus.objects.get(Q(name='加工中'))
+        order.save()
+    if position[params[0]] == '质检':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        product = workOrder.workOrder
+        standard = ProductStandard.objects.get(
+            Q(name='外观', product=product))
+        if random.random() > 0.5:
+            product.result = '1'
+            standard.result = '1'
+            standard.realValue = '合格'
+        else:
+            product.result = '2'
+            product.reason = '检测不合格'
+            standard.result = '2'
+            standard.realValue = '不合格'
+        product.save()
+        standard.save()
+    if position[params[0]] == '失败':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.status = WorkOrderStatus.objects.get(name='失败')
+        workOrder.save()
+    if position[params[0]] == 'B模块入库':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+        workOrder.save()
+        product = workOrder.workOrder
+        order = workOrder.order
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
+            order.status = OrderStatus.objects.get(Q(name='已完成'))
+            order.save()
+
+    event = Event()
+    event.workOrder = WorkOrder.objects.get(
+        Q(number=params[1], order__number=params[2]))
+    event.source = position[params[0]]
+    event.title = title[params[0]]
+    event.save() """
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
 def wincc2(request):
     title = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
              'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检'}
@@ -81,10 +152,10 @@ def wincc2(request):
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
-        storePosition = StorePosition.objects.get(
+        """ storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (workOrder.workOrder.outPos, store.key)))
         storePosition.status = '4'
-        storePosition.save()
+        storePosition.save() """
         order = workOrder.order
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
@@ -118,12 +189,12 @@ def wincc2(request):
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
         product = workOrder.workOrder
-        storePosition = StorePosition.objects.get(
+        """ storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (workOrder.workOrder.inPos, store.key)))
         storePosition.status = '3'
         storePosition.content = '%s-%s' % (product.name,
                                            product.workOrder.number)
-        storePosition.save()
+        storePosition.save() """
 
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -366,7 +437,7 @@ def loginCheck(request):
     res = ''
     if user.password == params['password']:
         res = {'name': user.name, 'authority': user.role.authority, 'key': user.key, 'status': user.status,
-               'role': user.role.name, 'phone': user.phone,'post':user.post if user.post else '','department':user.department.name if user.department else ''}
+               'role': user.role.name, 'phone': user.phone, 'post': user.post if user.post else '', 'department': user.department.name if user.department else ''}
     else:
         res = 'err'
     return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(), })
@@ -411,7 +482,7 @@ def checkUserState(request):
         res = user.status
     except:
         pass
-    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(),'history':Operate.objects.filter(Q(name='登陆系统')).count()})
+    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(), 'history': Operate.objects.filter(Q(name='登陆系统')).count()})
 
 
 @csrf_exempt
@@ -1182,11 +1253,13 @@ def splitCheck(request):
                 product = desc.split('x')[0]
                 productCount = desc.split('x')[1]
                 bom = BOM.objects.get(Q(product__name=product))
-                materialStr = materialStr + ','.join(list(map(lambda obj: obj.material, bom.contents.all())))+','
-                if eaOutPosition[product]<int(productCount):
+                matStr = ','.join(
+                    list(map(lambda obj: obj.material, bom.contents.all())))+','
+                materialStr = materialStr + matStr
+                if eaOutPosition[product] < int(productCount):
                     res = 'err'
                     info = '%s原料底座不足，无法排产' % product
-                if eaInPosition[product]<int(productCount):
+                if eaInPosition[product] < int(productCount):
                     res = 'err'
                     info = '%s成品仓位不足，无法排产' % product
             for material in list(set(materialStr.split(',')))[1:]:
@@ -1196,7 +1269,8 @@ def splitCheck(request):
                 product = desc.split('x')[0]
                 bom = BOM.objects.get(Q(product__name=product))
                 for mat in bom.contents.all():
-                    materialDict[mat.material] = materialDict[mat.material] +  mat.counts*int(count)
+                    counts = mat.counts*int(count)
+                    materialDict[mat.material] = materialDict[mat.material] + counts
             for mat in list(set(materialStr.split(',')))[1:]:
                 try:
                     bomContents = BOMContent.objects.filter(
@@ -1266,13 +1340,23 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
         map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
     badRate = list(
-        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data))
+        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data)) """
+
+    goodRateFake, badRateFake, timesFake, productFake = [], [], [], []
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
+    start = '%s-%s-20' % (str(year), str(month-1))
+    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        goodRateFake.append([day, round(random.random(), 2)])
+        badRateFake.append([day, round(random.random(), 2)])
+    for i in range(20):
+        timesFake.append(['工单%s' % str(i+1), random.randint(1, 10)])
 
     rate = [
         {'name': '合格率', 'type': 'areaspline',
@@ -1287,7 +1371,7 @@ def queryCharts(request):
                     [0, 'rgba(24,144,255,1)'],
                     [1, 'rgba(24,144,255,0)']
                 ]
-            }, 'data': goodRate[-20:]},
+            }, 'data': goodRateFake},
         {'name': '不合格率', 'type': 'areaspline',
             'color': {
                 'linearGradient': {
@@ -1300,8 +1384,10 @@ def queryCharts(request):
                     [0, 'rgba(255,77,79,1)'],
                     [1, 'rgba(255,77,79,0)']
                 ]
-            }, 'data': badRate[-20:]}
+            }, 'data':badRateFake}
     ]
+
+    """ 生产耗时list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))[-20:])) """
 
     times = [
         {'name': '生产耗时', 'type': 'column', 'color': {
@@ -1310,32 +1396,37 @@ def queryCharts(request):
                      [0, 'rgba(244,144,255,0)'],
                      [1, 'rgba(244,144,255,1)']
                  ]
-        }, 'data': list(
-            map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))[-20:]))}
+        }, 'data': timesFake}
     ]
 
     if params['order'] == '灌装':
-        product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
+        """ product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
             {'name': '红瓶', 'y': Product.objects.filter(
                 Q(name__icontains='红瓶')).count()},
             {'name': '绿瓶', 'y':  Product.objects.filter(
                 Q(name__icontains='绿瓶')).count()},
             {'name': '蓝瓶', 'y':  Product.objects.filter(
                 Q(name__icontains='蓝瓶')).count()},
-        ]}]
+        ]}] """
         position = list(
             map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
     else:
-        product = [
+        """ product = [
             {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data':
              list(map(lambda obj:
                       {'name': obj.name, 'y': Product.objects.filter(
                           Q(name__icontains=obj.name)).count()},
-                      ProductType.objects.filter(Q(orderType__name=params['order']))
+                      ProductType.objects.filter(
+                          Q(orderType__name=params['order']))
                       ))}
-        ]
+        ] """
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
-            Q(store__storeType__name='混合库',store__productLine__lineType__name=params['order']))))
+            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']))))
+
+    for product in ['产品1', '产品2', '产品3', '产品4', '产品5', '产品6']:
+        productFake.append({'name': product, 'y': random.randint(10, 20)})
+    product = [{'type': 'pie', 'innerSize': '80%',
+                'name': '产品占比', 'data': productFake}]
 
     return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 

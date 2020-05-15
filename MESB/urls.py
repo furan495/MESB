@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/wincc/',  views.wincc),
     url(r'^api/wincc2/',  views.wincc2),
+    url(r'^api/wincc3/',  views.wincc3),
     url(r'^api/logout/',  views.logout),
     url(r'^api/upload/',  views.upload),
     url(r'^api/uploadPic/',  views.uploadPic),
