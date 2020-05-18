@@ -403,28 +403,6 @@ def queryPallet(request):
 
 
 @csrf_exempt
-def queryMWPosition(request):
-    params = json.loads(request.body)
-    mwPosition = StorePosition.objects.get(
-        number=params['item'].split('/')[0]).content
-    return JsonResponse({'res': mwPosition})
-
-
-@csrf_exempt
-def OutputPallet(request):
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))
-    pallet = Pallet.objects.get(
-        Q(number=params['pallet'], position__store__storeType__name='成品库'))
-    position = pallet.position
-    position.status = '2'
-    position.save()
-    pallet.position = None
-    pallet.save()
-    print(params)
-    return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
 def loginCheck(request):
     params = json.loads(request.body)
     user = User.objects.get(phone=params['phone'])
@@ -454,29 +432,6 @@ def logoutUser(request):
     user.status = '1'
     user.save()
     return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
-def logout(request):
-    params = json.loads(request.body)
-    print(params)
-    """ user = User.objects.get(
-        Q(phone=params['phone'], password=params['password']))
-    user.status = '1'
-    user.save() """
-    return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
-def checkUserState(request):
-    params = json.loads(request.body)
-    res = ''
-    try:
-        user = User.objects.get(key=params['key'])
-        res = user.status
-    except:
-        pass
-    return JsonResponse({'res': res, 'count': User.objects.filter(Q(status='2')).count(), 'history': Operate.objects.filter(Q(name='登陆系统')).count()})
 
 
 @csrf_exempt
@@ -823,15 +778,6 @@ def uploadPic(request):
         list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'))
     pro.save()
     return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
-def updatePWD(request):
-    params = json.loads(request.body)
-    user = User.objects.get(phone=params['phone'])
-    user.password = params['pwd']
-    user.save()
-    return JsonResponse({'res': 'succ'})
 
 
 @csrf_exempt
