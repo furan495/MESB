@@ -64,9 +64,9 @@ def queryStores(request):
 @csrf_exempt
 def wincc3(request):
 
-    position = {'startB': 'B模块出库开始','stopB':'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
+    position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
                 'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'startE': 'E模块加工开始', 'stopE': 'E模块加工结束',
-                'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB':'B模块入库结束','check': '质检', 'error': '失败'}
+                'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB': 'B模块入库结束', 'check': '质检', 'error': '失败'}
     params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',')
 
@@ -191,7 +191,7 @@ def wincc2(request):
                                            product.workOrder.number)
         storePosition.save()
 
-        if WorkOrder.objects.filter(Q(status__name='加工中', order= workOrder.order)).count() == 0:
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=workOrder.order)).count() == 0:
             order.status = OrderStatus.objects.get(Q(name='已完成'))
             order.save()
 
@@ -1083,6 +1083,16 @@ def queryPoweranaChart(request):
 
 
 @csrf_exempt
+def deleteMaterialOrTool(request):
+    params = json.loads(request.body)
+    if params['model']=='material':
+        Material.objects.filter(Q(name=params['name'])).delete()
+    else:
+        Tool.objects.filter(Q(name=params['name'])).delete()
+    return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
 def queryMateanaChart(request):
     params = json.loads(request.body)
     data = mateAna(params['order'], all=False)
@@ -1327,7 +1337,7 @@ def queryProducing(request):
             map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description, 'orderType': obj.order.orderType.name, 'order': obj.order.number}, workOrderList))
     if params['order'] == '电子装配':
         producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number+'/'+obj.description,'startB':positionSelect(obj, 'B模块出库开始'),'stopB':positionSelect(obj, 'B模块出库结束'),'startC':positionSelect(obj, 'C模块加工开始'),'stopC':positionSelect(obj, 'C模块加工结束'),'startD':positionSelect(obj, 'D模块加工开始'),'stopD':positionSelect(obj, 'D模块加工结束'),'startE':positionSelect(obj, 'E模块加工开始'),'stopE':positionSelect(obj, 'E模块加工结束'),'startF':positionSelect(obj, 'F模块加工开始'),'stopF':positionSelect(obj, 'F模块加工结束'),'startInB':positionSelect(obj, 'B模块入库开始'),'stopInB':positionSelect(obj, 'B模块入库结束'),'orderType': obj.order.orderType.name }, workOrderList))
+            map(lambda obj: {'key': obj.key, 'workOrder': obj.number+'/'+obj.description, 'startB': positionSelect(obj, 'B模块出库开始'), 'stopB': positionSelect(obj, 'B模块出库结束'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'startE': positionSelect(obj, 'E模块加工开始'), 'stopE': positionSelect(obj, 'E模块加工结束'), 'startF': positionSelect(obj, 'F模块加工开始'), 'stopF': positionSelect(obj, 'F模块加工结束'), 'startInB': positionSelect(obj, 'B模块入库开始'), 'stopInB': positionSelect(obj, 'B模块入库结束'), 'orderType': obj.order.orderType.name}, workOrderList))
 
     return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
 
