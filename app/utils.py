@@ -164,7 +164,7 @@ def qualAna(orderType, all):
         {'name': '原因汇总', 'type': 'pie', 'data': reasonDataFake, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
-    if all or orderType == '机加':
+    if all:
         data = [
             {'name': '合格', 'type': 'column',
                 'color': {
@@ -294,33 +294,38 @@ def storeAna(order):
 def selectPosition(product):
     res = ''
     if product.pallet:
-        if product.pallet.hole1Content == product.workOrder.bottle:
+        if obj.pallet.hole1Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '1')
-        elif product.pallet.hole2Content == product.workOrder.bottle:
+        if obj.pallet.hole2Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '2')
-        elif product.pallet.hole3Content == product.workOrder.bottle:
+        if obj.pallet.hole3Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '3')
-        elif product.pallet.hole4Content == product.workOrder.bottle:
+        if obj.pallet.hole4Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '4')
-        elif product.pallet.hole5Content == product.workOrder.bottle:
+        if obj.pallet.hole5Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '5')
-        elif product.pallet.hole6Content == product.workOrder.bottle:
+        if obj.pallet.hole6Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '6')
-        elif product.pallet.hole7Content == product.workOrder.bottle:
+        if obj.pallet.hole7Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '7')
-        elif product.pallet.hole8Content == product.workOrder.bottle:
+        if obj.pallet.hole8Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '8')
-        elif product.pallet.hole9Content == product.workOrder.bottle:
+        if obj.pallet.hole9Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '9')
-        else:
-            pass
+    else:
+        try:
+            pos = StorePosition.objects.get(
+                content='%s-%s' % (obj.name, product.workOrder.number))
+            res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
+        except:
+            res = ''
     return res
