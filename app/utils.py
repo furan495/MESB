@@ -227,51 +227,81 @@ def mateAna(orderType, all):
 
         data = [
             {'name': '红粒', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': redFake},
+                'color': 'rgb(24,144,255)', 'data': red},
             {'name': '红瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': redBottleFake},
+                'color': 'rgb(24,144,255)', 'data': redBottle},
             {'name': '绿粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': greenFake},
+                'color': 'rgb(24,144,255)',  'data': green},
             {'name': '绿瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': greenBottleFake},
+                'color': 'rgb(24,144,255)', 'data': greenBottle},
             {'name': '蓝粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': blueFake},
+                'color': 'rgb(24,144,255)',  'data': blue},
             {'name': '蓝瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': blueBottleFake},
+                'color': 'rgb(24,144,255)', 'data': blueBottle},
         ]
-    else:
+    if orderType=='机加:
         data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
         data = [
             {'name': '原料棒', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': day[-20:]},
-        ] """
-    redFake, redBottleFake, greenFake, greenBottleFake, blueFake, blueBottleFake = [
-    ], [], [], [], [], []
-    year = datetime.datetime.now().year
-    month = datetime.datetime.now().month
-    start = '%s-%s-20' % (str(year), str(month-1))
+        ]
+    if orderType=='电子装配':
+        materialDict = {}
+        materials = Material.objects.filter(
+        Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name','size').distinct()
+        for material in materials:
+            materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
+                prodType__bom__contents__material=material['name']+'/'+material['size']))
+
+        results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values(
+            'batch').annotate(**materialDict).values('batch',*materialDict.keys())
+
+        data=[]
+        for mate in materials:
+            data.append({'name':mate['name],'type': 'column','color': 'rgb(24,144,255)','data':list(
+            map(lambda obj: [dataX(obj['batch']), obj['name']],results))
+            })
+    """
+
+    one, two, three, four, five, six, seven, eight, nine, ten=[
+    ], [], [], [], [], [], [], [], [], []
+    year=datetime.datetime.now().year
+    month=datetime.datetime.now().month
+    start='%s-%s-20' % (str(year), str(month-1))
     for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        redFake.append([day, random.randint(1, 100)])
-        redBottleFake.append([day, random.randint(1, 100)])
-        greenFake.append([day, random.randint(1, 100)])
-        greenBottleFake.append([day, random.randint(1, 100)])
-        blueFake.append([day, random.randint(1, 100)])
-        blueBottleFake.append([day, random.randint(1, 100)])
-    data = [
-        {'name': '红粒', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': redFake},
-        {'name': '红瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': redBottleFake},
-        {'name': '绿粒', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': greenFake},
-        {'name': '绿瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': greenBottleFake},
-        {'name': '蓝粒', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': blueFake},
-        {'name': '蓝瓶', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': blueBottleFake},
+        one.append([day, random.randint(1, 100)])
+        two.append([day, random.randint(1, 100)])
+        three.append([day, random.randint(1, 100)])
+        four.append([day, random.randint(1, 100)])
+        five.append([day, random.randint(1, 100)])
+        six.append([day, random.randint(1, 100)])
+        seven.append([day, random.randint(1, 100)])
+        eight.append([day, random.randint(1, 100)])
+        nine.append([day, random.randint(1, 100)])
+        ten.append([day, random.randint(1, 100)])
+    data=[
+        {'name': '耗材1', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': one},
+        {'name': '耗材2', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': two},
+        {'name': '耗材3', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': three},
+        {'name': '耗材4', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': four},
+        {'name': '耗材5', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': five},
+        {'name': '耗材6', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': six},
+        {'name': '耗材7', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': seven},
+        {'name': '耗材8', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': eight},
+        {'name': '耗材9', 'type': 'column',
+            'color': 'rgb(24,144,255)',  'data': nine},
+        {'name': '耗材10', 'type': 'column',
+            'color': 'rgb(24,144,255)', 'data': ten},
     ]
     return data
 
@@ -281,10 +311,10 @@ def storeAna(order):
         {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ] """
-    materialFake = []
+    materialFake=[]
     for material in ['物料1', '物料2', '物料3', '物料4', '物料5', '物料6', '物料7', '物料8']:
         materialFake.append({'name': material, 'y': random.randint(10, 50)})
-    data = [
+    data=[
         {'name': '库存统计', 'type': 'pie', 'innerSize': '80%',
             'name': '库存剩余', 'data': materialFake}
     ]
@@ -292,40 +322,40 @@ def storeAna(order):
 
 
 def selectPosition(product):
-    res = ''
+    res=''
     if product.pallet:
         if obj.pallet.hole1Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '1')
         if obj.pallet.hole2Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '2')
         if obj.pallet.hole3Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '3')
         if obj.pallet.hole4Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '4')
         if obj.pallet.hole5Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '5')
         if obj.pallet.hole6Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '6')
         if obj.pallet.hole7Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '7')
         if obj.pallet.hole8Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '8')
         if obj.pallet.hole9Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
+            res='%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '9')
     else:
         try:
-            pos = StorePosition.objects.get(
+            pos=StorePosition.objects.get(
                 content='%s-%s' % (obj.name, product.workOrder.number))
-            res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
+            res='%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         except:
-            res = ''
+            res=''
     return res
