@@ -659,16 +659,6 @@ def queryPoweranaChart(request):
 
 
 @csrf_exempt
-def deleteMaterialOrTool(request):
-    params = json.loads(request.body)
-    if params['model']=='material':
-        Material.objects.filter(Q(name=params['name'])).delete()
-    else:
-        Tool.objects.filter(Q(name=params['name'])).delete()
-    return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
 def queryMateanaChart(request):
     params = json.loads(request.body)
     data = mateAna(params['order'], all=False)
@@ -894,30 +884,4 @@ def queryCharts(request):
                 'name': '产品占比', 'data': productFake}]
 
     return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
-
-
-@csrf_exempt
-def addMaterialOrTool(request):
-    params = json.loads(request.body)
-    Material.objects.filter(Q(name=None)).delete()
-    Tool.objects.filter(Q(name=None)).delete()
-    if params['model'] == 'material':
-        for i in range(params['addCount']):
-            material = Material()
-            material.name = params['name']
-            material.size = params['size']
-            material.unit = params['unit']
-            material.mateType = '1' if params['mateType'] == '自制' else '2'
-            material.store = Store.objects.get(name=params['store__name'])
-            material.save()
-    if params['model'] == 'tool':
-        for i in range(params['addCount']):
-            tool = Tool()
-            tool.name = params['name']
-            tool.size = params['size']
-            tool.unit = params['unit']
-            tool.toolType = '1' if params['toolType'] == '自制' else '2'
-            tool.store = Store.objects.get(name=params['store__name'])
-            tool.save()
-    return JsonResponse({'res': 'ok'})
 

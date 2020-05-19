@@ -62,13 +62,11 @@ urlpatterns = [
     url(r'^api/recordWeight/',  views.recordWeight),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryProducing/',  views.queryProducing),
-    url(r'^api/addMaterialOrTool/',  views.addMaterialOrTool),
     url(r'^api/queryOperateChart/',  views.queryOperateChart),
     url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
     url(r'^api/queryMateanaChart/',  views.queryMateanaChart),
     url(r'^api/queryPoweranaChart/',  views.queryPoweranaChart),
     url(r'^api/queryInterviewChart/',  views.queryInterviewChart),
-    url(r'^api/deleteMaterialOrTool/',  views.deleteMaterialOrTool),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

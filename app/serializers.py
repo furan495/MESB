@@ -1,4 +1,5 @@
 import time
+from app.utils import *
 from app.models import *
 from django.db.models import Q
 from rest_framework import serializers
@@ -158,6 +159,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    number = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
         queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
@@ -170,6 +172,9 @@ class OrderSerializer(serializers.ModelSerializer):
     line = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='选用产线', slug_field='name', required=False)
 
+    def get_number(self, obj):
+        return dataX(obj.number)
+    
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 

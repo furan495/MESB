@@ -41,11 +41,11 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             Organization.objects.all().delete()
         return Response({'res': 'succ'}, status=200)
 
-    @action(methods=['get'], detail=False)
-    def queryOrganization(self, request):
+    def list(self, request, *args, **kwargs):
         data = list(map(lambda obj: {
             'key': obj.key,
             'title': obj.name,
+            'parent':obj.parent,
             'children': loopOrganization(obj.name)
         }, Organization.objects.filter(Q(parent=None))))
 
@@ -95,7 +95,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     @action(methods=['post'], detail=False)
-    def loginCheck(self, request):
+    def login(self, request):
         res = ''
         params = request.data
         user = User.objects.get(phone=params['phone'])
@@ -106,15 +106,15 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'res': res, 'count': User.objects.filter(Q(status='2')).count()})
 
     @action(methods=['post'], detail=False)
-    def logoutUser(self, request):
+    def logout(self, request):
         params = request.data
         user = User.objects.get(Q(phone=params['phone']))
         user.status = '1'
         user.save()
         return Response({'res': 'ok'})
 
-    @action(methods=['post'], detail=True)
-    def updateUserState(self, request, pk=None):
+    @action(methods=['put'], detail=True)
+    def status(self, request, pk=None):
         params = json.loads(request.body)
         user = User.objects.get(key=pk)
         user.status = params['status']
@@ -127,7 +127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
     @action(methods=['post'], detail=True)
-    def addBottle(self, request, pk=None):
+    def bottles(self, request, pk=None):
         params = request.data
         for count in range(params['counts']):
             bottle = Bottle()
@@ -141,7 +141,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response({'res': 'ok'})
 
     @action(methods=['post'], detail=True)
-    def splitCheck(self, request, pk=None):
+    def preScheduling(self, request, pk=None):
         res, info = 'ok', ''
         params = request.data
         line = ProductLine.objects.get(name=params['line'])
@@ -240,7 +240,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response({'res': res, 'info': info})
 
     @action(methods=['post'], detail=True)
-    def orderSplit(self, request, pk=None):
+    def scheduling(self, request, pk=None):
         params = request.data
         order = Order.objects.get(key=pk)
         orderDesc = params['description'].split(';')
@@ -292,10 +292,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response({'res': 'ok'})
 
     @action(methods=['post'], detail=False)
-    def bandProduct(self, request):
+    def products(self, request):
         params = request.data
         workOrder = WorkOrder.objects.filter(
-            Q(order__number=params['number']))
+            Q(order__key=params['key']))
         outPos = list(StorePosition.objects.filter(
             Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料')))[:workOrder.count()]
         outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
@@ -349,7 +349,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     serializer_class = ProcessRouteSerializer
 
     @action(methods=['post'], detail=True)
-    def deviceBand(self, request, pk=None):
+    def deviceBanding(self, request, pk=None):
         params = request.data
         device = Device.objects.get(key=pk)
         if params['process'] != '':
@@ -362,7 +362,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         return Response({'res': 'ok'})
 
     @action(methods=['post'], detail=False)
-    def deviceUnband(self, request):
+    def deviceUnbanding(self, request):
         params = request.data
         for device in Device.objects.filter(Q(process__name=params['process'], process__route__key=params['route'])):
             device.process = None
@@ -370,7 +370,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         return Response({'res': 'ok'})
 
     @action(methods=['post'], detail=True)
-    def updateProcessByRoute(self, request, pk=None):
+    def process(self, request, pk=None):
         params = request.data
         list(map(lambda obj: updateDevice(obj), Device.objects.filter(
             Q(process__route__key=pk))))
@@ -394,7 +394,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         return Response({'res': 'ok'})
 
     @action(methods=['post'], detail=True)
-    def processParamsSetting(self, request, pk=None):
+    def processParams(self, request, pk=None):
         params = request.data
         processParam = ProcessParams()
         processParam.name = params['name']
@@ -455,7 +455,7 @@ class StoreViewSet(viewsets.ModelViewSet):
     serializer_class = StoreSerializer
 
     @action(methods=['post'], detail=True)
-    def createStore(self, request, pk=None):
+    def modeling(self, request, pk=None):
         params = json.loads(request.body)
         store = Store.objects.get(key=pk)
         storeType = store.productLine.lineType.name
@@ -494,7 +494,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                     pallet.save()
         return Response({'res': 'ok'})
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['put'], detail=False)
     def positionGroup(self, request):
         params = request.data
         position = StorePosition.objects.get(
@@ -502,17 +502,6 @@ class StoreViewSet(viewsets.ModelViewSet):
         position.description = params['value']
         position.save()
         return Response({'res': 'ok'})
-
-    @action(methods=['post'], detail=False)
-    def queryStores(self, request):
-        params = request.data
-        gz = Store.objects.filter(
-            Q(storeType__name=params['type'], workShop__name=params['shop'], productLine__name=params['line'])).count()
-        mw = Store.objects.filter(
-            Q(storeType__name=params['type'], workShop__name=params['shop'], productLine__name=params['line'])).count()
-        ea = Store.objects.filter(
-            Q(storeType__name=params['type'], workShop__name=params['shop'], productLine__name=params['line'])).count()
-        return Response({'gz': gz, 'mw': mw, 'ea': ea})
 
 
 class StoreTypeViewSet(viewsets.ModelViewSet):
@@ -545,8 +534,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['docType']
 
-    @action(methods=['post'], detail=True)
-    def updateCount(self, request, pk=None):
+    @action(methods=['put'], detail=True)
+    def counts(self, request, pk=None):
         params = request.data
         doc = Document.objects.get(key=pk)
         doc.count = params['count']+1
@@ -608,6 +597,24 @@ class MaterialViewSet(viewsets.ModelViewSet):
             counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
+    def update(self, request, *args, **kwargs):
+        params = request.data
+        for i in range(params['count']):
+            material = Material()
+            material.name = params['name']
+            material.size = params['size']
+            material.unit = params['unit']
+            material.mateType = '1' if params['mateType'] == '自制' else '2'
+            material.store = Store.objects.get(name=params['store__name'])
+            material.save()
+        Material.objects.filter(Q(name=None)).delete()
+        return Response({'res': 'ok'})
+
+    def destroy(self, request, *args, **kwargs):
+        params = request.data
+        Material.objects.filter(Q(name=params['name'])).delete()
+        return Response({'res': 'ok'})
+
 
 class ToolViewSet(viewsets.ModelViewSet):
     queryset = Tool.objects.all()
@@ -617,6 +624,24 @@ class ToolViewSet(viewsets.ModelViewSet):
         queryset = Tool.objects.all().values('name').annotate(
             counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
+
+    def update(self, request, *args, **kwargs):
+        params = request.data
+        for i in range(params['count']):
+            tool = Tool()
+            tool.name = params['name']
+            tool.size = params['size']
+            tool.unit = params['unit']
+            tool.toolType = '1' if params['toolType'] == '自制' else '2'
+            tool.store = Store.objects.get(name=params['store__name'])
+            tool.save()
+        Tool.objects.filter(Q(name=None)).delete()
+        return Response({'res': 'ok'})
+
+    def destroy(self, request, *args, **kwargs):
+        params = request.data
+        Tool.objects.filter(Q(name=params['name'])).delete()
+        return Response({'res': 'ok'})
 
 
 class PalletViewSet(viewsets.ModelViewSet):
@@ -662,8 +687,8 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
     queryset = ProductType.objects.all().order_by('-key')
     serializer_class = ProductTypeSerializer
 
-    @action(methods=['post'], detail=False)
-    def updateDataView(self, request):
+    @action(methods=['put'], detail=False)
+    def dataViews(self, request):
         params = request.data
         product = ProductType.objects.filter(
             Q(orderType__name=params['orderType']))
@@ -686,7 +711,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
             Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), 订单状态=F('status__name'),  **productDict).values('订单编号', '订单批次', '排产时间', '订单状态', *productDict.keys())
 
         dv = DataView.objects.all()[0]
-        if params['orderType'] != '机加':
+        if params['orderType'] == '机加':
             dv.mwContent = formatSql(orders.query.__str__().split(' '))
         if params['orderType'] == '电子装配':
             dv.eaContent = formatSql(orders.query.__str__().split(' '))

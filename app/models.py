@@ -236,8 +236,8 @@ class Order(models.Model):
         max_length=20, verbose_name='订单批次', blank=True, null=True)
     scheduling = models.CharField(max_length=50,
                                   verbose_name='订单排产', blank=True, null=True)
-    number = models.CharField(max_length=20,
-                              verbose_name='订单编号', blank=True, null=True)
+    number = models.DateTimeField(auto_now_add=True,
+                                  verbose_name='创建时间')
     createTime = models.DateTimeField(auto_now_add=True,
                                       verbose_name='创建时间')
     description = models.CharField(

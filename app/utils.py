@@ -39,7 +39,7 @@ def loopOrganization(organization):
         else:
             return list(map(lambda obj: {'key': obj.key, 'title': obj.name, }, User.objects.filter(Q(department__name=name))))
     data = list(map(lambda obj: {
-                'key': obj.key, 'title': obj.name, 'children': renderChildren(obj.name)}, Organization.objects.filter(Q(parent=organization))))
+                'key': obj.key, 'title': obj.name, 'parent': obj.parent, 'children': renderChildren(obj.name)}, Organization.objects.filter(Q(parent=organization))))
     return data
 
 
@@ -68,16 +68,19 @@ def selectDescription(storeType, index, count, row, col):
         else:
             return '成品'
     if '电子装配' == storeType:
-        products = ProductType.objects.filter(
-            Q(orderType__name='电子装配')).values_list('name')
-        if index < int(count/2):
-            for i in range(len(products)):
-                if int(i*col/2) <= index < int(i*col/2)+4:
-                    return '%s原料' % products[i][0]
+        if ProductType.objects.filter(Q(orderType__name='电子装配')).count() > 0:
+            products = ProductType.objects.filter(
+                Q(orderType__name='电子装配')).values_list('name')
+            if index < int(count/2):
+                for i in range(len(products)):
+                    if int(i*col/2) <= index < int(i*col/2)+4:
+                        return '%s原料' % products[i][0]
+            else:
+                for i in range(len(products)):
+                    if (row+i)*col/2 <= index < (row+i)*col/2+4:
+                        return '%s成品' % products[i][0]
         else:
-            for i in range(len(products)):
-                if (row+i)*col/2 <= index < (row+i)*col/2+4:
-                    return '%s成品' % products[i][0]
+            return '待定仓位'
     else:
         return '分组'
 
