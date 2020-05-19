@@ -35,24 +35,25 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.parent:
-            Organization.objects.filter(Q(key=instance.key) | Q(
-                parent=instance.name)).delete()
+            Organization.objects.filter(
+                Q(key=instance.key) | Q(parent=instance.name)).delete()
         else:
             Organization.objects.all().delete()
-        return Response({'res': 'succ'}, status=200)
+        return Response({'res': 'ok'})
 
     def list(self, request, *args, **kwargs):
-        data = list(map(lambda obj: {
-            'key': obj.key,
-            'title': obj.name,
-            'parent':obj.parent,
-            'children': loopOrganization(obj.name)
-        }, Organization.objects.filter(Q(parent=None))))
+        organizations = Organization.objects.filter(Q(parent=None))
+        data = map(lambda obj: {'key': obj.key, 'title': obj.name, 'parent': obj.parent,
+                                'children': loopOrganization(obj.name)}, organizations)
 
-        series = list(map(lambda obj: [obj.parent if obj.parent else obj.name, obj.name],
-                          Organization.objects.filter(~Q(parent=None))))
+        orgaSeries = Organization.objects.filter(~Q(parent=None))
+        series = map(
+            lambda obj: [obj.parent if obj.parent else obj.name, obj.name], orgaSeries)
 
-        return Response({'tree': data, 'series': series, 'parent': list(map(lambda obj: [obj.key, obj.name], Organization.objects.all()))})
+        parents = map(lambda obj: [obj.key, obj.name],
+                      Organization.objects.all())
+
+        return Response({'tree': list(data), 'series': list(series), 'parent': list(parents)})
 
 
 class ProcessParamsViewSet(viewsets.ModelViewSet):
@@ -129,14 +130,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True)
     def bottles(self, request, pk=None):
         params = request.data
+        order = Order.objects.get(key=pk)
         for count in range(params['counts']):
             bottle = Bottle()
-            bottle.order = Order.objects.get(key=pk)
             bottle.number = ''
-            bottle.color = params['color']
+            bottle.order = order
             bottle.red = params['red']
-            bottle.green = params['green']
             bottle.blue = params['blue']
+            bottle.green = params['green']
+            bottle.color = params['color']
             bottle.save()
         return Response({'res': 'ok'})
 
@@ -144,10 +146,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     def preScheduling(self, request, pk=None):
         res, info = 'ok', ''
         params = request.data
+        orderType = params['orderType']
         line = ProductLine.objects.get(name=params['line'])
         route = ProcessRoute.objects.get(name=params['route'])
-        if params['orderType'] == line.lineType.name and params['orderType'] == route.routeType.name:
-            if params['orderType'] == '灌装':
+        if orderType == line.lineType.name and orderType == route.routeType.name:
+            if orderType == '灌装':
                 particles, fieldDict = {}, {}
                 descriptions = params['description'].split(';')[:-1]
                 for field in apps.get_model('app', 'Bottle')._meta.fields:
@@ -164,31 +167,35 @@ class OrderViewSet(viewsets.ModelViewSet):
                         res = 'err'
                         info = '%s不足，无法排产' % bottle
                     for particle in desc.split(',')[1:-1]:
-                        particles[particle.split(':')[0]] = Sum(
-                            'bottles__%s' % fieldDict[particle.split(':')[0]])
+                        particleKey = particle.split(':')[0]
+                        particles[particleKey] = Sum(
+                            'bottles__%s' % fieldDict[particleKey])
                     particleCounts = Order.objects.filter(key=pk).annotate(
                         **particles).values(*particles.keys())
                     for parti in particleCounts[0].keys():
                         try:
                             occupyPar = Order.objects.filter(Q(status__name='已排产', order__orderType__name='灌装')).annotate(counts=Sum(
-                                'bottles__%s' % fieldDict[particle.split(':')[0]])).values('counts')[0]['counts']
+                                'bottles__%s' % fieldDict[parti])).values('counts')[0]['counts']
                         except:
                             occupyPar = 0
                         if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
                             res = 'err'
                             info = '%s不足，无法排产' % parti
-            if params['orderType'] == '机加':
+            if orderType == '机加':
                 count = 0
                 descriptions = params['description']
                 for desc in descriptions.split(';')[:-1]:
                     count = count+int(desc.split('x')[1])
                 occupy = WorkOrder.objects.filter(
                     Q(order__status__name='已排产', order__orderType__name='机加')).count()
-                if StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description='原料')).count() < count or Material.objects.filter(Q(store__storeType__name='混合库', store__productLine__lineType__name=params['orderType'])).count()-occupy < count:
+                mixinPos = StorePosition.objects.filter(
+                    Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')).count()
+                ylPos = Material.objects.filter(
+                    Q(store__storeType__name='原料库', store__productLine__lineType__name='机加')).count()
+                if (mixinPos < count) or (ylPos-occupy < count):
                     res = 'err'
                     info = '原料不足，无法排产'
-            if params['orderType'] == '电子装配':
+            if orderType == '电子装配':
                 eaOutPosition, eaInPosition = {}, {}
                 for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
                     eaOutPosition[pro.name] = StorePosition.objects.filter(
@@ -201,9 +208,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     product = desc.split('x')[0]
                     productCount = desc.split('x')[1]
                     bom = BOM.objects.get(Q(product__name=product))
-                    matStr = ','.join(
-                        list(map(lambda obj: obj.material, bom.contents.all())))+','
-                    materialStr = materialStr + matStr
+                    matStr = map(lambda obj: obj.material, bom.contents.all())
+                    materialStr = materialStr + ','.join(list(matStr))+','
                     if eaOutPosition[product] < int(productCount):
                         res = 'err'
                         info = '%s原料底座不足，无法排产' % product
@@ -211,15 +217,16 @@ class OrderViewSet(viewsets.ModelViewSet):
                         res = 'err'
                         info = '%s成品仓位不足，无法排产' % product
                 for material in list(set(materialStr.split(',')))[1:]:
-                    materialDict[material.split('/')[0]] = 0
+                    materialKey = material.split('/')[0]
+                    materialDict[materialKey] = 0
                 for desc in descriptions.split(';')[:-1]:
                     count = desc.split('x')[1]
                     product = desc.split('x')[0]
                     bom = BOM.objects.get(Q(product__name=product))
                     for mat in bom.contents.all():
                         counts = mat.counts*int(count)
-                        materialDict[mat.material.split(
-                            '/')[0]] = materialDict[mat.material.split('/')[0]] + counts
+                        matKey = mat.material.split('/')[0]
+                        materialDict[matKey] = materialDict[matKey] + counts
                 for mat in list(set(materialStr.split(',')))[1:]:
                     try:
                         bomContents = BOMContent.objects.filter(
@@ -502,6 +509,13 @@ class StoreViewSet(viewsets.ModelViewSet):
         position.description = params['value']
         position.save()
         return Response({'res': 'ok'})
+
+    @action(methods=['post'], detail=False)
+    def counts(self, request):
+        params = request.data
+        count = Store.objects.filter(
+            Q(storeType__name=params['storeType'], productLine__name=params['productLine'])).count()
+        return Response({'res': count})
 
 
 class StoreTypeViewSet(viewsets.ModelViewSet):

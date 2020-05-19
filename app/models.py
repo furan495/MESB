@@ -39,9 +39,9 @@ class WorkShop(models.Model):
 
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
-        max_length=20, verbose_name='车间名称', blank=True, null=True)
+        max_length=20, verbose_name='车间名称', unique=True, blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='车间编号', blank=True, null=True)
+        max_length=20, verbose_name='车间编号', unique=True, blank=True, null=True)
     descriptions = models.CharField(
         max_length=200, verbose_name='车间描述', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -99,13 +99,13 @@ class User(models.Model):
     role = models.ForeignKey(Role, related_name='users',
                              on_delete=models.CASCADE, verbose_name='角色', blank=True, null=True)
     name = models.CharField(
-        max_length=20, verbose_name='姓名', blank=True, null=True)
+        max_length=20, verbose_name='姓名', unique=True, blank=True, null=True)
     password = models.CharField(
         max_length=20, verbose_name='密码', blank=True, null=True, default='123456')
     gender = models.CharField(
         max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
     phone = models.CharField(
-        max_length=20, verbose_name='电话', blank=True, null=True)
+        max_length=20, verbose_name='电话', unique=True, blank=True, null=True)
     post = models.CharField(
         max_length=20, verbose_name='职位', blank=True, null=True)
     status = models.CharField(
@@ -149,7 +149,7 @@ class ProcessRoute(models.Model):
     routeType = models.ForeignKey(
         OrderType, related_name='routes', on_delete=models.CASCADE, verbose_name='工艺类别', blank=True, null=True)
     name = models.CharField(
-        max_length=20, verbose_name='工艺名称', blank=True, null=True)
+        max_length=20, verbose_name='工艺名称', unique=True, blank=True, null=True)
     data = models.CharField(
         max_length=4000, verbose_name='工艺内容', blank=True, null=True)
     description = models.CharField(
@@ -186,9 +186,9 @@ class ProductLine(models.Model):
     state = models.ForeignKey(LineState, related_name='productLines',
                               on_delete=models.CASCADE, verbose_name='产线状态', blank=True, null=True)
     name = models.CharField(
-        max_length=20, verbose_name='产线名称', blank=True, null=True)
+        max_length=20, verbose_name='产线名称', unique=True, blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='产线编号', blank=True, null=True)
+        max_length=20, verbose_name='产线编号', unique=True, blank=True, null=True)
     description = models.CharField(
         max_length=200, verbose_name='产线描述', blank=True, null=True)
 
@@ -340,7 +340,7 @@ class Device(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='设备编号', blank=True, null=True)
+        max_length=20, verbose_name='设备编号', unique=True,blank=True, null=True)
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
@@ -448,9 +448,9 @@ class Store(models.Model):
     storeType = models.ForeignKey(StoreType, related_name='stores',
                                   on_delete=models.CASCADE, verbose_name='仓库类型', blank=True, null=True)
     name = models.CharField(
-        max_length=20, verbose_name='仓库名称', blank=True, null=True)
+        max_length=20, verbose_name='仓库名称', unique=True, blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='仓库编号', blank=True, null=True)
+        max_length=20, verbose_name='仓库编号', unique=True, blank=True, null=True)
     dimensions = models.CharField(
         max_length=20, verbose_name='仓库规模',  blank=True, null=True)
     direction = models.CharField(
