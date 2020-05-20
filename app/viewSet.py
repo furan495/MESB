@@ -645,7 +645,7 @@ class OperateViewSet(viewsets.ModelViewSet):
         return Response({'res': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))})
 
     @action(methods=['get'], detail=False)
-    def operateChart(self,request):
+    def operateChart(self, request):
         dikaer, series = [], []
         for x, y in product(range(10), range(10)):
             dikaer.append([x, y])
@@ -865,8 +865,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
                 '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='2'))
         if params['model'] == 'qualAna':
-            excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '合格数': obj['good'], '不合格数': obj['bad'], '合格率': round(obj['good']/(obj['good']+obj['bad']), 2), '不合格率': round(obj['bad']/(
-                obj['good']+obj['bad']), 2)}, Product.objects.all().values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad'))
+            excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '合格数': obj['good'], '不合格数': obj['bad'], '合格率': round(obj['good']/(obj['good']+obj['bad']), 2)}, Product.objects.filter(
+                Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad'))
         if params['model'] == 'mateAna':
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
@@ -875,16 +875,17 @@ class ProductViewSet(viewsets.ModelViewSet):
                 excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '原料棒': obj['count']}, Product.objects.filter(Q(workOrder__order__orderType__name='机加')).values('batch').annotate(
                     count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count'))
             if params['orderType'] == '电子装配':
-                excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '原料棒': obj['count']}, Product.objects.filter(Q(workOrder__order__orderType__name='机加')).values('batch').annotate(
-                    count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count'))
+                materialDict = {}
+                materials = Material.objects.filter(
+                    Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
+                for material in materials:
+                    materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
+                        prodType__bom__contents__material=material['name']+'/'+material['size']))
+                excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
+                    'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerAna':
-            if params['orderType'] == '灌装':
-                data = Bottle.objects.all().values('order').annotate(
-                    expects=Count('order'), reals=Count('order', filter=Q(status__name='入库'))).values('order__number', 'expects', 'reals')
-                rate = list(map(lambda obj: round(len(Product.objects.filter(
-                    Q(result='1', workOrder__order=obj))) / len(WorkOrder.objects.filter(Q(order=obj))) if len(WorkOrder.objects.filter(Q(order=obj))) != 0 else 1, 2), Order.objects.all()))
-                excel = map(lambda obj: {'订单号': obj[0]['order__number'], '预期产量': obj[0]
-                                         ['expects'], '实际产量': obj[0]['reals'], '合格率': obj[1]}, list(zip(data, rate)))
+            excel = WorkOrder.objects.filter(Q(order__orderType__name=params['orderType'])).values(
+                'order__batch').annotate(日期=F('order__batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(status__name='已完成'))).values('日期', '预期产量', '实际产量')
 
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')

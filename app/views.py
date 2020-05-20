@@ -19,9 +19,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 @csrf_exempt
 def recordWeight(request):
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+    
+    params = str(request.body, 'utf8').split(',')
     print(params)
+    
     try:
         workOrder = WorkOrder.objects.get(
             Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
@@ -50,8 +53,10 @@ def wincc3(request):
     position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
                 'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'startE': 'E模块加工开始', 'stopE': 'E模块加工结束',
                 'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB': 'B模块入库结束', 'check': '质检', 'error': '失败'}
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
 
     print(params)
 
@@ -102,7 +107,8 @@ def wincc3(request):
         storePosition.content = '%s-%s' % (product.name,
                                            product.workOrder.number)
         storePosition.save()
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=workOrder.order)).count() == 0:
+        order = workOrder.order
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
             order.status = OrderStatus.objects.get(Q(name='已完成'))
             order.save()
 
@@ -119,8 +125,10 @@ def wincc3(request):
 def wincc2(request):
     position = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
                 'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检', 'error': '失败'}
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
 
     print(params)
 
@@ -174,7 +182,8 @@ def wincc2(request):
                                            product.workOrder.number)
         storePosition.save()
 
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=workOrder.order)).count() == 0:
+        order=workOrder.order
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
             order.status = OrderStatus.objects.get(Q(name='已完成'))
             order.save()
 
@@ -193,8 +202,10 @@ def wincc(request):
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     position = {'LP': '理瓶', 'XG': '旋盖', 'SLA': '数粒A',
                 'SLB': '数粒B', 'SLC': '数粒C', 'CZ': '称重', 'TB': '贴签', 'HJ': '桁架'}
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
 
     print(params)
 
@@ -266,9 +277,12 @@ def wincc(request):
 
 @csrf_exempt
 def storeOperate(request):
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
     print(params)
+    
     store = Store.objects.get(
         Q(storeType__name='成品库', productLine=Order.objects.get(number=params[1]).line))
     storePosition = StorePosition.objects.get(

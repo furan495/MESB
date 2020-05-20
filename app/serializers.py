@@ -159,7 +159,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    number = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
         queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
@@ -172,9 +171,6 @@ class OrderSerializer(serializers.ModelSerializer):
     line = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='选用产线', slug_field='name', required=False)
 
-    def get_number(self, obj):
-        return dataX(obj.number)
-    
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -258,6 +254,7 @@ class BottleSerializer(serializers.ModelSerializer):
 
 class WorkOrderSerializer(serializers.ModelSerializer):
 
+    bottle = serializers.SerializerMethodField()
     orderNum = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     startTime = serializers.SerializerMethodField()
@@ -281,6 +278,12 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     def get_orderNum(self, obj):
         return obj.order.number
+    
+    def get_bottle(self, obj):
+        if obj.order.orderType.name=='灌装':
+            return obj.bottle
+        else:
+            return obj.workOrder.number
 
     class Meta:
         model = WorkOrder
@@ -356,10 +359,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.batch.strftime('%Y-%m-%d')
 
     def get_name(self, obj):
-        try:
-            return obj.name+'/'+obj.workOrder.bottle
-        except:
-            return obj.name
+        return obj.name
 
     def get_stateList(self, obj):
         states = []

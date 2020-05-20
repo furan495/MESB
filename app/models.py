@@ -236,8 +236,8 @@ class Order(models.Model):
         max_length=20, verbose_name='订单批次', blank=True, null=True)
     scheduling = models.CharField(max_length=50,
                                   verbose_name='订单排产', blank=True, null=True)
-    number = models.DateTimeField(auto_now_add=True,
-                                  verbose_name='创建时间')
+    number = models.CharField(
+        max_length=20, verbose_name='订单编号', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True,
                                       verbose_name='创建时间')
     description = models.CharField(
@@ -340,7 +340,7 @@ class Device(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='设备编号', unique=True,blank=True, null=True)
+        max_length=20, verbose_name='设备编号', unique=True, blank=True, null=True)
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
@@ -547,9 +547,9 @@ class Operate(models.Model):
 class ProductType(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
-        max_length=20, verbose_name='产品类型', blank=True, null=True)
+        max_length=20, verbose_name='产品类型', unique=True, blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='产品编号', blank=True, null=True)
+        max_length=20, verbose_name='产品编号', unique=True, blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='产品图片', blank=True, null=True)
     errorRange = models.FloatField(

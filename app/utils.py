@@ -118,22 +118,22 @@ def powerAna(orderType, all):
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data)) """
 
-    expectDataFake, realDataFake, goodRateFake = [], [], []
+    expectData, realData, goodRate = [], [], []
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     start = '%s-%s-20' % (str(year), str(month-1))
     for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        expectDataFake.append([day, random.randint(1, 100)])
-        realDataFake.append([day, random.randint(1, 100)])
-        goodRateFake.append([day, round(random.random(), 2)])
+        expectData.append([day, random.randint(1, 100)])
+        realData.append([day, random.randint(1, 100)])
+        goodRate.append([day, round(random.random(), 2)])
 
     data = [
         {'name': '预期产量', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': expectDataFake},
+            'color': 'rgb(24,144,255)', 'data': expectData},
         {'name': '实际产量', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': realDataFake},
+            'color': 'rgb(255,77,79)', 'data': realData},
         {'name': '合格率', 'type': 'line', 'color': '#40a9ff',
-            'yAxis': 1, 'data': goodRateFake},
+            'yAxis': 1, 'data': goodRate},
     ]
     if all:
         data = [
@@ -144,7 +144,7 @@ def powerAna(orderType, all):
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
                  ]
-             }, 'data': expectDataFake},
+             }, 'data': expectData},
             {'name': '实际产量', 'type': 'column',
              'color': {
                  'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
@@ -152,7 +152,7 @@ def powerAna(orderType, all):
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
                  ]
-             }, 'data': realDataFake},
+             }, 'data': realData},
         ]
     return data
 
@@ -164,31 +164,30 @@ def qualAna(orderType, all):
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
         map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
-    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(
-                Q(result='2', workOrder__order__orderType__name='灌装'))
+                Q(result='2', workOrder__order__orderType__name=orderType))
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))
     ) """
 
-    goodDataFake, badDataFake, reasonDataFake = [], [], []
+    goodData, badData, reasonData = [], [], []
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     start = '%s-%s-20' % (str(year), str(month-1))
     for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        goodDataFake.append([day, random.randint(1, 100)])
-        badDataFake.append([day, random.randint(1, 100)])
+        goodData.append([day, random.randint(1, 100)])
+        badData.append([day, random.randint(1, 100)])
     for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
-        reasonDataFake.append({'name': reason, 'y': random.randint(20, 100)})
+        reasonData.append({'name': reason, 'y': random.randint(20, 100)})
     data = [
         {'name': '合格', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': goodDataFake},
+            'color': 'rgb(24,144,255)', 'data': goodData},
         {'name': '不合格', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': badDataFake},
-        {'name': '原因汇总', 'type': 'pie', 'data': reasonDataFake, 'innerSize': '50%',
+            'color': 'rgb(255,77,79)', 'data': badData},
+        {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
     if all:
@@ -200,7 +199,7 @@ def qualAna(orderType, all):
                      [0, 'rgba(24,144,255,0)'],
                      [1, 'rgba(24,144,255,1)']
                     ]
-                }, 'data': goodDataFake},
+                }, 'data': goodData},
             {'name': '不合格', 'type': 'column',
                 'color': {
                     'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
@@ -208,7 +207,7 @@ def qualAna(orderType, all):
                      [0, 'rgba(255,77,79,0)'],
                      [1, 'rgba(255,77,79,1)']
                     ]
-                }, 'data': badDataFake},
+                }, 'data': badData},
         ]
 
     return data
@@ -266,7 +265,7 @@ def mateAna(orderType, all):
             {'name': '蓝瓶', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': blueBottle},
         ]
-    if orderType=='机加:
+    if orderType == '机加':
         data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
@@ -274,23 +273,22 @@ def mateAna(orderType, all):
             {'name': '原料棒', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': day[-20:]},
         ]
-    if orderType=='电子装配':
+    if orderType == '电子装配':
         materialDict = {}
         materials = Material.objects.filter(
-        Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name','size').distinct()
+            Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
         for material in materials:
             materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
                 prodType__bom__contents__material=material['name']+'/'+material['size']))
 
         results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values(
-            'batch').annotate(**materialDict).values('batch',*materialDict.keys())
+            'batch').annotate(**materialDict).values('batch', *materialDict.keys())
 
-        data=[]
+        data = []
         for mate in materials:
-            data.append({'name':mate['name'],'type': 'column','color': 'rgb(24,144,255)','data':list(
-            map(lambda obj: [dataX(obj['batch']), obj['name']],results))
-            })
-    """
+            data.append({'name': mate['name'], 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
+                map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
+            }) """
 
     one, two, three, four, five, six, seven, eight, nine, ten = [
     ], [], [], [], [], [], [], [], [], []
@@ -309,25 +307,25 @@ def mateAna(orderType, all):
         nine.append([day, random.randint(1, 100)])
         ten.append([day, random.randint(1, 100)])
     data = [
-        {'name': '耗材1', 'type': 'column',
+        {'name': '物料1', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': one},
-        {'name': '耗材2', 'type': 'column',
+        {'name': '物料2', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': two},
-        {'name': '耗材3', 'type': 'column',
+        {'name': '物料3', 'type': 'column',
             'color': 'rgb(24,144,255)',  'data': three},
-        {'name': '耗材4', 'type': 'column',
+        {'name': '物料4', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': four},
-        {'name': '耗材5', 'type': 'column',
+        {'name': '物料5', 'type': 'column',
             'color': 'rgb(24,144,255)',  'data': five},
-        {'name': '耗材6', 'type': 'column',
+        {'name': '物料6', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': six},
-        {'name': '耗材7', 'type': 'column',
+        {'name': '物料7', 'type': 'column',
             'color': 'rgb(24,144,255)',  'data': seven},
-        {'name': '耗材8', 'type': 'column',
+        {'name': '物料8', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': eight},
-        {'name': '耗材9', 'type': 'column',
+        {'name': '物料9', 'type': 'column',
             'color': 'rgb(24,144,255)',  'data': nine},
-        {'name': '耗材10', 'type': 'column',
+        {'name': '物料10', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': ten},
     ]
     return data
@@ -351,38 +349,38 @@ def storeAna(order):
 def selectPosition(product):
     res = ''
     if product.pallet:
-        if obj.pallet.hole1Content == product.workOrder.bottle:
+        if product.pallet.hole1Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '1')
-        if obj.pallet.hole2Content == product.workOrder.bottle:
+        if product.pallet.hole2Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '2')
-        if obj.pallet.hole3Content == product.workOrder.bottle:
+        if product.pallet.hole3Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '3')
-        if obj.pallet.hole4Content == product.workOrder.bottle:
+        if product.pallet.hole4Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '4')
-        if obj.pallet.hole5Content == product.workOrder.bottle:
+        if product.pallet.hole5Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '5')
-        if obj.pallet.hole6Content == product.workOrder.bottle:
+        if product.pallet.hole6Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '6')
-        if obj.pallet.hole7Content == product.workOrder.bottle:
+        if product.pallet.hole7Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '7')
-        if obj.pallet.hole8Content == product.workOrder.bottle:
+        if product.pallet.hole8Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '8')
-        if obj.pallet.hole9Content == product.workOrder.bottle:
+        if product.pallet.hole9Content == product.workOrder.bottle:
             res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
                                     product.pallet.position.number.split('-')[0], '9')
     else:
         try:
             pos = StorePosition.objects.get(
-                content='%s-%s' % (obj.name, product.workOrder.number))
+                content='%s-%s' % (product.name, product.workOrder.number))
             res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
-        except:
+        except Exception as e:
             res = ''
     return res
