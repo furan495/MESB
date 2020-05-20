@@ -287,7 +287,7 @@ def mateAna(orderType, all):
 
         data=[]
         for mate in materials:
-            data.append({'name':mate['name],'type': 'column','color': 'rgb(24,144,255)','data':list(
+            data.append({'name':mate['name'],'type': 'column','color': 'rgb(24,144,255)','data':list(
             map(lambda obj: [dataX(obj['batch']), obj['name']],results))
             })
     """
