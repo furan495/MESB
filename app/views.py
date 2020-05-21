@@ -415,7 +415,7 @@ def querySelect(request):
         }
     if params['model'] == 'bom':
         selectList = {
-            'materials': list(set(map(lambda obj: obj.name+'/'+obj.size, Material.objects.all()))),
+            'materials': list(set(map(lambda obj: obj.name+'/'+obj.size, Material.objects.filter(Q(store__productLine__lineType__name=params['order']))))),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
         }
     if params['model'] == 'processRoute':
@@ -446,7 +446,7 @@ def querySelect(request):
     if params['model'] == 'productStandard':
         selectList = {
             'result': ['合格', '不合格'],
-            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1)))),
+            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1,workOrder__order__orderType__name=params['order'])))),
         }
     if params['model'] == 'material':
         selectList = {
@@ -709,3 +709,8 @@ def queryCharts(request):
 
     return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
+
+@csrf_exempt
+def agv(request):
+
+    return JsonResponse({'robot':'FUNUC机器人-001'})

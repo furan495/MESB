@@ -736,7 +736,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Material.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name', 'store__productLine__lineType__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     def update(self, request, *args, **kwargs):
@@ -773,7 +773,7 @@ class ToolViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Tool.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name', 'store__productLine__lineType__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     def update(self, request, *args, **kwargs):
@@ -871,7 +871,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerAna':
-            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'),预期产量=Count('number'), 实际产量=Count('number', filter=Q(workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
+            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
+                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})

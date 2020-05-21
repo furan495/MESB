@@ -111,21 +111,21 @@ def rateY(obj):
 
 
 def powerAna(orderType, all):
-    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
-    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data)) """
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
-    expectData, realData, goodRate = [], [], []
+    """ expectData, realData, goodRate = [], [], []
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     start = '%s-%s-20' % (str(year), str(month-1))
     for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
         expectData.append([day, random.randint(1, 100)])
         realData.append([day, random.randint(1, 100)])
-        goodRate.append([day, round(random.random(), 2)])
+        goodRate.append([day, round(random.random(), 2)]) """
 
     data = [
         {'name': '预期产量', 'type': 'column',
@@ -158,7 +158,7 @@ def powerAna(orderType, all):
 
 
 def qualAna(orderType, all):
-    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
@@ -171,9 +171,9 @@ def qualAna(orderType, all):
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))
-    ) """
+    )
 
-    goodData, badData, reasonData = [], [], []
+    """ goodData, badData, reasonData = [], [], []
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     start = '%s-%s-20' % (str(year), str(month-1))
@@ -181,7 +181,7 @@ def qualAna(orderType, all):
         goodData.append([day, random.randint(1, 100)])
         badData.append([day, random.randint(1, 100)])
     for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
-        reasonData.append({'name': reason, 'y': random.randint(20, 100)})
+        reasonData.append({'name': reason, 'y': random.randint(20, 100)}) """
     data = [
         {'name': '合格', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': goodData},
@@ -214,7 +214,7 @@ def qualAna(orderType, all):
 
 
 def mateAna(orderType, all):
-    """ if orderType == '灌装':
+    if orderType == '灌装':
         redBottle = list(
             map(lambda obj: [dataX(obj['createTime']), obj['count']],
                 Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
@@ -288,9 +288,9 @@ def mateAna(orderType, all):
         for mate in materials:
             data.append({'name': mate['name'], 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
-            }) """
+            })
 
-    one, two, three, four, five, six, seven, eight, nine, ten = [
+    """ one, two, three, four, five, six, seven, eight, nine, ten = [
     ], [], [], [], [], [], [], [], [], []
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
@@ -305,7 +305,7 @@ def mateAna(orderType, all):
         seven.append([day, random.randint(1, 100)])
         eight.append([day, random.randint(1, 100)])
         nine.append([day, random.randint(1, 100)])
-        ten.append([day, random.randint(1, 100)])
+        ten.append([day, random.randint(1, 100)]) 
     data = [
         {'name': '物料1', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': one},
@@ -327,7 +327,7 @@ def mateAna(orderType, all):
             'color': 'rgb(24,144,255)',  'data': nine},
         {'name': '物料10', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': ten},
-    ]
+    ]"""
     return data
 
 
