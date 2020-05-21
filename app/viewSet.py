@@ -10,11 +10,12 @@ from django.apps import apps
 from functools import reduce
 from itertools import product
 from app.serializers import *
-from django.db.models import Q, F
 from rest_framework import viewsets
+from django.db.models.functions import Cast
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import ExpressionWrapper, FloatField, Q, F
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 
 # Create your views here.
@@ -27,7 +28,6 @@ class WorkShopViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'车间编号': obj.number, '车间名称': obj.name,
                                  '车间描述': obj.descriptions}, WorkShop.objects.all())
@@ -42,7 +42,6 @@ class BOMViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'对应产品': obj.product.name, 'bom名称': obj.name, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'bom内容': ','.join(
             list(map(lambda obj: obj.material+',数量:'+str(obj.counts) if obj.counts else obj.material+',数量:若干', obj.contents.all())))}, BOM.objects.all())
@@ -110,7 +109,6 @@ class RoleViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'角色名': obj.name,
                                  '权限范围': obj.authority}, Role.objects.all())
@@ -125,7 +123,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'客户名称': obj.name, '客户编号': obj.number, '联系电话': obj.phone,
                                  '客户等级': obj.level, '公司': obj.company}, Customer.objects.all())
@@ -167,7 +164,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': '男' if obj.gender == '1' else '女',
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
@@ -400,7 +396,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'订单类别': obj.orderType.name, '选用工艺': obj.route.name, '订单状态': obj.status.name, '创建人': obj.creator, '目标客户': obj.customer.name,
                                  '订单编号': obj.number, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description}, Order.objects.all())
@@ -415,7 +410,6 @@ class ProductLineViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'产线名称': obj.name, '产线类别': obj.lineType, '隶属车间': obj.workShop.name,
                                  '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
@@ -505,7 +499,6 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'工艺名称': obj.name, '工艺类别': obj.routeType, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
                                  '包含工序': ('->').join(list(map(lambda obj: obj.name, Process.objects.filter(Q(route=obj))))), '详细数据': obj.data}, ProcessRoute.objects.all())
@@ -541,7 +534,6 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '工单瓶号': obj.bottle, '创建时间': obj.createTime.strftime(
             '%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description}, WorkOrder.objects.all())
@@ -612,7 +604,6 @@ class StoreViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,
                                  '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions}, Store.objects.all())
@@ -670,7 +661,6 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '设备状态': list(DeviceState.objects.filter(Q(device=obj)))[-1].name, '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '入库时间': obj.joinTime.strftime(
             '%Y-%m-%d %H:%M:%S'), '设备厂家': obj.factory, '出厂日期': obj.facTime, '厂家联系人': obj.facPeo, '厂家电话': obj.facPho}, Device.objects.all())
@@ -769,7 +759,6 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': '自制' if obj['mateType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
@@ -807,7 +796,6 @@ class ToolViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': '自制' if obj['toolType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
@@ -856,7 +844,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         if params['model'] == 'product':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果': '合格' if obj.result == '1' else '不合格', '存放仓位': selectPosition(
@@ -865,8 +852,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
                 '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='2'))
         if params['model'] == 'qualAna':
-            excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '合格数': obj['good'], '不合格数': obj['bad'], '合格率': round(obj['good']/(obj['good']+obj['bad']), 2)}, Product.objects.filter(
-                Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad'))
+            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
+                'batch'), 合格数=Count('result', filter=Q(result='1')), 不合格数=Count('result', filter=Q(result='2'))).values('日期', '合格数', '不合格数')
         if params['model'] == 'mateAna':
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
@@ -884,9 +871,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerAna':
-            excel = WorkOrder.objects.filter(Q(order__orderType__name=params['orderType'])).values(
-                'order__batch').annotate(日期=F('order__batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(status__name='已完成'))).values('日期', '预期产量', '实际产量')
-
+            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'),预期产量=Count('number'), 实际产量=Count('number', filter=Q(workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
@@ -931,7 +916,6 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'产品名称': obj.name, '订单类型': obj.orderType.name,
                                  '产品编号': obj.number, '产品容差': obj.errorRange}, ProductType.objects.all())
@@ -974,7 +958,6 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=False)
     def export(self, request):
-        res = ''
         params = request.data
         excel = map(lambda obj: {'产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue,
                                  '实际结果': obj.realValue, '检测结果': '合格' if obj.result == '1' else '不合格'}, ProductStandard.objects.all())

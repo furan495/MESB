@@ -21,10 +21,10 @@ def recordWeight(request):
     color = {'1': '红瓶', '2': '绿瓶', '3': '蓝瓶'}
     """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',') """
-    
+
     params = str(request.body, 'utf8').split(',')
     print(params)
-    
+
     try:
         workOrder = WorkOrder.objects.get(
             Q(bottle=params[1], description__icontains=color[params[2]], order=Order.objects.get(number=params[3])))
@@ -182,7 +182,7 @@ def wincc2(request):
                                            product.workOrder.number)
         storePosition.save()
 
-        order=workOrder.order
+        order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
             order.status = OrderStatus.objects.get(Q(name='已完成'))
             order.save()
@@ -282,7 +282,7 @@ def storeOperate(request):
 
     params = str(request.body, 'utf8').split(',')
     print(params)
-    
+
     store = Store.objects.get(
         Q(storeType__name='成品库', productLine=Order.objects.get(number=params[1]).line))
     storePosition = StorePosition.objects.get(
@@ -708,3 +708,4 @@ def queryCharts(request):
                 'name': '产品占比', 'data': productFake}]
 
     return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+

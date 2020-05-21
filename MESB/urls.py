@@ -65,5 +65,4 @@ urlpatterns = [
     url(r'^api/queryMateanaChart/',  views.queryMateanaChart),
     url(r'^api/queryPoweranaChart/',  views.queryPoweranaChart),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
