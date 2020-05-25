@@ -214,6 +214,7 @@ def qualAna(orderType, all):
 
 
 def mateAna(orderType, all):
+    data = []
     if orderType == '灌装':
         redBottle = list(
             map(lambda obj: [dataX(obj['createTime']), obj['count']],

@@ -53,10 +53,10 @@ def wincc3(request):
     position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
                 'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'startE': 'E模块加工开始', 'stopE': 'E模块加工结束',
                 'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB': 'B模块入库结束', 'check': '质检', 'error': '失败'}
-    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',') """
+    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',')
 
-    params = str(request.body, 'utf8').split(',')
+    """ params = str(request.body, 'utf8').split(',') """
 
     print(params)
 
@@ -446,7 +446,7 @@ def querySelect(request):
     if params['model'] == 'productStandard':
         selectList = {
             'result': ['合格', '不合格'],
-            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1,workOrder__order__orderType__name=params['order'])))),
+            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1, workOrder__order__orderType__name=params['order'])))),
         }
     if params['model'] == 'material':
         selectList = {
@@ -689,6 +689,8 @@ def queryCharts(request):
         ]}] """
         position = list(
             map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
+        dimension = Store.objects.get(
+            Q(storeType__name='成品库', productLine__lineType__name='灌装')).dimensions
     else:
         """ product = [
             {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data':
@@ -701,16 +703,18 @@ def queryCharts(request):
         ] """
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
             Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']))))
+        dimension = Store.objects.get(
+            Q(storeType__name='混合库', productLine__lineType__name=params['order'])).dimensions
 
     for product in ['产品1', '产品2', '产品3', '产品4', '产品5', '产品6']:
         productFake.append({'name': product, 'y': random.randint(10, 20)})
     product = [{'type': 'pie', 'innerSize': '80%',
                 'name': '产品占比', 'data': productFake}]
 
-    return JsonResponse({'position': position, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+    return JsonResponse({'position': position, 'dimension': dimension, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
 
 @csrf_exempt
 def agv(request):
 
-    return JsonResponse({'robot':'FUNUC机器人-001'})
+    return JsonResponse({'robot': 'FUNUC机器人-001'})

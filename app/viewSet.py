@@ -200,7 +200,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         route = ProcessRoute.objects.get(name=params['route'])
         if orderType == line.lineType.name and orderType == route.routeType.name:
             if orderType == '灌装':
-                particles, fieldDict = {}, {}
+                particles, fieldDict, bottleCounts = {}, {}, False
                 descriptions = params['description'].split(';')[:-1]
                 for field in apps.get_model('app', 'Bottle')._meta.fields:
                     fieldDict[field.verbose_name] = field.name
@@ -214,22 +214,24 @@ class OrderViewSet(viewsets.ModelViewSet):
                         occupyBot = 0
                     if Material.objects.filter(Q(name=bottle)).count()-occupyBot < int(count):
                         res = 'err'
+                        bottleCounts = True
                         info = '%s不足，无法排产' % bottle
-                    for particle in desc.split(',')[1:-1]:
-                        particleKey = particle.split(':')[0]
-                        particles[particleKey] = Sum(
-                            'bottles__%s' % fieldDict[particleKey])
-                    particleCounts = Order.objects.filter(key=pk).annotate(
-                        **particles).values(*particles.keys())
-                    for parti in particleCounts[0].keys():
-                        try:
-                            occupyPar = Order.objects.filter(Q(status__name='已排产', order__orderType__name='灌装')).annotate(counts=Sum(
-                                'bottles__%s' % fieldDict[parti])).values('counts')[0]['counts']
-                        except:
-                            occupyPar = 0
-                        if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
-                            res = 'err'
-                            info = '%s不足，无法排产' % parti
+                    if not bottleCounts:
+                        for particle in desc.split(',')[1:-1]:
+                            particleKey = particle.split(':')[0]
+                            particles[particleKey] = Sum(
+                                'bottles__%s' % fieldDict[particleKey])
+                        particleCounts = Order.objects.filter(key=pk).annotate(
+                            **particles).values(*particles.keys())
+                        for parti in particleCounts[0].keys():
+                            try:
+                                occupyPar = Order.objects.filter(Q(status__name='已排产', order__orderType__name='灌装')).annotate(counts=Sum(
+                                    'bottles__%s' % fieldDict[parti])).values('counts')[0]['counts']
+                            except:
+                                occupyPar = 0
+                            if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
+                                res = 'err'
+                                info = '%s不足，无法排产' % parti
             if orderType == '机加':
                 count = 0
                 descriptions = params['description']
@@ -252,7 +254,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     eaInPosition[pro.name] = StorePosition.objects.filter(
                         Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).count()
                 descriptions = params['description']
-                materialStr, materialDict = '', {}
+                materialStr, materialDict, bed = '', {}, False
                 for desc in descriptions.split(';')[:-1]:
                     product = desc.split('x')[0]
                     productCount = desc.split('x')[1]
@@ -260,33 +262,37 @@ class OrderViewSet(viewsets.ModelViewSet):
                     matStr = map(lambda obj: obj.material, bom.contents.all())
                     materialStr = materialStr + ','.join(list(matStr))+','
                     if eaOutPosition[product] < int(productCount):
+                        bed = True
                         res = 'err'
                         info = '%s原料底座不足，无法排产' % product
                     if eaInPosition[product] < int(productCount):
+                        bed = True
                         res = 'err'
                         info = '%s成品仓位不足，无法排产' % product
-                for material in list(set(materialStr.split(',')))[1:]:
-                    materialKey = material.split('/')[0]
-                    materialDict[materialKey] = 0
-                for desc in descriptions.split(';')[:-1]:
-                    count = desc.split('x')[1]
-                    product = desc.split('x')[0]
-                    bom = BOM.objects.get(Q(product__name=product))
-                    for mat in bom.contents.all():
-                        counts = mat.counts*int(count)
-                        matKey = mat.material.split('/')[0]
-                        materialDict[matKey] = materialDict[matKey] + counts
-                for mat in list(set(materialStr.split(',')))[1:]:
-                    try:
-                        bomContents = BOMContent.objects.filter(
-                            Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
-                        occupy = list(filter(lambda obj: obj['counts'] != None, bomContents))[
-                            0]['counts']
-                    except:
-                        occupy = 0
-                    if Material.objects.filter(Q(name=mat.split('/')[0], size=mat.split('/')[1])).count()-occupy < materialDict[mat.split('/')[0]]:
-                        res = 'err'
-                        info = '%s不足，无法排产' % mat
+                if not bed:
+                    for material in list(set(materialStr.split(',')))[1:]:
+                        materialKey = material.split('/')[0]
+                        materialDict[materialKey] = 0
+                    #print(materialDict)
+                    for desc in descriptions.split(';')[:-1]:
+                        count = desc.split('x')[1]
+                        product = desc.split('x')[0]
+                        bom = BOM.objects.get(Q(product__name=product))
+                        for mat in bom.contents.all():
+                            counts = mat.counts*int(count)
+                            matKey = mat.material.split('/')[0]
+                            materialDict[matKey] = materialDict[matKey] + counts
+                    for mat in list(set(materialStr.split(',')))[1:]:
+                        try:
+                            bomContents = BOMContent.objects.filter(
+                                Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
+                            occupy = list(filter(lambda obj: obj['counts'] != None, bomContents))[
+                                0]['counts']
+                        except:
+                            occupy = 0
+                        if Material.objects.filter(Q(name=mat.split('/')[0], size__icontains=mat.split('/')[1])).count()-occupy < materialDict[mat.split('/')[0]]:
+                            res = 'err'
+                            info = '%s不足，无法排产' % mat
             else:
                 pass
         else:
@@ -367,7 +373,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     eaOutPosition[pro.name] = StorePosition.objects.filter(
                         Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name))
                     eaInPosition[pro.name] = StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name))
+                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).order_by('-key')
             product = Product()
             product.name = workOrder[i].description
             product.number = str(time.time()*1000000)
@@ -601,6 +607,13 @@ class StoreViewSet(viewsets.ModelViewSet):
         count = Store.objects.filter(
             Q(storeType__name=params['storeType'], productLine__name=params['productLine'])).count()
         return Response({'res': count})
+
+    @action(methods=['post'], detail=False)
+    def mwPosition(self, request):
+        params = request.data
+        mwPosition = StorePosition.objects.get(
+            number=params['item'].split('/')[0]).content
+        return Response({'res': mwPosition})
 
     @action(methods=['post'], detail=False)
     def export(self, request):
