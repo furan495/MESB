@@ -187,7 +187,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             bottle.red = params['red']
             bottle.blue = params['blue']
             bottle.green = params['green']
-            bottle.color = params['color']
+            bottle.color = params['product']
             bottle.save()
         return Response({'res': 'ok'})
 
@@ -273,7 +273,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     for material in list(set(materialStr.split(',')))[1:]:
                         materialKey = material.split('/')[0]
                         materialDict[materialKey] = 0
-                    #print(materialDict)
+                    # print(materialDict)
                     for desc in descriptions.split(';')[:-1]:
                         count = desc.split('x')[1]
                         product = desc.split('x')[0]
@@ -646,7 +646,7 @@ class OperateViewSet(viewsets.ModelViewSet):
     def interviewChart(self, request):
         data = map(lambda obj: [dataX(obj.time.date()), dataY(
             obj.time)], Operate.objects.filter(Q(name='登陆系统')).order_by('time'))
-        return Response({'res': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))})
+        return Response([{'type': 'areaspline', 'name': '日访问量', 'data': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))}])
 
     @action(methods=['get'], detail=False)
     def operateChart(self, request):

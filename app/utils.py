@@ -118,14 +118,15 @@ def powerAna(orderType, all):
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
-    """ expectData, realData, goodRate = [], [], []
-    year = datetime.datetime.now().year
-    month = datetime.datetime.now().month
-    start = '%s-%s-20' % (str(year), str(month-1))
-    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        expectData.append([day, random.randint(1, 100)])
-        realData.append([day, random.randint(1, 100)])
-        goodRate.append([day, round(random.random(), 2)]) """
+    if data.count() == 0:
+        expectData, realData, goodRate = [], [], []
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        start = '%s-%s-20' % (str(year), str(month-1))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+            expectData.append([day, random.randint(1, 100)])
+            realData.append([day, random.randint(1, 100)])
+            goodRate.append([day, round(random.random(), 2)])
 
     data = [
         {'name': '预期产量', 'type': 'column',
@@ -173,15 +174,17 @@ def qualAna(orderType, all):
             .values('reason', 'count'))
     )
 
-    """ goodData, badData, reasonData = [], [], []
-    year = datetime.datetime.now().year
-    month = datetime.datetime.now().month
-    start = '%s-%s-20' % (str(year), str(month-1))
-    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        goodData.append([day, random.randint(1, 100)])
-        badData.append([day, random.randint(1, 100)])
-    for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
-        reasonData.append({'name': reason, 'y': random.randint(20, 100)}) """
+    if data.count() == 0:
+        goodData, badData, reasonData = [], [], []
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        start = '%s-%s-20' % (str(year), str(month-1))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+            goodData.append([day, random.randint(1, 100)])
+            badData.append([day, random.randint(1, 100)])
+        for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
+            reasonData.append({'name': reason, 'y': random.randint(20, 100)})
+
     data = [
         {'name': '合格', 'type': 'column',
             'color': 'rgb(24,144,255)', 'data': goodData},
@@ -272,7 +275,7 @@ def mateAna(orderType, all):
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
         data = [
             {'name': '原料棒', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': day[-20:]},
+                'color': 'rgb(24,144,255)', 'data': day},
         ]
     if orderType == '电子装配':
         materialDict = {}
@@ -291,58 +294,52 @@ def mateAna(orderType, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    """ one, two, three, four, five, six, seven, eight, nine, ten = [
-    ], [], [], [], [], [], [], [], [], []
-    year = datetime.datetime.now().year
-    month = datetime.datetime.now().month
-    start = '%s-%s-20' % (str(year), str(month-1))
-    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        one.append([day, random.randint(1, 100)])
-        two.append([day, random.randint(1, 100)])
-        three.append([day, random.randint(1, 100)])
-        four.append([day, random.randint(1, 100)])
-        five.append([day, random.randint(1, 100)])
-        six.append([day, random.randint(1, 100)])
-        seven.append([day, random.randint(1, 100)])
-        eight.append([day, random.randint(1, 100)])
-        nine.append([day, random.randint(1, 100)])
-        ten.append([day, random.randint(1, 100)]) 
-    data = [
-        {'name': '物料1', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': one},
-        {'name': '物料2', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': two},
-        {'name': '物料3', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': three},
-        {'name': '物料4', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': four},
-        {'name': '物料5', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': five},
-        {'name': '物料6', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': six},
-        {'name': '物料7', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': seven},
-        {'name': '物料8', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': eight},
-        {'name': '物料9', 'type': 'column',
-            'color': 'rgb(24,144,255)',  'data': nine},
-        {'name': '物料10', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': ten},
-    ]"""
+    if len(data[0]['data']) == 0:
+        one, two, three, four, five, six, seven, eight, nine, ten = [
+        ], [], [], [], [], [], [], [], [], []
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        start = '%s-%s-20' % (str(year), str(month-1))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+            one.append([day, random.randint(1, 100)])
+            two.append([day, random.randint(1, 100)])
+            three.append([day, random.randint(1, 100)])
+            four.append([day, random.randint(1, 100)])
+            five.append([day, random.randint(1, 100)])
+            six.append([day, random.randint(1, 100)])
+            seven.append([day, random.randint(1, 100)])
+            eight.append([day, random.randint(1, 100)])
+            nine.append([day, random.randint(1, 100)])
+            ten.append([day, random.randint(1, 100)])
+        data = [
+            {'name': '物料1', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': one},
+            {'name': '物料2', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': two},
+            {'name': '物料3', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': three},
+            {'name': '物料4', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': four},
+            {'name': '物料5', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': five},
+            {'name': '物料6', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': six},
+            {'name': '物料7', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': seven},
+            {'name': '物料8', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': eight},
+            {'name': '物料9', 'type': 'column',
+                'color': 'rgb(24,144,255)',  'data': nine},
+            {'name': '物料10', 'type': 'column',
+                'color': 'rgb(24,144,255)', 'data': ten},
+        ]
     return data
 
 
 def storeAna(order):
-    """ data = [
+    data = [
         {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
-    ] """
-    materialFake = []
-    for material in ['物料1', '物料2', '物料3', '物料4', '物料5', '物料6', '物料7', '物料8']:
-        materialFake.append({'name': material, 'y': random.randint(10, 50)})
-    data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%',
-            'name': '库存剩余', 'data': materialFake}
     ]
     return data
 

@@ -53,10 +53,10 @@ def wincc3(request):
     position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
                 'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'startE': 'E模块加工开始', 'stopE': 'E模块加工结束',
                 'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB': 'B模块入库结束', 'check': '质检', 'error': '失败'}
-    params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',')
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
 
-    """ params = str(request.body, 'utf8').split(',') """
+    params = str(request.body, 'utf8').split(',')
 
     print(params)
 
@@ -619,23 +619,38 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
-    """ data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
         map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
     badRate = list(
-        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data)) """
+        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data))
+    times = list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(
+        WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
+    dimension = Store.objects.get(
+        Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
+    productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
+        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
-    goodRateFake, badRateFake, timesFake, productFake = [], [], [], []
-    year = datetime.datetime.now().year
-    month = datetime.datetime.now().month
-    start = '%s-%s-20' % (str(year), str(month-1))
-    for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        goodRateFake.append([day, round(random.random(), 2)])
-        badRateFake.append([day, round(random.random(), 2)])
-    for i in range(20):
-        timesFake.append(['工单%s' % str(i+1), random.randint(1, 10)])
+    if params['order'] == '灌装':
+        position = list(
+            map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
+    else:
+        position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
+            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']))))
+
+    if data.count() == 0:
+        goodRate, badRate, times, productFake = [], [], [], []
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        start = '%s-%s-20' % (str(year), str(month-1))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+            goodRate.append([day, round(random.random(), 2)])
+            badRate.append([day, round(random.random(), 2)])
+    if len(times) == 0:
+        for i in range(20):
+            times.append(['工单%s' % str(i+1), random.randint(1, 10)])
 
     rate = [
         {'name': '合格率', 'type': 'areaspline',
@@ -650,7 +665,7 @@ def queryCharts(request):
                     [0, 'rgba(24,144,255,1)'],
                     [1, 'rgba(24,144,255,0)']
                 ]
-            }, 'data': goodRateFake},
+            }, 'data': goodRate},
         {'name': '不合格率', 'type': 'areaspline',
             'color': {
                 'linearGradient': {
@@ -663,10 +678,8 @@ def queryCharts(request):
                     [0, 'rgba(255,77,79,1)'],
                     [1, 'rgba(255,77,79,0)']
                 ]
-            }, 'data':badRateFake}
+            }, 'data':badRate}
     ]
-
-    """ 生产耗时list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))[-20:])) """
 
     times = [
         {'name': '生产耗时', 'type': 'column', 'color': {
@@ -675,41 +688,12 @@ def queryCharts(request):
                      [0, 'rgba(244,144,255,0)'],
                      [1, 'rgba(244,144,255,1)']
                  ]
-        }, 'data': timesFake}
+        }, 'data': times}
     ]
 
-    if params['order'] == '灌装':
-        """ product = [{'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': [
-            {'name': '红瓶', 'y': Product.objects.filter(
-                Q(name__icontains='红瓶')).count()},
-            {'name': '绿瓶', 'y':  Product.objects.filter(
-                Q(name__icontains='绿瓶')).count()},
-            {'name': '蓝瓶', 'y':  Product.objects.filter(
-                Q(name__icontains='蓝瓶')).count()},
-        ]}] """
-        position = list(
-            map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
-        dimension = Store.objects.get(
-            Q(storeType__name='成品库', productLine__lineType__name='灌装')).dimensions
-    else:
-        """ product = [
-            {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data':
-             list(map(lambda obj:
-                      {'name': obj.name, 'y': Product.objects.filter(
-                          Q(name__icontains=obj.name)).count()},
-                      ProductType.objects.filter(
-                          Q(orderType__name=params['order']))
-                      ))}
-        ] """
-        position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
-            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']))))
-        dimension = Store.objects.get(
-            Q(storeType__name='混合库', productLine__lineType__name=params['order'])).dimensions
-
-    for product in ['产品1', '产品2', '产品3', '产品4', '产品5', '产品6']:
-        productFake.append({'name': product, 'y': random.randint(10, 20)})
-    product = [{'type': 'pie', 'innerSize': '80%',
-                'name': '产品占比', 'data': productFake}]
+    product = [
+        {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': productData}
+    ]
 
     return JsonResponse({'position': position, 'dimension': dimension, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
