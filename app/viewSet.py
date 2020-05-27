@@ -33,7 +33,7 @@ class WorkShopViewSet(viewsets.ModelViewSet):
                                  '车间描述': obj.descriptions}, WorkShop.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class BOMViewSet(viewsets.ModelViewSet):
@@ -47,7 +47,7 @@ class BOMViewSet(viewsets.ModelViewSet):
             list(map(lambda obj: obj.material+',数量:'+str(obj.counts) if obj.counts else obj.material+',数量:若干', obj.contents.all())))}, BOM.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -61,7 +61,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
                 Q(key=instance.key) | Q(parent=instance.name)).delete()
         else:
             Organization.objects.all().delete()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     def list(self, request, *args, **kwargs):
         organizations = Organization.objects.filter(Q(parent=None))
@@ -114,7 +114,7 @@ class RoleViewSet(viewsets.ModelViewSet):
                                  '权限范围': obj.authority}, Role.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -128,7 +128,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
                                  '客户等级': obj.level, '公司': obj.company}, Customer.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -152,7 +152,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user = User.objects.get(Q(phone=params['phone']))
         user.status = '1'
         user.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['put'], detail=True)
     def status(self, request, pk=None):
@@ -160,7 +160,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user = User.objects.get(key=pk)
         user.status = params['status']
         user.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -169,7 +169,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -189,7 +189,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             bottle.green = params['green']
             bottle.color = params['product']
             bottle.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=True)
     def preScheduling(self, request, pk=None):
@@ -308,7 +308,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         orderDesc = params['description'].split(';')
         order.status = OrderStatus.objects.get(name='已排产')
         order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        order.scheduling = params['scheduling'] if params['scheduling'] != '' else datetime.datetime.now(
+        ).strftime('%Y-%m-%d %H:%M:%S')
         order.save()
         if params['orderType'] == '灌装':
             for description in orderDesc:
@@ -351,7 +352,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                             name='等待中')
                         workOrder.description = description.split('x')[0]
                         workOrder.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def products(self, request):
@@ -398,7 +399,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             standard.expectValue = '合格'
             standard.product = product
             standard.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -407,7 +408,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                  '订单编号': obj.number, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description}, Order.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class ProductLineViewSet(viewsets.ModelViewSet):
@@ -421,7 +422,7 @@ class ProductLineViewSet(viewsets.ModelViewSet):
                                  '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class ProcessRouteViewSet(viewsets.ModelViewSet):
@@ -439,7 +440,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         else:
             device.process = None
         device.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def deviceUnbanding(self, request):
@@ -447,7 +448,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         for device in Device.objects.filter(Q(process__name=params['process'], process__route__key=params['route'])):
             device.process = None
             device.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=True)
     def process(self, request, pk=None):
@@ -471,7 +472,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
                     filter(lambda obj: obj['key'] == orders[i]['from'], processes))
                 process.name = proc[0]['text']
             process.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=True)
     def processParams(self, request, pk=None):
@@ -486,10 +487,10 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         processParam.process = Process.objects.get(
             Q(name=params['process'], route__key=pk))
         processParam.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
-    def uploadPic(self, request):
+    def upload(self, request):
         url = request.POST['url']
         route = request.POST['route']
         process = request.POST['process']
@@ -501,7 +502,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         pro.path = 'http://%s:8899/upload/picture/%s' % (url, ''.join(
             list(map(lambda obj: obj[0], pypinyin.pinyin(f.name, style=pypinyin.NORMAL)))).replace(' ', '').replace('）', ')'))
         pro.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -510,7 +511,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
                                  '包含工序': ('->').join(list(map(lambda obj: obj.name, Process.objects.filter(Q(route=obj))))), '详细数据': obj.data}, ProcessRoute.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class ProcessViewSet(viewsets.ModelViewSet):
@@ -545,7 +546,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             '%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description}, WorkOrder.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class StoreViewSet(viewsets.ModelViewSet):
@@ -590,7 +591,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                         number='%s-%s' % (str(i+1), pk))
                     pallet.number = str(i+1)
                     pallet.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['put'], detail=False)
     def positionGroup(self, request):
@@ -599,21 +600,21 @@ class StoreViewSet(viewsets.ModelViewSet):
             Q(number=params['item'].split('/')[0]))
         position.description = params['value']
         position.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def counts(self, request):
         params = request.data
         count = Store.objects.filter(
             Q(storeType__name=params['storeType'], productLine__name=params['productLine'])).count()
-        return Response({'res': count})
+        return Response(count)
 
     @action(methods=['post'], detail=False)
     def mwPosition(self, request):
         params = request.data
-        mwPosition = StorePosition.objects.get(
+        content = StorePosition.objects.get(
             number=params['item'].split('/')[0]).content
-        return Response({'res': mwPosition})
+        return Response(content)
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -622,7 +623,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                                  '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions}, Store.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class StoreTypeViewSet(viewsets.ModelViewSet):
@@ -665,7 +666,7 @@ class OperateViewSet(viewsets.ModelViewSet):
             ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
             series.append(ope)
 
-        return Response({'res': data})
+        return Response(data)
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
@@ -679,7 +680,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
             '%Y-%m-%d %H:%M:%S'), '设备厂家': obj.factory, '出厂日期': obj.facTime, '厂家联系人': obj.facPeo, '厂家电话': obj.facPho}, Device.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
@@ -695,7 +696,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         doc = Document.objects.get(key=pk)
         doc.count = params['count']+1
         doc.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def upload(self, request):
@@ -715,7 +716,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         operate.name = '上传文档'
         operate.operator = up
         operate.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
 
 class LineStateViewSet(viewsets.ModelViewSet):
@@ -763,12 +764,12 @@ class MaterialViewSet(viewsets.ModelViewSet):
             material.store = Store.objects.get(name=params['store__name'])
             material.save()
         Material.objects.filter(Q(name=None)).delete()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     def destroy(self, request, *args, **kwargs):
         params = request.data
         Material.objects.filter(Q(name=params['name'])).delete()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -777,7 +778,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
             key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class ToolViewSet(viewsets.ModelViewSet):
@@ -800,12 +801,12 @@ class ToolViewSet(viewsets.ModelViewSet):
             tool.store = Store.objects.get(name=params['store__name'])
             tool.save()
         Tool.objects.filter(Q(name=None)).delete()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     def destroy(self, request, *args, **kwargs):
         params = request.data
         Tool.objects.filter(Q(name=params['name'])).delete()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -814,7 +815,7 @@ class ToolViewSet(viewsets.ModelViewSet):
             key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class PalletViewSet(viewsets.ModelViewSet):
@@ -888,7 +889,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class ProductTypeViewSet(viewsets.ModelViewSet):
@@ -926,7 +927,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
         if params['orderType'] == '灌装':
             dv.gzContent = formatSql(orders.query.__str__().split(' '))
         dv.save()
-        return Response({'res': 'ok'})
+        return Response('ok')
 
     @action(methods=['post'], detail=False)
     def export(self, request):
@@ -935,7 +936,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
                                  '产品编号': obj.number, '产品容差': obj.errorRange}, ProductType.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class DataViewViewSet(viewsets.ModelViewSet):
@@ -977,7 +978,7 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
                                  '实际结果': obj.realValue, '检测结果': '合格' if obj.result == '1' else '不合格'}, ProductStandard.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response({'res': 'http://%s:8899/upload/export/export.xlsx' % params['url']})
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class EventViewSet(viewsets.ModelViewSet):
