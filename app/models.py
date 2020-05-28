@@ -342,7 +342,6 @@ class Device(models.Model):
     number = models.CharField(
         max_length=20, verbose_name='设备编号', unique=True, blank=True, null=True)
     joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
-    exitTime = models.DateTimeField(auto_now=True, verbose_name='报废时间')
     factory = models.CharField(
         max_length=20, verbose_name='设备厂家', blank=True, null=True)
     facTime = models.CharField(

@@ -135,7 +135,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = ('key', 'deviceType', 'process', 'name', 'number', 'joinTime',
-                  'exitTime', 'factory', 'facTime', 'facPeo', 'facPho', 'state', 'stateList')
+                   'factory', 'facTime', 'facPeo', 'facPho', 'state', 'stateList')
 
 
 class UserSerializer(serializers.ModelSerializer):
