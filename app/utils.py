@@ -293,7 +293,7 @@ def mateAna(orderType, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    if len(data[0]['data']) == 0:
+    if len(data) == 0:
         one, two, three, four, five, six, seven, eight, nine, ten = [
         ], [], [], [], [], [], [], [], [], []
         year = datetime.datetime.now().year
