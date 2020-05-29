@@ -95,7 +95,7 @@ WSGI_APPLICATION = 'MESB.wsgi.application'
         'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
-        'PASSWORD': '1234',
+        'PASSWORD': 'sa',
         'OPTIONS': {
             'driver': 'SQL Server Native Client 11.0',
             'MARS_Connection': True,
@@ -110,7 +110,7 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'sa',
-        'PASSWORD': '1234',
+        'PASSWORD': 'sa',
         'OPTIONS': {
             'driver': 'SQL Server Native Client 11.0',
             'MARS_Connection': True,

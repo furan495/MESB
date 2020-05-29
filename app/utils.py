@@ -56,9 +56,9 @@ def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'
     if '机加' == storeType:
-        return '3' if index < int(count/2) else '4'
+        return '4'
     if '电子装配' == storeType:
-        return '3' if index < int(count/2) else '4'
+        return '4'
 
 
 def selectDescription(storeType, index, count, row, col):
@@ -280,7 +280,7 @@ def mateAna(orderType, all):
     if orderType == '电子装配':
         materialDict = {}
         materials = Material.objects.filter(
-            Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
+            Q(store__storeType__name='原料库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
         for material in materials:
             materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
                 prodType__bom__contents__material=material['name']+'/'+material['size']))
@@ -288,7 +288,6 @@ def mateAna(orderType, all):
         results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values(
             'batch').annotate(**materialDict).values('batch', *materialDict.keys())
 
-        data = []
         for mate in materials:
             data.append({'name': mate['name'], 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))

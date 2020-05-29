@@ -403,6 +403,7 @@ def querySelect(request):
         bblue=Avg('bottles__blue', filter=Q(bottles__color='蓝瓶')),
     ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',) """
 
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
