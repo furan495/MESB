@@ -15,8 +15,8 @@ from django.db.models.functions import Cast
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import ExpressionWrapper, FloatField, Q, F
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
+from django.db.models import ExpressionWrapper, FloatField, SlugField, Q, F
 
 # Create your views here.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
