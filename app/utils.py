@@ -93,6 +93,13 @@ def positionSelect(obj, position):
         return ''
 
 
+def ganteX(date, obj):
+    try:
+        return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
+    except:
+        return int(time.mktime(obj.events.all().order_by('-key')[0].time.timetuple())) * 1000+8*60*60*1000
+
+
 def dataX(date):
     try:
         return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000

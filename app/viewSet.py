@@ -347,7 +347,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         workOrder = WorkOrder()
                         workOrder.order = order
                         time.sleep(0.1)
-                        workOrder.number = random.randint(0, 255)
+                        workOrder.number = str(time.time()*1000000)[:15]
                         workOrder.status = WorkOrderStatus.objects.get(
                             name='等待中')
                         workOrder.description = description.split('x')[0]
@@ -409,6 +409,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+
+    @action(methods=['get'], detail=True)
+    def gante(self, request, pk=None):
+        order = Order.objects.get(key=pk)
+        yAxis = list(map(
+            lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
+        data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
+            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/13, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
+        return Response({'yAxis': yAxis, 'data': data})
 
 
 class ProductLineViewSet(viewsets.ModelViewSet):
