@@ -629,7 +629,7 @@ def queryCharts(request):
     times = list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(
         WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
     dimension = Store.objects.get(
-            Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
+        Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
     productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
         Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
