@@ -429,7 +429,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'pallet', 'orderType','inPos','outPos',
+        fields = ('key', 'prodType', 'workOrder', 'pallet', 'orderType', 'inPos', 'outPos',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
 
 

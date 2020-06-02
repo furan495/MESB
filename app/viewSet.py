@@ -239,13 +239,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                     count = count+int(desc.split('x')[1])
                 occupy = WorkOrder.objects.filter(
                     Q(order__status__name='已排产', order__orderType__name='机加')).count()
-                """ mixinPos = StorePosition.objects.filter(
-                    Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')).count()
-                ylPos = Material.objects.filter(
-                    Q(store__storeType__name='原料库', store__productLine__lineType__name='机加')).count()
-                if (mixinPos < count) or (ylPos-occupy < count):
-                    res = 'err'
-                    info = '原料不足，无法排产' """
                 if count > StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4')).count():
                     res = 'err'
                     info = '成品库仓位不足，无法排产'
@@ -393,20 +386,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.name = workOrder[i].description
             product.number = str(time.time()*1000000)
             product.workOrder = workOrder[i]
-            """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
-                '-')[0] """
+            product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
+                '-')[0]
             product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split(
                 '-')[0]
             product.prodType = ProductType.objects.get(
                 Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
 
-            """ outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
+            outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
             outP.status = '4'
             outP.save()
             inP = inPos[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0]
             inP.status = '3'
-            inP.save() """
+            inP.save()
 
             standard = ProductStandard()
             standard.name = '外观'
