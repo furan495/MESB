@@ -55,6 +55,7 @@ urlpatterns = [
     url(r'^api/wincc/',  views.wincc),
     url(r'^api/wincc2/',  views.wincc2),
     url(r'^api/wincc3/',  views.wincc3),
+    url(r'^api/wincc4/',  views.wincc4),
     url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/filterChart/',  views.filterChart),

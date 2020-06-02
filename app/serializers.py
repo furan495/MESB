@@ -300,7 +300,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         if obj.order.orderType.name == '灌装':
             return obj.bottle
         else:
-            return obj.workOrder.number
+            return obj.number
 
     class Meta:
         model = WorkOrder
@@ -367,7 +367,6 @@ class ProductSerializer(serializers.ModelSerializer):
     palletStr = serializers.SerializerMethodField()
     result = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
 
@@ -379,9 +378,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
-
-    def get_name(self, obj):
-        return obj.name
 
     def get_stateList(self, obj):
         states = []
@@ -433,7 +429,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'pallet', 'orderType',
+        fields = ('key', 'prodType', 'workOrder', 'pallet', 'orderType','inPos','outPos',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
 
 

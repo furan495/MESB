@@ -14,9 +14,9 @@ from rest_framework import viewsets
 from django.db.models.functions import Cast
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import FloatField, Q, F
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models.aggregates import Count, Sum, Max, Min, Avg
-from django.db.models import ExpressionWrapper, FloatField, SlugField, Q, F
 
 # Create your views here.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -360,13 +360,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         workOrder = WorkOrder.objects.filter(
             Q(order__key=params['key']))
         outPos = list(StorePosition.objects.filter(
-            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料')))[:workOrder.count()]
+            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料') | Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='原料库', status='3')))[:workOrder.count()]
         outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
         inPos = list(StorePosition.objects.filter(
-            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='4', description__icontains='成品')).order_by('-key'))[:workOrder.count()]
+            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='4', description__icontains='成品') | Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='成品库', status='4')).order_by('-key'))[:workOrder.count()]
         inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
 
         eaOutPosition, eaInPosition = {}, {}
+
+        """ outPos = {}
+        for store in Store.objects.filter(Q(storeType__name='原料库')):
+            outPos[store.name] = StorePosition.objects.filter(
+                Q(store=store, status='3')).values_list('number', flat=True) """
+
 
         for i in range(workOrder.count()):
             if params['orderType'] == '电子装配':
@@ -379,20 +385,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.name = workOrder[i].description
             product.number = str(time.time()*1000000)
             product.workOrder = workOrder[i]
-            product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
-                '-')[0]
+            """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
+                '-')[0] """
             product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split(
                 '-')[0]
             product.prodType = ProductType.objects.get(
                 Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
 
-            outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
+            """ outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
             outP.status = '4'
             outP.save()
             inP = inPos[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0]
             inP.status = '3'
-            inP.save()
+            inP.save() """
 
             standard = ProductStandard()
             standard.name = '外观'
@@ -416,7 +422,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         yAxis = list(map(
             lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
         data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
-            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/13, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
+            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/20, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
         return Response({'yAxis': yAxis, 'data': data})
 
 

@@ -476,9 +476,9 @@ class StorePosition(models.Model):
         max_length=2, verbose_name='仓位状态', choices=POSITION_STATUS, blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='仓位编号')
     description = models.CharField(
-        max_length=20, verbose_name='仓位描述', blank=True, null=True, default='分组')
+        max_length=20, verbose_name='仓位描述', blank=True, null=True, default='')
     content = models.CharField(
-        max_length=20, verbose_name='存放物料', blank=True, null=True, default='')
+        max_length=200, verbose_name='存放物料', blank=True, null=True, default='')
 
     def __str__(self):
         return self.number+'/'+self.status+'/'+str(self.key)+'/'+self.description

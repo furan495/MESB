@@ -48,6 +48,74 @@ def recordWeight(request):
 
 
 @csrf_exempt
+def wincc4(request):
+
+    position = {'startA': '视觉模块开始', 'stopA': '视觉模块结束', 'startB': '数控车模块开始', 'stopB': '数控车模块结束', 'startC': '加工中心模块开始', 'stopC': '加工中心模块结束', 'startD': '精雕机模块开始', 'stopD': '精雕机模块结束', 'startF': '清洗打标块开始', 'stopF': '清洗打标块结束',
+                'startG': '焊接模块开始', 'stopG': '焊接模块结束', 'startH': '打磨模块开始', 'stopH': '打磨模块结束', 'startF2': '二次清洗开始', 'stopF2': '二次清洗结束', 'startI': '装配模块开始', 'stopI': '装配模块结束', 'check': '质检', 'startJ': '立体库模块开始', 'stopJ': '立体库模块结束'}
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
+
+    print(params)
+
+    store = Store.objects.get(
+        Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
+
+    if position[params[0]] == '视觉模块开始' or position[params[0]] == '数控车模块开始' or position[params[0]] == '加工中心模块开始' or position[params[0]] == '精雕机模块开始':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.startTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+        workOrder.save()
+        order = workOrder.order
+        order.status = OrderStatus.objects.get(Q(name='加工中'))
+        order.save()
+    if position[params[0]] == '质检':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        product = workOrder.workOrder
+        standard = ProductStandard.objects.get(
+            Q(name='外观', product=product))
+        if random.random() > 0.5:
+            product.result = '1'
+            standard.result = '1'
+            standard.realValue = '合格'
+        else:
+            product.result = '2'
+            product.reason = '检测不合格'
+            standard.result = '2'
+            standard.realValue = '不合格'
+        product.save()
+        standard.save()
+    if position[params[0]] == '立体库模块结束':
+        workOrder = WorkOrder.objects.get(
+            Q(number=params[1], order__number=params[2]))
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+        workOrder.save()
+        product = workOrder.workOrder
+        storePosition = StorePosition.objects.get(
+            Q(number='%s-%s' % (product.inPos, store.key)))
+        storePosition.status = '3'
+        storePosition.content = '%s-%s' % (product.name,
+                                           product.workOrder.number)
+        storePosition.save()
+        order = workOrder.order
+        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
+            order.status = OrderStatus.objects.get(Q(name='已完成'))
+            order.save()
+
+    event = Event()
+    event.workOrder = WorkOrder.objects.get(
+        Q(number=params[1], order__number=params[2]))
+    event.source = position[params[0]]
+    event.title = position[params[0]]
+    event.save()
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
 def wincc3(request):
 
     position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
@@ -605,13 +673,15 @@ def queryProducing(request):
         Q(status__name='等待中', order__orderType__name=params['order']) | Q(status__name='加工中', order__orderType__name=params['order']))
     if params['order'] == '灌装':
         producing = list(
-            map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'orderType': obj.order.orderType.name, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架')}, workOrderList))
+            map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架')}, workOrderList))
     if params['order'] == '机加':
+        """ producing = list(
+            map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description,'order': obj.order.number}, workOrderList)) """
         producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description, 'orderType': obj.order.orderType.name, 'order': obj.order.number}, workOrderList))
+            map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startA': positionSelect(obj, '视觉模块开始'), 'startB': positionSelect(obj, '数控车模块开始'), 'startC': positionSelect(obj, '加工中心模块开始'), 'startD': positionSelect(obj, '精雕机模块开始'), 'startF': positionSelect(obj, '清洗打标块开始'), 'startG': positionSelect(obj, '焊接模块开始'), 'startH': positionSelect(obj, '打磨模块开始'), 'startF2': positionSelect(obj, '二次清洗开始'), 'startI': positionSelect(obj, '装配模块开始'), 'startJ': positionSelect(obj, '立体库模块开始'), }, workOrderList))
     if params['order'] == '电子装配':
         producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number+'/'+obj.description, 'startB': positionSelect(obj, 'B模块出库开始'), 'stopB': positionSelect(obj, 'B模块出库结束'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'startE': positionSelect(obj, 'E模块加工开始'), 'stopE': positionSelect(obj, 'E模块加工结束'), 'startF': positionSelect(obj, 'F模块加工开始'), 'stopF': positionSelect(obj, 'F模块加工结束'), 'startInB': positionSelect(obj, 'B模块入库开始'), 'stopInB': positionSelect(obj, 'B模块入库结束'), 'orderType': obj.order.orderType.name}, workOrderList))
+            map(lambda obj: {'key': obj.key, 'workOrder': obj.number+'/'+obj.description, 'startB': positionSelect(obj, 'B模块出库开始'), 'stopB': positionSelect(obj, 'B模块出库结束'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'startE': positionSelect(obj, 'E模块加工开始'), 'stopE': positionSelect(obj, 'E模块加工结束'), 'startF': positionSelect(obj, 'F模块加工开始'), 'stopF': positionSelect(obj, 'F模块加工结束'), 'startInB': positionSelect(obj, 'B模块入库开始'), 'stopInB': positionSelect(obj, 'B模块入库结束')}, workOrderList))
 
     return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
 
