@@ -471,6 +471,10 @@ def querySelect(request):
         bblue=Avg('bottles__blue', filter=Q(bottles__color='蓝瓶')),
     ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',) """
 
+    """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
+        pos.status='4'
+        pos.save() """
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
@@ -708,7 +712,7 @@ def queryCharts(request):
             map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
     else:
         position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
-            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']))))
+            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']) | Q(store__storeType__name='成品库', store__productLine__lineType__name=params['order']))))
 
     if data.count() == 0:
         goodRate, badRate, times, productFake = [], [], [], []

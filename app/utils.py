@@ -280,8 +280,9 @@ def mateAna(orderType, all):
         data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
+
         data = [
-            {'name': '原料棒', 'type': 'column',
+            {'name': '摆件底座', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': day},
         ]
     if orderType == '电子装配':
@@ -300,7 +301,7 @@ def mateAna(orderType, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    if len(data) == 0:
+    if len(data[0]['data']) == 0:
         one, two, three, four, five, six, seven, eight, nine, ten = [
         ], [], [], [], [], [], [], [], [], []
         year = datetime.datetime.now().year
@@ -339,6 +340,7 @@ def mateAna(orderType, all):
             {'name': '物料10', 'type': 'column',
                 'color': 'rgb(24,144,255)', 'data': ten},
         ]
+
     return data
 
 

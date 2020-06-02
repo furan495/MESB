@@ -239,13 +239,22 @@ class OrderViewSet(viewsets.ModelViewSet):
                     count = count+int(desc.split('x')[1])
                 occupy = WorkOrder.objects.filter(
                     Q(order__status__name='已排产', order__orderType__name='机加')).count()
-                mixinPos = StorePosition.objects.filter(
+                """ mixinPos = StorePosition.objects.filter(
                     Q(store__productLine__lineType__name='机加', store__storeType__name='混合库', status='3', description='原料')).count()
                 ylPos = Material.objects.filter(
                     Q(store__storeType__name='原料库', store__productLine__lineType__name='机加')).count()
                 if (mixinPos < count) or (ylPos-occupy < count):
                     res = 'err'
-                    info = '原料不足，无法排产'
+                    info = '原料不足，无法排产' """
+                if count > StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4')).count():
+                    res = 'err'
+                    info = '成品库仓位不足，无法排产'
+                else:
+                    for store in Store.objects.filter(Q(storeType__name='原料库')):
+                        if count > StorePosition.objects.filter(Q(store=store, status='3')).count()-occupy:
+                            res = 'err'
+                            info = '%s不足，无法排产' % Material.objects.filter(Q(store=store))[
+                                0].name
             if orderType == '电子装配':
                 eaOutPosition, eaInPosition = {}, {}
                 for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
@@ -373,7 +382,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             outPos[store.name] = StorePosition.objects.filter(
                 Q(store=store, status='3')).values_list('number', flat=True) """
 
-
         for i in range(workOrder.count()):
             if params['orderType'] == '电子装配':
                 for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
@@ -417,12 +425,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
     @action(methods=['get'], detail=True)
-    def gante(self, request, pk=None):
+    def gantt(self, request, pk=None):
         order = Order.objects.get(key=pk)
         yAxis = list(map(
             lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
         data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
-            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/20, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
+            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/21, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
         return Response({'yAxis': yAxis, 'data': data})
 
 
