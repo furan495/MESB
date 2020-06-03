@@ -423,7 +423,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         yAxis = list(map(
             lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
         data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
-            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/21, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
+            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/11, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
         return Response({'yAxis': yAxis, 'data': data})
 
 

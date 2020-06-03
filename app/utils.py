@@ -136,12 +136,9 @@ def powerAna(orderType, all):
             goodRate.append([day, round(random.random(), 2)])
 
     data = [
-        {'name': '预期产量', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': expectData},
-        {'name': '实际产量', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': realData},
-        {'name': '合格率', 'type': 'line', 'color': '#40a9ff',
-            'yAxis': 1, 'data': goodRate},
+        {'name': '预期产量', 'type': 'column', 'data': expectData},
+        {'name': '实际产量', 'type': 'column', 'data': realData},
+        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
     ]
     if all:
         data = [
@@ -149,16 +146,16 @@ def powerAna(orderType, all):
              'color': {
                  'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                  'stops': [
-                     [0, 'rgba(24,144,255,0)'],
-                     [1, 'rgba(24,144,255,1)']
+                     [0, 'rgba(155,183,255,0)'],
+                     [1, 'rgba(155,183,255,1)']
                  ]
              }, 'data': expectData},
             {'name': '实际产量', 'type': 'column',
              'color': {
                  'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                  'stops': [
-                     [0, 'rgba(255,77,79,0)'],
-                     [1, 'rgba(255,77,79,1)']
+                     [0, 'rgba(190,147,255,0)'],
+                     [1, 'rgba(190,147,255,1)']
                  ]
              }, 'data': realData},
         ]
@@ -193,10 +190,8 @@ def qualAna(orderType, all):
             reasonData.append({'name': reason, 'y': random.randint(20, 100)})
 
     data = [
-        {'name': '合格', 'type': 'column',
-            'color': 'rgb(24,144,255)', 'data': goodData},
-        {'name': '不合格', 'type': 'column',
-            'color': 'rgb(255,77,79)', 'data': badData},
+        {'name': '合格', 'type': 'column', 'data': goodData},
+        {'name': '不合格', 'type': 'column', 'data': badData},
         {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
             'center': [150, 80], 'size':200}
     ]
@@ -263,28 +258,19 @@ def mateAna(orderType, all):
                 ))
 
         data = [
-            {'name': '红粒', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': red},
-            {'name': '红瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': redBottle},
-            {'name': '绿粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': green},
-            {'name': '绿瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': greenBottle},
-            {'name': '蓝粒', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': blue},
-            {'name': '蓝瓶', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': blueBottle},
+            {'name': '红粒', 'type': 'column', 'data': red},
+            {'name': '红瓶', 'type': 'column', 'data': redBottle},
+            {'name': '绿粒', 'type': 'column',  'data': green},
+            {'name': '绿瓶', 'type': 'column', 'data': greenBottle},
+            {'name': '蓝粒', 'type': 'column', 'data': blue},
+            {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
         ]
     if orderType == '机加':
         data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
 
-        data = [
-            {'name': '摆件底座', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': day},
-        ]
+        data = [{'name': '摆件底座', 'type': 'column', 'data': day}]
     if orderType == '电子装配':
         materialDict = {}
         materials = Material.objects.filter(
@@ -297,7 +283,7 @@ def mateAna(orderType, all):
             'batch').annotate(**materialDict).values('batch', *materialDict.keys())
 
         for mate in materials:
-            data.append({'name': mate['name'], 'type': 'column', 'color': 'rgb(24,144,255)', 'data': list(
+            data.append({'name': mate['name'], 'type': 'column', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
@@ -319,26 +305,16 @@ def mateAna(orderType, all):
             nine.append([day, random.randint(1, 100)])
             ten.append([day, random.randint(1, 100)])
         data = [
-            {'name': '物料1', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': one},
-            {'name': '物料2', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': two},
-            {'name': '物料3', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': three},
-            {'name': '物料4', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': four},
-            {'name': '物料5', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': five},
-            {'name': '物料6', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': six},
-            {'name': '物料7', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': seven},
-            {'name': '物料8', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': eight},
-            {'name': '物料9', 'type': 'column',
-                'color': 'rgb(24,144,255)',  'data': nine},
-            {'name': '物料10', 'type': 'column',
-                'color': 'rgb(24,144,255)', 'data': ten},
+            {'name': '物料1', 'type': 'column', 'data': one},
+            {'name': '物料2', 'type': 'column', 'data': two},
+            {'name': '物料3', 'type': 'column',  'data': three},
+            {'name': '物料4', 'type': 'column', 'data': four},
+            {'name': '物料5', 'type': 'column', 'data': five},
+            {'name': '物料6', 'type': 'column', 'data': six},
+            {'name': '物料7', 'type': 'column', 'data': seven},
+            {'name': '物料8', 'type': 'column', 'data': eight},
+            {'name': '物料9', 'type': 'column', 'data': nine},
+            {'name': '物料10', 'type': 'column', 'data': ten},
         ]
 
     return data
@@ -346,7 +322,7 @@ def mateAna(orderType, all):
 
 def storeAna(order):
     data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '80%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
+        {'name': '库存统计', 'type': 'pie', 'innerSize': '60%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data

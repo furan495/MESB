@@ -779,8 +779,8 @@ def queryCharts(request):
         WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
     dimension = Store.objects.get(
         Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
-    productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
-        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+    """ productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
+        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order'])))) """
 
     if params['order'] == '灌装':
         position = list(
@@ -798,8 +798,12 @@ def queryCharts(request):
             goodRate.append([day, round(random.random(), 2)])
             badRate.append([day, round(random.random(), 2)])
     if len(times) == 0:
-        for i in range(20):
+        for i in range(8):
             times.append(['工单%s' % str(i+1), random.randint(1, 10)])
+    productData = []
+    for i in range(8):
+        productData.append(
+            {'name': '产品%s' % str(i+1), 'y': random.randint(1, 10)})
 
     rate = [
         {'name': '合格率', 'type': 'areaspline',
@@ -811,8 +815,8 @@ def queryCharts(request):
                     'y2': 1
                 },
                 'stops': [
-                    [0, 'rgba(24,144,255,1)'],
-                    [1, 'rgba(24,144,255,0)']
+                    [0, 'rgba(155,183,255,1)'],
+                    [1, 'rgba(155,183,255,0)']
                 ]
             }, 'data': goodRate},
         {'name': '不合格率', 'type': 'areaspline',
@@ -824,24 +828,22 @@ def queryCharts(request):
                     'y2': 1
                 },
                 'stops': [
-                    [0, 'rgba(255,77,79,1)'],
-                    [1, 'rgba(255,77,79,0)']
+                    [0, 'rgba(190,147,255,1)'],
+                    [1, 'rgba(190,147,255,0)']
                 ]
             }, 'data':badRate}
     ]
 
-    times = [
-        {'name': '生产耗时', 'type': 'column', 'color': {
-                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                 'stops': [
-                     [0, 'rgba(244,144,255,0)'],
-                     [1, 'rgba(244,144,255,1)']
-                 ]
-        }, 'data': times}
-    ]
+    times = [{'name': '生产耗时', 'type': 'columnpyramid',  'color': {
+        'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
+        'stops': [
+            [0, 'rgba(244,144,255,0)'],
+            [1, 'rgba(244,144,255,1)']
+        ]
+    }, 'data': times}]
 
     product = [
-        {'type': 'pie', 'innerSize': '80%', 'name': '产品占比', 'data': productData}
+        {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
     return JsonResponse({'position': position, 'dimension': dimension, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
