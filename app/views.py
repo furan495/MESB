@@ -96,8 +96,7 @@ def wincc5(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name,
-                                           product.workOrder.number)
+        storePosition.content = product.name
         storePosition.save()
 
         order = workOrder.order
@@ -164,8 +163,7 @@ def wincc4(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name,
-                                           product.workOrder.number)
+        storePosition.content = product.name
         storePosition.save()
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -238,8 +236,7 @@ def wincc3(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name,
-                                           product.workOrder.number)
+        storePosition.content = product.name
         storePosition.save()
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -312,8 +309,7 @@ def wincc2(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name,
-                                           product.workOrder.number)
+        storePosition.content = product.name
         storePosition.save()
 
         order = workOrder.order
@@ -843,7 +839,7 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
-    return JsonResponse({'position': position,'store':store.data ,'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+    return JsonResponse({'position': position, 'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
 
 @csrf_exempt

@@ -314,12 +314,8 @@ class StoreSerializer(serializers.ModelSerializer):
         queryset=StoreType.objects.all(), label='仓库类型', slug_field='name', required=False)
     productLine = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
-    positions = serializers.StringRelatedField(many=True, read_only=True)
+    positions = serializers.SerializerMethodField()
     lineType = serializers.SerializerMethodField()
-    materials = serializers.SerializerMethodField()
-
-    def get_materials(self, obj):
-        return list(set(list(map(lambda obj: obj.name, Material.objects.filter(Q(store__storeType__name='原料库', store__productLine__lineType__name='机加'))))))
 
     def get_lineType(self, obj):
         try:
@@ -327,10 +323,13 @@ class StoreSerializer(serializers.ModelSerializer):
         except:
             return ''
 
+    def get_positions(self, obj):
+        return list(map(lambda obj: {'key': obj.key, 'number': obj.number.split('-')[0], 'status': obj.status, 'content': obj.content}, obj.positions.all()))
+
     class Meta:
         model = Store
         fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine', 'lineType',
-                  'number', 'storeType', 'positions', 'materials')
+                  'number', 'storeType', 'positions')
 
 
 class StorePositionSerializer(serializers.ModelSerializer):

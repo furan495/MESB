@@ -478,10 +478,10 @@ class StorePosition(models.Model):
     description = models.CharField(
         max_length=20, verbose_name='仓位描述', blank=True, null=True, default='分组')
     content = models.CharField(
-        max_length=200, verbose_name='存放物料', blank=True, null=True, default='')
+        max_length=200, verbose_name='存放物料', blank=True, null=True, default='原料')
 
     def __str__(self):
-        return self.number+'/'+self.status+'/'+str(self.key)+'/'+self.description
+        return self.number
 
     class Meta:
         verbose_name = '仓位'
