@@ -6,6 +6,7 @@ import datetime
 import numpy as np
 from app.utils import *
 from app.models import *
+from app.serializers import *
 from django.db.models import Q, F
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -773,17 +774,17 @@ def queryCharts(request):
         map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data))
     times = list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(
         WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
-    dimension = Store.objects.get(
-        Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
     productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
         Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+
+    store = StoreSerializer(Store.objects.get(Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(
+        storeType__name='成品库', productLine__lineType__name=params['order'])))
 
     if params['order'] == '灌装':
         position = list(
             map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
     else:
-        position = list(map(lambda obj: [obj.status, obj.number], StorePosition.objects.filter(
-            Q(store__storeType__name='混合库', store__productLine__lineType__name=params['order']) | Q(store__storeType__name='成品库', store__productLine__lineType__name=params['order']))))
+        position = store.data['positions']
 
     if data.count() == 0:
         goodRate, badRate, times, productFake = [], [], [], []
@@ -842,7 +843,7 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
-    return JsonResponse({'position': position, 'dimension': dimension, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+    return JsonResponse({'position': position,'store':store.data ,'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
 
 
 @csrf_exempt

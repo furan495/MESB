@@ -329,7 +329,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Store
-        fields = ('key', 'workShop', 'name', 'dimensions', 'direction', 'productLine', 'lineType',
+        fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine', 'lineType',
                   'number', 'storeType', 'positions', 'materials')
 
 

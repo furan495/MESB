@@ -156,7 +156,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['put'], detail=True)
     def status(self, request, pk=None):
-        params = json.loads(request.body)
+        params = request.data
         user = User.objects.get(key=pk)
         user.status = params['status']
         user.save()
@@ -562,18 +562,14 @@ class StoreViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=True)
     def modeling(self, request, pk=None):
-        params = json.loads(request.body)
         store = Store.objects.get(key=pk)
         storeType = store.productLine.lineType.name
-        store.direction = params['direction']
-        store.dimensions = params['dimensions']
-        store.save()
-        count = params['row']*params['column']
+        count = store.rows*store.columns
         if storeType == '电子装配':
             left = np.arange(
-                0, count/2).reshape(params['row'], int(params['column']/2))
+                0, count/2).reshape(store.rows, int(store.columns/2))
             right = np.arange(
-                count/2, count).reshape(params['row'], int(params['column']/2))
+                count/2, count).reshape(store.rows, int(store.columns/2))
             martix = np.hstack((left, right)).reshape(1, count)
             for i in np.ravel(martix):
                 position = StorePosition()
@@ -581,7 +577,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 position.number = '%s-%s' % (str(int(i)+1), pk)
                 position.status = selectStatus(storeType, i, count)
                 position.description = selectDescription(
-                    storeType, i, count, params['row'], params['column'])
+                    storeType, i, count, store.rows, store.columns)
                 position.save()
         else:
             for i in range(count):
@@ -590,7 +586,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 position.number = '%s-%s' % (str(i+1), pk)
                 position.status = selectStatus(storeType, i, count)
                 position.description = selectDescription(
-                    storeType, i, count, params['row'], params['column'])
+                    storeType, i, count, store.rows, store.columns)
                 position.save()
                 if storeType == '灌装':
                     pallet = Pallet()
@@ -627,7 +623,7 @@ class StoreViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.data
         excel = map(lambda obj: {'仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,
-                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库规模': obj.dimensions}, Store.objects.all())
+                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows,'仓库列数': obj.columns}, Store.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -641,7 +637,6 @@ class StoreTypeViewSet(viewsets.ModelViewSet):
 class StorePositionViewSet(viewsets.ModelViewSet):
     queryset = StorePosition.objects.all()
     serializer_class = StorePositionSerializer
-
 
 class OperateViewSet(viewsets.ModelViewSet):
     queryset = Operate.objects.all().order_by('-time')

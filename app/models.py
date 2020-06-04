@@ -450,8 +450,8 @@ class Store(models.Model):
         max_length=20, verbose_name='仓库名称', unique=True, blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='仓库编号', unique=True, blank=True, null=True)
-    dimensions = models.CharField(
-        max_length=20, verbose_name='仓库规模',  blank=True, null=True)
+    rows=models.IntegerField(verbose_name='仓库行数', blank=True, null=True)
+    columns=models.IntegerField(verbose_name='仓库列数', blank=True, null=True)
     direction = models.CharField(
         max_length=20, verbose_name='仓库排向', default='row')
 
