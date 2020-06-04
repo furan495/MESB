@@ -443,13 +443,6 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         fields = ('key', 'name', 'number', 'path', 'orderType', 'errorRange')
 
 
-class DataViewSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DataView
-        fields = ('key', 'mwContent', 'gzContent', 'eaContent')
-
-
 class ProductStandardSerializer(serializers.ModelSerializer):
     batch = serializers.SerializerMethodField()
     result = serializers.SerializerMethodField()

@@ -912,39 +912,6 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
     queryset = ProductType.objects.all().order_by('-key')
     serializer_class = ProductTypeSerializer
 
-    @action(methods=['put'], detail=False)
-    def dataViews(self, request):
-        params = request.data
-        product = ProductType.objects.filter(
-            Q(orderType__name=params['orderType']))
-        productDict, fieldDict, materialStr = {}, {}, ''
-        for field in apps.get_model('app', 'Bottle')._meta.fields:
-            fieldDict[field.verbose_name] = field.name
-        for prod in product:
-            productDict[prod.name] = Count('workOrders__workOrder__name', filter=Q(
-                workOrders__workOrder__name=prod.name)) if params['orderType'] != '灌装' else Count('bottles', filter=Q(bottles__color=prod.name))
-            if params['orderType'] == '灌装':
-                boms = BOMContent.objects.filter(
-                    Q(bom__product=prod) & ~Q(material__icontains=prod.name) & ~Q(material__icontains='盖'))
-                for bom in boms:
-                    materialStr = materialStr+bom.material.split('/')[0]+','
-                for mat in list(filter(lambda obj: obj != '', list(set(materialStr.split(','))))):
-                    productDict[prod.name+mat] = Avg(
-                        'bottles__%s' % fieldDict[mat], filter=Q(bottles__color=prod.name))
-
-        orders = Order.objects.filter(
-            Q(status=OrderStatus.objects.get(name='已排产'), orderType=OrderType.objects.get(name=params['orderType']))).values('number').annotate(订单编号=F('number'), 订单批次=F('batch'), 排产时间=F('scheduling'), 订单状态=F('status__name'),  **productDict).values('订单编号', '订单批次', '排产时间', '订单状态', *productDict.keys())
-
-        dv = DataView.objects.all()[0]
-        if params['orderType'] == '机加':
-            dv.mwContent = formatSql(orders.query.__str__().split(' '))
-        if params['orderType'] == '电子装配':
-            dv.eaContent = formatSql(orders.query.__str__().split(' '))
-        if params['orderType'] == '灌装':
-            dv.gzContent = formatSql(orders.query.__str__().split(' '))
-        dv.save()
-        return Response('ok')
-
     @action(methods=['post'], detail=False)
     def export(self, request):
         params = request.data
@@ -953,11 +920,6 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
-
-
-class DataViewViewSet(viewsets.ModelViewSet):
-    queryset = DataView.objects.all()
-    serializer_class = DataViewSerializer
 
 
 class ProductStandardViewSet(viewsets.ModelViewSet):

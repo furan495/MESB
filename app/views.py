@@ -544,6 +544,7 @@ def querySelect(request):
         pos.status='3'
         pos.save() """
 
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
@@ -779,8 +780,8 @@ def queryCharts(request):
         WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
     dimension = Store.objects.get(
         Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(storeType__name='成品库', productLine__lineType__name=params['order'])).dimensions
-    """ productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
-        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order'])))) """
+    productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
+        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
     if params['order'] == '灌装':
         position = list(
@@ -834,7 +835,7 @@ def queryCharts(request):
             }, 'data':badRate}
     ]
 
-    times = [{'name': '生产耗时', 'type': 'columnpyramid',  'color': {
+    times = [{'name': '生产耗时', 'type': 'line',  'color': {
         'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
         'stops': [
             [0, 'rgba(244,144,255,0)'],

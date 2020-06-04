@@ -715,18 +715,3 @@ class BOMContent(models.Model):
     class Meta:
         verbose_name = 'BOM内容'
 
-
-class DataView(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    mwContent = models.CharField(
-        max_length=4000, verbose_name='sql字符串-机加', blank=True, null=True)
-    gzContent = models.CharField(
-        max_length=4000, verbose_name='sql字符串-灌装', blank=True, null=True)
-    eaContent = models.CharField(
-        max_length=4000, verbose_name='sql字符串-电子装配', blank=True, null=True)
-
-    def __str__(self):
-        return self.mwContent
-
-    class Meta:
-        verbose_name = '视图表'
