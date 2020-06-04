@@ -62,8 +62,7 @@ def wincc5(request):
         Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
 
     if position[params[0]] == '出库开始':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
+        workOrder = WorkOrder.objects.get(Q(number=params[1]))
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
         workOrder.save()
@@ -71,8 +70,7 @@ def wincc5(request):
         order.status = OrderStatus.objects.get(Q(name='加工中'))
         order.save()
     if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
+        workOrder = WorkOrder.objects.get(Q(number=params[1]))
         product = workOrder.workOrder
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
@@ -88,8 +86,7 @@ def wincc5(request):
         product.save()
         standard.save()
     if position[params[0]] == '入库结束':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
+        workOrder = WorkOrder.objects.get(Q(number=params[1]))
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
@@ -108,8 +105,7 @@ def wincc5(request):
             order.save()
 
     event = Event()
-    event.workOrder = WorkOrder.objects.get(
-        Q(number=params[1], order__number=params[2]))
+    event.workOrder = WorkOrder.objects.get(Q(number=params[1]))
     event.source = position[params[0]]
     event.title = position[params[0]]
     event.save()
@@ -543,7 +539,6 @@ def querySelect(request):
     """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status='3'
         pos.save() """
-
 
     params = json.loads(request.body)
     selectList = {}

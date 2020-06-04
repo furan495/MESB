@@ -237,14 +237,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 descriptions = params['description']
                 for desc in descriptions.split(';')[:-1]:
                     count = count+int(desc.split('x')[1])
-                occupy = WorkOrder.objects.filter(
-                    Q(order__status__name='已排产', order__orderType__name='机加')).count()
                 if count > StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4')).count():
                     res = 'err'
                     info = '成品库仓位不足，无法排产'
                 else:
                     for store in Store.objects.filter(Q(storeType__name='原料库')):
-                        if count > StorePosition.objects.filter(Q(store=store, status='3')).count()-occupy:
+                        if count > StorePosition.objects.filter(Q(store=store, status='3')).count():
                             res = 'err'
                             info = '%s不足，无法排产' % Material.objects.filter(Q(store=store))[
                                 0].name
@@ -285,14 +283,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                             matKey = mat.material.split('/')[0]
                             materialDict[matKey] = materialDict[matKey] + counts
                     for mat in list(set(materialStr.split(',')))[1:]:
-                        try:
-                            bomContents = BOMContent.objects.filter(
-                                Q(bom__product__products__workOrder__order__status__name='已排产', bom__product__products__workOrder__order__orderType__name='电子装配')).values('material').distinct().annotate(counts=Sum('counts', filter=Q(material=mat))).values('counts')
-                            occupy = list(filter(lambda obj: obj['counts'] != None, bomContents))[
-                                0]['counts']
-                        except:
-                            occupy = 0
-                        if Material.objects.filter(Q(name=mat.split('/')[0], size__icontains=mat.split('/')[1])).count()-occupy < materialDict[mat.split('/')[0]]:
+                        if Material.objects.filter(Q(name=mat.split('/')[0], size__icontains=mat.split('/')[1])).count() < materialDict[mat.split('/')[0]]:
                             res = 'err'
                             info = '%s不足，无法排产' % mat
             else:
@@ -423,7 +414,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         yAxis = list(map(
             lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
         data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
-            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/11, 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
+            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/(len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
         return Response({'yAxis': yAxis, 'data': data})
 
 

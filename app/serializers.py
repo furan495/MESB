@@ -1,4 +1,5 @@
 import time
+import json
 from app.utils import *
 from app.models import *
 from django.db.models import Q
@@ -267,7 +268,7 @@ class BottleSerializer(serializers.ModelSerializer):
 
 class WorkOrderSerializer(serializers.ModelSerializer):
 
-    bottle = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField()
     orderNum = serializers.SerializerMethodField()
     orderType = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
@@ -296,16 +297,13 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     def get_orderType(self, obj):
         return obj.order.orderType.name
 
-    def get_bottle(self, obj):
-        if obj.order.orderType.name == '灌装':
-            return obj.bottle
-        else:
-            return obj.number
+    def get_progress(self, obj):
+        return round(obj.events.all().count()/(len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100
 
     class Meta:
         model = WorkOrder
         fields = ('key', 'orderNum', 'bottle', 'number', 'createTime', 'orderType',
-                  'startTime', 'endTime', 'status', 'description', 'events')
+                  'startTime', 'endTime', 'status', 'description', 'events', 'progress')
 
 
 class StoreSerializer(serializers.ModelSerializer):

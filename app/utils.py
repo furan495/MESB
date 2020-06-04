@@ -143,13 +143,7 @@ def powerAna(orderType, all):
     if all:
         data = [
             {'name': '预期产量', 'type': 'column',
-             'color': {
-                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                 'stops': [
-                     [0, 'rgba(155,183,255,0)'],
-                     [1, 'rgba(155,183,255,1)']
-                 ]
-             }, 'data': expectData},
+             'color': 'rgb(155,183,255)', 'data': expectData},
             {'name': '实际产量', 'type': 'column',
              'color': {
                  'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
@@ -270,7 +264,7 @@ def mateAna(orderType, all):
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
 
-        data = [{'name': '摆件底座', 'type': 'column', 'data': day}]
+        data = [{'name': '原料棒', 'type': 'column', 'data': day}]
     if orderType == '电子装配':
         materialDict = {}
         materials = Material.objects.filter(
