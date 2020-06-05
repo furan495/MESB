@@ -63,7 +63,8 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             Organization.objects.all().delete()
         return Response('ok')
 
-    def list(self, request, *args, **kwargs):
+    @action(methods=['get'], detail=False)
+    def charts(self, request):
         organizations = Organization.objects.filter(Q(parent=None))
         data = map(lambda obj: {'key': obj.key, 'title': obj.name, 'parent': obj.parent,
                                 'children': loopOrganization(obj.name)}, organizations)
@@ -135,10 +136,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def login(self, request):
         res = ''
-        params = request.data
+        params = request.query_params
         user = User.objects.get(phone=params['phone'])
         if user.password == params['password']:
             res = UserSerializer(user).data
@@ -146,9 +147,9 @@ class UserViewSet(viewsets.ModelViewSet):
             res = 'err'
         return Response({'res': res, 'count': User.objects.filter(Q(status='2')).count()})
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def logout(self, request):
-        params = request.data
+        params = request.query_params
         user = User.objects.get(Q(phone=params['phone']))
         user.status = '1'
         user.save()
@@ -191,10 +192,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             bottle.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=True)
-    def preScheduling(self, request, pk=None):
+    @action(methods=['get'], detail=False)
+    def preScheduling(self, request):
         res, info = 'ok', ''
-        params = request.data
+        params = request.query_params
         orderType = params['orderType']
         line = ProductLine.objects.get(name=params['line'])
         route = ProcessRoute.objects.get(name=params['route'])
@@ -301,8 +302,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         orderDesc = params['description'].split(';')
         order.status = OrderStatus.objects.get(name='已排产')
         order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        order.scheduling = params['scheduling'] if params['scheduling'] != '' else datetime.datetime.now(
-        ).strftime('%Y-%m-%d %H:%M:%S')
+        order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         order.save()
         if params['orderType'] == '灌装':
             for description in orderDesc:

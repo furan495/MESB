@@ -320,6 +320,8 @@ class StoreSerializer(serializers.ModelSerializer):
             return ''
 
     def get_positions(self, obj):
+        if obj.productLine and obj.productLine.lineType.name == '灌装':
+            return list(map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
         return list(map(lambda obj: {'key': obj.key, 'number': obj.number.split('-')[0], 'status': obj.status, 'content': obj.content}, obj.positions.all()))
 
     class Meta:

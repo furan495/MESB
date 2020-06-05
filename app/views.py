@@ -518,21 +518,6 @@ def queryPallet(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ data = Order.objects.filter(Q(status__name='已完成',orderType__name='灌装')).values('number').annotate(
-        rbot=Count('bottles', filter=Q(bottles__color='红瓶')),
-        rred=Avg('bottles__red', filter=Q(bottles__color='红瓶')),
-        rgreen=Avg('bottles__green', filter=Q(bottles__color='红瓶')),
-        rblue=Avg('bottles__blue', filter=Q(bottles__color='红瓶')),
-        gbot=Count('bottles', filter=Q(bottles__color='绿瓶')),
-        gred=Avg('bottles__red', filter=Q(bottles__color='绿瓶')),
-        ggreen=Avg('bottles__green', filter=Q(bottles__color='绿瓶')),
-        gblue=Avg('bottles__blue', filter=Q(bottles__color='绿瓶')),
-        bbot=Count('bottles', filter=Q(bottles__color='蓝瓶')),
-        bred=Avg('bottles__red', filter=Q(bottles__color='蓝瓶')),
-        bgreen=Avg('bottles__green', filter=Q(bottles__color='蓝瓶')),
-        bblue=Avg('bottles__blue', filter=Q(bottles__color='蓝瓶')),
-    ).values('number',  'rbot', 'rred', 'rgreen', 'rblue', 'gbot', 'gred', 'ggreen', 'gblue', 'bbot', 'bred', 'bgreen', 'bblue', 'scheduling', 'status__name',) """
-
     """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status='3'
         pos.save() """
@@ -542,9 +527,9 @@ def querySelect(request):
     if params['model'] == 'order' or params['model'] == 'productType':
         selectList = {
             'line': list(map(lambda obj: obj.name, ProductLine.objects.all())),
-            'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
             'customer': list(map(lambda obj: obj.name, Customer.objects.all())),
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
+            'route': list(map(lambda obj: obj.name, ProcessRoute.objects.filter(~Q(processes__key=None)))),
             'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom__contents__key=None))))
         }
     if params['model'] == 'bom':
@@ -777,12 +762,6 @@ def queryCharts(request):
     store = StoreSerializer(Store.objects.get(Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(
         storeType__name='成品库', productLine__lineType__name=params['order'])))
 
-    if params['order'] == '灌装':
-        position = list(
-            map(lambda obj: [obj.rate*100, obj.number], Pallet.objects.all()))
-    else:
-        position = store.data['positions']
-
     if data.count() == 0:
         goodRate, badRate, times, productFake = [], [], [], []
         year = datetime.datetime.now().year
@@ -840,10 +819,4 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
-    return JsonResponse({'position': position, 'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'qualana': qualAna(params['order'], all=True), 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
-
-
-@csrf_exempt
-def agv(request):
-
-    return JsonResponse({'robot': 'FUNUC机器人-001'})
+    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
