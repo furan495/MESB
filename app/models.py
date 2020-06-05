@@ -439,6 +439,11 @@ class StoreType(models.Model):
 
 class Store(models.Model):
 
+    STORE_DIRECTION = (
+        ('1', '行优先'),
+        ('2', '列优先'),
+    )
+
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workShop = models.ForeignKey(WorkShop, related_name='stores',
                                  on_delete=models.CASCADE, verbose_name='隶属车间', blank=True, null=True)
@@ -450,10 +455,10 @@ class Store(models.Model):
         max_length=20, verbose_name='仓库名称', unique=True, blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='仓库编号', unique=True, blank=True, null=True)
-    rows=models.IntegerField(verbose_name='仓库行数', blank=True, null=True)
-    columns=models.IntegerField(verbose_name='仓库列数', blank=True, null=True)
+    rows = models.IntegerField(verbose_name='仓库行数', blank=True, null=True)
+    columns = models.IntegerField(verbose_name='仓库列数', blank=True, null=True)
     direction = models.CharField(
-        max_length=20, verbose_name='仓库排向', default='row')
+        max_length=2, verbose_name='仓库排向', choices=STORE_DIRECTION, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -714,4 +719,3 @@ class BOMContent(models.Model):
 
     class Meta:
         verbose_name = 'BOM内容'
-

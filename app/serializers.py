@@ -147,7 +147,6 @@ class DeviceSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
 
     status = serializers.SerializerMethodField()
-    gender = serializers.SerializerMethodField()
     authority = serializers.SerializerMethodField(read_only=True)
     role = serializers.SlugRelatedField(
         queryset=Role.objects.all(), label='角色', slug_field='name', required=False)
@@ -162,9 +161,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         return obj.get_status_display()
-
-    def get_gender(self, obj):
-        return obj.get_gender_display()
 
     class Meta:
         model = User

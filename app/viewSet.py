@@ -165,7 +165,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False)
     def export(self, request):
         params = request.data
-        excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': '男' if obj.gender == '1' else '女',
+        excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': obj.get_gender_display(),
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
@@ -613,17 +613,10 @@ class StoreViewSet(viewsets.ModelViewSet):
         return Response(count)
 
     @action(methods=['post'], detail=False)
-    def mwPosition(self, request):
-        params = request.data
-        content = StorePosition.objects.get(
-            number=params['item'].split('/')[0]).content
-        return Response(content)
-
-    @action(methods=['post'], detail=False)
     def export(self, request):
         params = request.data
         excel = map(lambda obj: {'仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,
-                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows,'仓库列数': obj.columns}, Store.objects.all())
+                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows, '仓库列数': obj.columns, '排向优先': obj.get_direction_display()}, Store.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -637,6 +630,7 @@ class StoreTypeViewSet(viewsets.ModelViewSet):
 class StorePositionViewSet(viewsets.ModelViewSet):
     queryset = StorePosition.objects.all()
     serializer_class = StorePositionSerializer
+
 
 class OperateViewSet(viewsets.ModelViewSet):
     queryset = Operate.objects.all().order_by('-time')
@@ -862,7 +856,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.data
         if params['model'] == 'product':
-            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果': '合格' if obj.result == '1' else '不合格', '存放仓位': selectPosition(
+            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果':  obj.get_result_display(), '存放仓位': selectPosition(
                 obj), '历史状态': ('->').join(list(map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title), Event.objects.filter(Q(workOrder=obj.workOrder)))))}, Product.objects.all())
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
@@ -939,7 +933,7 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.data
         excel = map(lambda obj: {'产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue,
-                                 '实际结果': obj.realValue, '检测结果': '合格' if obj.result == '1' else '不合格'}, ProductStandard.objects.all())
+                                 '实际结果': obj.realValue, '检测结果': obj.get_result_display()}, ProductStandard.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
