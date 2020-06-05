@@ -629,6 +629,9 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
+    start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+    stop = datetime.datetime.strptime(
+        params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
     data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
@@ -701,4 +704,4 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
-    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': mateAna(params['order'], all=False), 'goodRate': rate, 'power': powerAna(params['order'], all=True)})
+    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': mateAna(params['order'], start, stop, all=False), 'goodRate': rate, 'power': powerAna(params['order'], start, stop, all=True)})
