@@ -117,8 +117,8 @@ def rateY(obj):
     return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
 
-def powerAna(orderType, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+def powerAna(orderType, start, stop, all):
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
@@ -156,8 +156,8 @@ def powerAna(orderType, all):
     return data
 
 
-def qualAna(orderType, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(good=Count(
+def qualAna(orderType, start, stop, all):
+    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
@@ -212,7 +212,7 @@ def qualAna(orderType, all):
     return data
 
 
-def mateAna(orderType, all):
+def mateAna(orderType, start, stop, all):
     data = []
     if orderType == '灌装':
         redBottle = list(
@@ -260,7 +260,7 @@ def mateAna(orderType, all):
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
         ]
     if orderType == '机加':
-        data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values('batch').annotate(
+        data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(
             count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
         day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
 
@@ -273,7 +273,7 @@ def mateAna(orderType, all):
             materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
                 prodType__bom__contents__material=material['name']+'/'+material['size']))
 
-        results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType)).values(
+        results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
             'batch').annotate(**materialDict).values('batch', *materialDict.keys())
 
         for mate in materials:

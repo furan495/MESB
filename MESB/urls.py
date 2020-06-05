@@ -57,13 +57,9 @@ urlpatterns = [
     url(r'^api/wincc5/',  views.wincc5),
     url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/queryCharts/',  views.queryCharts),
-    url(r'^api/filterChart/',  views.filterChart),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^api/recordWeight/',  views.recordWeight),
     url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryProducing/',  views.queryProducing),
-    url(r'^api/queryQualanaChart/',  views.queryQualanaChart),
-    url(r'^api/queryMateanaChart/',  views.queryMateanaChart),
-    url(r'^api/queryPoweranaChart/',  views.queryPoweranaChart),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
 ]

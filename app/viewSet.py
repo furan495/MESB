@@ -26,9 +26,9 @@ class WorkShopViewSet(viewsets.ModelViewSet):
     queryset = WorkShop.objects.all().order_by('-createTime')
     serializer_class = WorkShopSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'车间编号': obj.number, '车间名称': obj.name,
                                  '车间描述': obj.descriptions}, WorkShop.objects.all())
         df = pd.DataFrame(list(excel))
@@ -40,9 +40,9 @@ class BOMViewSet(viewsets.ModelViewSet):
     queryset = BOM.objects.all().order_by('-createTime')
     serializer_class = BOMSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'对应产品': obj.product.name, 'bom名称': obj.name, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'bom内容': ','.join(
             list(map(lambda obj: obj.material+',数量:'+str(obj.counts) if obj.counts else obj.material+',数量:若干', obj.contents.all())))}, BOM.objects.all())
         df = pd.DataFrame(list(excel))
@@ -108,9 +108,9 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all().order_by('-key')
     serializer_class = RoleSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'角色名': obj.name,
                                  '权限范围': obj.authority}, Role.objects.all())
         df = pd.DataFrame(list(excel))
@@ -122,9 +122,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all().order_by('-key')
     serializer_class = CustomerSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'客户名称': obj.name, '客户编号': obj.number, '联系电话': obj.phone,
                                  '客户等级': obj.level, '公司': obj.company}, Customer.objects.all())
         df = pd.DataFrame(list(excel))
@@ -163,9 +163,9 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': obj.get_gender_display(),
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
         df = pd.DataFrame(list(excel))
@@ -399,9 +399,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             standard.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'订单类别': obj.orderType.name, '选用工艺': obj.route.name, '订单状态': obj.status.name, '创建人': obj.creator, '目标客户': obj.customer.name,
                                  '订单编号': obj.number, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description}, Order.objects.all())
         df = pd.DataFrame(list(excel))
@@ -422,9 +422,9 @@ class ProductLineViewSet(viewsets.ModelViewSet):
     queryset = ProductLine.objects.all().order_by('-key')
     serializer_class = ProductLineSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'产线名称': obj.name, '产线类别': obj.lineType, '隶属车间': obj.workShop.name,
                                  '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
         df = pd.DataFrame(list(excel))
@@ -511,9 +511,9 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         pro.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'工艺名称': obj.name, '工艺类别': obj.routeType, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
                                  '包含工序': ('->').join(list(map(lambda obj: obj.name, Process.objects.filter(Q(route=obj))))), '详细数据': obj.data}, ProcessRoute.objects.all())
         df = pd.DataFrame(list(excel))
@@ -546,9 +546,9 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['number', 'status', 'bottle']
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '工单瓶号': obj.bottle, '创建时间': obj.createTime.strftime(
             '%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description}, WorkOrder.objects.all())
         df = pd.DataFrame(list(excel))
@@ -612,9 +612,9 @@ class StoreViewSet(viewsets.ModelViewSet):
             Q(storeType__name=params['storeType'], productLine__name=params['productLine'])).count()
         return Response(count)
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,
                                  '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows, '仓库列数': obj.columns, '排向优先': obj.get_direction_display()}, Store.objects.all())
         df = pd.DataFrame(list(excel))
@@ -669,9 +669,9 @@ class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')
     serializer_class = DeviceSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '设备状态': list(DeviceState.objects.filter(Q(device=obj)))[-1].name, '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '入库时间': obj.joinTime.strftime(
             '%Y-%m-%d %H:%M:%S'), '设备厂家': obj.factory, '出厂日期': obj.facTime, '厂家联系人': obj.facPeo, '厂家电话': obj.facPho}, Device.objects.all())
         df = pd.DataFrame(list(excel))
@@ -767,9 +767,18 @@ class MaterialViewSet(viewsets.ModelViewSet):
         Material.objects.filter(Q(name=params['name'])).delete()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
+    def materialChart(self, request):
+        params = request.query_params
+        start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+        stop = datetime.datetime.strptime(
+            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
+        data = mateAna(params['order'], start, stop, all=False)
+        return Response(data)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': '自制' if obj['mateType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
         df = pd.DataFrame(list(excel))
@@ -804,9 +813,9 @@ class ToolViewSet(viewsets.ModelViewSet):
         Tool.objects.filter(Q(name=params['name'])).delete()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': '自制' if obj['toolType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
         df = pd.DataFrame(list(excel))
@@ -821,40 +830,32 @@ class PalletViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['position']
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        content = [request.data['hole1Content'], request.data['hole2Content'], request.data['hole3Content'], request.data['hole4Content'],
-                   request.data['hole5Content'], request.data['hole6Content'], request.data['hole7Content'], request.data['hole8Content'], request.data['hole9Content']]
-        data = request.data.copy()
-        data['rate'] = round(
-            len(list(filter(lambda obj: obj != '', content)))/9, 2)
-        position = instance.position
-        if data['rate'] > 0:
-            position.status = '3'
-        if data['rate'] == 0.0:
-            position.status = '4'
-        position.save()
-        serializer = self.get_serializer(
-            instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('-key')
     serializer_class = ProductSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
+    def powerChart(self, request):
+        params = request.query_params
+        start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+        stop = datetime.datetime.strptime(
+            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
+        data = powerAna(params['order'], start, stop, all=False)
+        return Response(data)
+
+    @action(methods=['get'], detail=False)
+    def qualityChart(self, request):
+        params = request.query_params
+        start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
+        stop = datetime.datetime.strptime(
+            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
+        data = qualAna(params['order'], start, stop, all=False)
+        return Response(data)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         if params['model'] == 'product':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果':  obj.get_result_display(), '存放仓位': selectPosition(
                 obj), '历史状态': ('->').join(list(map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title), Event.objects.filter(Q(workOrder=obj.workOrder)))))}, Product.objects.all())
@@ -892,9 +893,9 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
     queryset = ProductType.objects.all().order_by('-key')
     serializer_class = ProductTypeSerializer
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'产品名称': obj.name, '订单类型': obj.orderType.name,
                                  '产品编号': obj.number, '产品容差': obj.errorRange}, ProductType.objects.all())
         df = pd.DataFrame(list(excel))
@@ -906,32 +907,9 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
     queryset = ProductStandard.objects.all().order_by('-key')
     serializer_class = ProductStandardSerializer
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-
-        product = Product.objects.get(
-            Q(workOrder__number=request.data['product'].split('/')[1]))
-        product.result = '1' if str(request.data['result']) == '1' else '2'
-        product.reason = '%s%s' % (
-            request.data['name'], request.data['realValue'])
-        product.save()
-
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def export(self, request):
-        params = request.data
+        params = request.query_params
         excel = map(lambda obj: {'产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue,
                                  '实际结果': obj.realValue, '检测结果': obj.get_result_display()}, ProductStandard.objects.all())
         df = pd.DataFrame(list(excel))
