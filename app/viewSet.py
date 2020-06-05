@@ -773,7 +773,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
         stop = datetime.datetime.strptime(
             params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
-        data = mateAna(params['order'], start, stop, all=False)
+        data = materialChart(params['order'], start, stop, all=False)
         return Response(data)
 
     @action(methods=['get'], detail=False)
@@ -841,7 +841,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
         stop = datetime.datetime.strptime(
             params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
-        data = powerAna(params['order'], start, stop, all=False)
+        data = powerChart(params['order'], start, stop, all=False)
         return Response(data)
 
     @action(methods=['get'], detail=False)
@@ -850,7 +850,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
         stop = datetime.datetime.strptime(
             params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
-        data = qualAna(params['order'], start, stop, all=False)
+        data = qualityChart(params['order'], start, stop, all=False)
         return Response(data)
 
     @action(methods=['get'], detail=False)
@@ -862,10 +862,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
                 '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='2'))
-        if params['model'] == 'qualAna':
+        if params['model'] == 'qualityChart':
             excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
                 'batch'), 合格数=Count('result', filter=Q(result='1')), 不合格数=Count('result', filter=Q(result='2'))).values('日期', '合格数', '不合格数')
-        if params['model'] == 'mateAna':
+        if params['model'] == 'materialChart':
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
                     'color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cap', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues'))
@@ -881,7 +881,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                         prodType__bom__contents__material=material['name']+'/'+material['size']))
                 excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
-        if params['model'] == 'powerAna':
+        if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
                 workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))

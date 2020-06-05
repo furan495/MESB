@@ -704,4 +704,4 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '产品占比', 'data': productData}
     ]
 
-    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': mateAna(params['order'], start, stop, all=False), 'goodRate': rate, 'power': powerAna(params['order'], start, stop, all=True)})
+    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})

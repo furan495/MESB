@@ -117,7 +117,7 @@ def rateY(obj):
     return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
 
 
-def powerAna(orderType, start, stop, all):
+def powerChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
     expectData = list(
@@ -156,7 +156,7 @@ def powerAna(orderType, start, stop, all):
     return data
 
 
-def qualAna(orderType, start, stop, all):
+def qualityChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count(
         'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
     goodData = list(
@@ -212,7 +212,7 @@ def qualAna(orderType, start, stop, all):
     return data
 
 
-def mateAna(orderType, start, stop, all):
+def materialChart(orderType, start, stop, all):
     data = []
     if orderType == '灌装':
         redBottle = list(
