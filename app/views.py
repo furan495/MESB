@@ -658,10 +658,6 @@ def queryCharts(request):
     if len(times) == 0:
         for i in range(8):
             times.append(['工单%s' % str(i+1), random.randint(1, 10)])
-    productData = []
-    for i in range(8):
-        productData.append(
-            {'name': '产品%s' % str(i+1), 'y': random.randint(1, 10)})
 
     rate = [
         {'name': '合格率', 'type': 'areaspline',
