@@ -43,15 +43,6 @@ def loopOrganization(organization):
     return data
 
 
-def formatSql(sqlList):
-    sqlList.insert(
-        1, 'ROW_NUMBER() OVER(ORDER BY [app_order].[number]) AS 编号,')
-    for sql in sqlList:
-        if u'\u4e00' <= sql <= u'\u9fff' or ('[' not in sql and re.compile(u'[\u4e00-\u9fa5]').search(sql)):
-            sqlList[sqlList.index(sql)] = '\'%s\'' % sql
-    return ' '.join(sqlList)
-
-
 def selectStatus(storeType, index, count):
     if '灌装' == storeType:
         return '1'
@@ -110,16 +101,16 @@ def dataX(date):
 def dataY(date):
     start = date.date()
     stop = date.date()+datetime.timedelta(hours=24)
-    return Operate.objects.filter(Q(name='登陆系统', time__gte=start, time__lte=stop)).count()
+    return Operate.objects.filter(Q(name='登录系统', time__gte=start, time__lte=stop)).count()
 
 
 def rateY(obj):
-    return round(obj['good']/(obj['good']+obj['bad']) if (obj['good']+obj['bad']) != 0 else 0, 2)
+    return round(obj['good']/obj['reals'], 2)
 
 
 def powerChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
-        'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
+        'batch'), good=Count('result', filter=Q(result='1'))).values('batch', 'good', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))

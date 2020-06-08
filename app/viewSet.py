@@ -192,10 +192,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             bottle.save()
         return Response('ok')
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['post'], detail=False)
     def preScheduling(self, request):
         res, info = 'ok', ''
-        params = request.query_params
+        params = request.data
         orderType = params['orderType']
         line = ProductLine.objects.get(name=params['line'])
         route = ProcessRoute.objects.get(name=params['route'])
@@ -242,7 +242,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     res = 'err'
                     info = '成品库仓位不足，无法排产'
                 else:
-                    for store in Store.objects.filter(Q(storeType__name='原料库')):
+                    for store in Store.objects.filter(Q(storeType__name='原料库') & ~Q(name__icontains='车间')):
                         if count > StorePosition.objects.filter(Q(store=store, status='3')).count():
                             res = 'err'
                             info = '%s不足，无法排产' % Material.objects.filter(Q(store=store))[
@@ -642,7 +642,7 @@ class OperateViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def interviewChart(self, request):
         data = map(lambda obj: [dataX(obj.time.date()), dataY(
-            obj.time)], Operate.objects.filter(Q(name='登陆系统')).order_by('time'))
+            obj.time)], Operate.objects.filter(Q(name='登录系统')).order_by('time'))
         return Response([{'type': 'areaspline', 'name': '日访问量', 'data': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))}])
 
     @action(methods=['get'], detail=False)
@@ -883,7 +883,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
-                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
+                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', filter=Q(workOrder__status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])

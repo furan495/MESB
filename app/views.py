@@ -96,7 +96,7 @@ def wincc5(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = product.name
+        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
 
         order = workOrder.order
@@ -163,7 +163,7 @@ def wincc4(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = product.name
+        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -236,7 +236,7 @@ def wincc3(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = product.name
+        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -309,7 +309,7 @@ def wincc2(request):
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
         storePosition.status = '3'
-        storePosition.content = product.name
+        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
 
         order = workOrder.order
@@ -692,7 +692,7 @@ def queryCharts(request):
             }, 'data':badRate}
     ]
 
-    times = [{'name': '生产耗时', 'type': 'line',  'color': {
+    times = [{'name': '生产耗时', 'type': 'bar',  'color': {
         'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
         'stops': [
             [0, 'rgba(244,144,255,0)'],
