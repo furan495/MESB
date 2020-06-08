@@ -105,7 +105,7 @@ def dataY(date):
 
 
 def rateY(obj):
-    return round(obj['good']/obj['reals'], 2)
+    return round(obj['good']/obj['reals'] if obj['reals'] != 0 else 1, 2)
 
 
 def powerChart(orderType, start, stop, all):
