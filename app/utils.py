@@ -136,13 +136,7 @@ def powerChart(orderType, start, stop, all):
             {'name': '预期产量', 'type': 'column',
              'color': 'rgb(155,183,255)', 'data': expectData},
             {'name': '实际产量', 'type': 'column',
-             'color': {
-                 'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                 'stops': [
-                     [0, 'rgba(190,147,255,0)'],
-                     [1, 'rgba(190,147,255,1)']
-                 ]
-             }, 'data': realData},
+             'color': 'rgb(190,147,255)', 'data': realData},
         ]
     return data
 
