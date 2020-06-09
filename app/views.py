@@ -642,7 +642,7 @@ def queryCharts(request):
     times = list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(
         WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
     productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
-        Q(name__icontains=obj.name)).count(), 'sliced': True, 'color':'rgb(190,147,255)'}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+        Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
     store = StoreSerializer(Store.objects.get(Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(
         storeType__name='成品库', productLine__lineType__name=params['order'])))
@@ -656,36 +656,18 @@ def queryCharts(request):
             goodRate.append([day, round(random.random(), 2)])
             badRate.append([day, round(random.random(), 2)])
     if len(times) == 0:
-        for i in range(8):
+        for i in range(35):
             times.append(['工单%s' % str(i+1), random.randint(1, 10)])
 
+    if Product.objects.all().count() == 0:
+        productData = list(map(lambda obj: {'name': obj.name, 'y': random.randint(
+            1, 10)}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+
     rate = [
-        {'name': '合格率', 'type': 'areaspline',
-            'color': {
-                'linearGradient': {
-                    'x1': 0,
-                    'y1': 0,
-                    'x2': 0,
-                    'y2': 1
-                },
-                'stops': [
-                    [0, 'rgba(155,183,255,1)'],
-                    [1, 'rgba(155,183,255,0.5)']
-                ]
-            }, 'data': goodRate},
-        {'name': '不合格率', 'type': 'areaspline',
-            'color': {
-                'linearGradient': {
-                    'x1': 0,
-                    'y1': 0,
-                    'x2': 0,
-                    'y2': 1
-                },
-                'stops': [
-                    [0, 'rgba(190,147,255,1)'],
-                    [1, 'rgba(190,147,255,0.5)']
-                ]
-            }, 'data':badRate}
+        {'name': '合格率', 'type': 'line',
+            'color': 'rgb(155,183,255)', 'data': goodRate},
+        {'name': '不合格率', 'type': 'line',
+            'color': 'rgb(190,147,255)', 'data': badRate}
     ]
 
     times = [{'name': '生产耗时', 'type': 'bar',  'color': {
@@ -694,10 +676,10 @@ def queryCharts(request):
             [0, 'rgb(190,147,255)'],
             [1, 'rgb(155,183,255)']
         ]
-    }, 'data': times}]
+    }, 'data': times[-35:]}]
 
     product = [
         {'type': 'pie', 'innerSize': '60%', 'name': '成品数量', 'data': productData}
     ]
 
-    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})
+    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})

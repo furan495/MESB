@@ -134,9 +134,9 @@ def powerChart(orderType, start, stop, all):
     if all:
         data = [
             {'name': '预期产量', 'type': 'column',
-             'color': 'rgb(155,183,255)', 'data': expectData},
+             'color': 'rgb(155,183,255)', 'data': expectData[-15:]},
             {'name': '实际产量', 'type': 'column',
-             'color': 'rgb(190,147,255)', 'data': realData},
+             'color': 'rgb(190,147,255)', 'data': realData[-15:]},
         ]
     return data
 
@@ -176,20 +176,20 @@ def qualityChart(orderType, start, stop, all):
     ]
     if all:
         data = [
-            {'name': '合格', 'type': 'column',
+            {'name': '合格', 'type': 'areaspline',
                 'color': {
                     'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                     'stops': [
-                     [0, 'rgba(24,144,255,0)'],
-                     [1, 'rgba(24,144,255,1)']
+                     [0, 'rgba(155,183,255,0)'],
+                     [1, 'rgba(155,183,255,1)']
                     ]
                 }, 'data': goodData},
-            {'name': '不合格', 'type': 'column',
+            {'name': '不合格', 'type': 'areaspline',
                 'color': {
                     'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
                     'stops': [
-                     [0, 'rgba(255,77,79,0)'],
-                     [1, 'rgba(255,77,79,1)']
+                     [0, 'rgba(190,147,255,0)'],
+                     [1, 'rgba(190,147,255,1)']
                     ]
                 }, 'data': badData},
         ]
