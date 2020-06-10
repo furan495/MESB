@@ -83,9 +83,6 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class DeviceStateSerializer(serializers.ModelSerializer):
 
-    device = serializers.SlugRelatedField(
-        queryset=Device.objects.all(), label='设备名称', slug_field='name', required=False)
-
     class Meta:
         model = DeviceState
         fields = ('key', 'device', 'name', 'time')
@@ -226,7 +223,7 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_devices(self, obj):
-        return list(map(lambda device: {'key': device.key, 'name': device.name+'-'+str(device.key)}, Device.objects.filter(Q(process=None))))
+        return list(map(lambda device: {'key': device.key, 'name': device.name+'-'+device.number}, Device.objects.filter(Q(process=None))))
 
     class Meta:
         model = ProcessRoute
