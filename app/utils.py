@@ -110,7 +110,7 @@ def rateY(obj):
 
 def powerChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
-        'batch'), good=Count('result', filter=Q(result='1'))).values('batch', 'good', 'expects', 'reals')
+        'batch'), good=Count('result', filter=Q(result='合格'))).values('batch', 'good', 'expects', 'reals')
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
@@ -143,7 +143,7 @@ def powerChart(orderType, start, stop, all):
 
 def qualityChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count(
-        'result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad')
+        'result', filter=Q(result='合格')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad')
     goodData = list(
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
@@ -151,7 +151,7 @@ def qualityChart(orderType, start, stop, all):
     reasonData = list(
         map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
             Product.objects.filter(
-                Q(result='2', workOrder__order__orderType__name=orderType))
+                Q(result='不合格', workOrder__order__orderType__name=orderType))
             .values('reason')
             .annotate(count=Count('reason'))
             .values('reason', 'count'))

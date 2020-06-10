@@ -449,14 +449,6 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         device.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
-    def deviceUnbanding(self, request):
-        params = request.data
-        for device in Device.objects.filter(Q(process__name=params['process'], process__route__key=params['route'])):
-            device.process = None
-            device.save()
-        return Response('ok')
-
     @action(methods=['post'], detail=True)
     def process(self, request, pk=None):
         params = request.data
