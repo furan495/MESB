@@ -145,13 +145,13 @@ class UserViewSet(viewsets.ModelViewSet):
             res = UserSerializer(user).data
         else:
             res = 'err'
-        return Response({'res': res, 'count': User.objects.filter(Q(status='2')).count()})
+        return Response({'res': res, 'count': User.objects.filter(Q(status='在线')).count()})
 
     @action(methods=['get'], detail=False)
     def logout(self, request):
         params = request.query_params
         user = User.objects.get(Q(phone=params['phone']))
-        user.status = '1'
+        user.status = '离线'
         user.save()
         return Response('ok')
 
@@ -166,7 +166,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': obj.get_gender_display(),
+        excel = map(lambda obj: {'角色': obj.role.name, '姓名': obj.name, '性别': obj.gender,
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
@@ -560,41 +560,51 @@ class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all().order_by('-key')
     serializer_class = StoreSerializer
 
-    @action(methods=['post'], detail=True)
-    def modeling(self, request, pk=None):
-        store = Store.objects.get(key=pk)
-        storeType = store.productLine.lineType.name
-        count = store.rows*store.columns
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        storeType = request.data['storeType']
+        count = request.data['rows']*request.data['columns']
         if storeType == '电子装配':
             left = np.arange(
-                0, count/2).reshape(store.rows, int(store.columns/2))
+                0, count/2).reshape(request.data['rows'], int(request.data['columns']/2))
             right = np.arange(
-                count/2, count).reshape(store.rows, int(store.columns/2))
+                count/2, count).reshape(request.data['rows'], int(request.data['columns']/2))
             martix = np.hstack((left, right)).reshape(1, count)
             for i in np.ravel(martix):
                 position = StorePosition()
-                position.store = store
-                position.number = '%s-%s' % (str(int(i)+1), pk)
+                position.store = instance
+                position.number = '%s-%s' % (str(int(i)+1), instance.key)
                 position.status = selectStatus(storeType, i, count)
                 position.description = selectDescription(
-                    storeType, i, count, store.rows, store.columns)
+                    storeType, i, count, request.data['rows'], request.data['columns'])
                 position.save()
         else:
             for i in range(count):
                 position = StorePosition()
-                position.store = store
-                position.number = '%s-%s' % (str(i+1), pk)
+                position.store = instance
+                position.number = '%s-%s' % (str(i+1), instance.key)
                 position.status = selectStatus(storeType, i, count)
                 position.description = selectDescription(
-                    storeType, i, count, store.rows, store.columns)
+                    storeType, i, count, request.data['rows'], request.data['columns'])
                 position.save()
                 if storeType == '灌装':
                     pallet = Pallet()
                     pallet.position = StorePosition.objects.get(
-                        number='%s-%s' % (str(i+1), pk))
+                        number='%s-%s' % (str(i+1), instance.key))
                     pallet.number = str(i+1)
                     pallet.save()
-        return Response('ok')
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     @action(methods=['put'], detail=False)
     def positionGroup(self, request):
@@ -616,7 +626,7 @@ class StoreViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'仓库名称': obj.name, '隶属车间': obj.workShop.name, '使用产线': obj.productLine.name,
-                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows, '仓库列数': obj.columns, '排向优先': obj.get_direction_display()}, Store.objects.all())
+                                 '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows, '仓库列数': obj.columns, '排向优先': obj.direction}, Store.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -756,7 +766,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
             material.name = params['name']
             material.size = params['size']
             material.unit = params['unit']
-            material.mateType = '1' if params['mateType'] == '自制' else '2'
+            material.mateType = params['mateType']
             material.store = Store.objects.get(name=params['store__name'])
             material.save()
         Material.objects.filter(Q(name=None)).delete()
@@ -779,7 +789,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': '自制' if obj['mateType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
+        excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': obj['mateType'], '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
@@ -802,7 +812,7 @@ class ToolViewSet(viewsets.ModelViewSet):
             tool.name = params['name']
             tool.size = params['size']
             tool.unit = params['unit']
-            tool.toolType = '1' if params['toolType'] == '自制' else '2'
+            tool.toolType = params['toolType']
             tool.store = Store.objects.get(name=params['store__name'])
             tool.save()
         Tool.objects.filter(Q(name=None)).delete()
@@ -816,7 +826,7 @@ class ToolViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': '自制' if obj['toolType'] == '1' else '外采', '现有库存': obj['counts'], '存储仓库': Store.objects.get(
+        excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': obj['toolType'], '现有库存': obj['counts'], '存储仓库': Store.objects.get(
             key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
@@ -857,7 +867,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.query_params
         if params['model'] == 'product':
-            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果':  obj.get_result_display(), '存放仓位': selectPosition(
+            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': selectPosition(
                 obj), '历史状态': ('->').join(list(map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title), Event.objects.filter(Q(workOrder=obj.workOrder)))))}, Product.objects.all())
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
@@ -911,7 +921,7 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue,
-                                 '实际结果': obj.realValue, '检测结果': obj.get_result_display()}, ProductStandard.objects.all())
+                                 '实际结果': obj.realValue, '检测结果': obj.result}, ProductStandard.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])

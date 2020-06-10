@@ -83,16 +83,6 @@ class Role(models.Model):
 
 class User(models.Model):
 
-    USER_GENDER = (
-        ('1', '男'),
-        ('2', '女'),
-    )
-
-    USER_STATUS = (
-        ('1', '离线'),
-        ('2', '在线'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
     department = models.ForeignKey(
         Organization, related_name='members', on_delete=models.CASCADE, verbose_name='部门', blank=True, null=True)
@@ -103,13 +93,13 @@ class User(models.Model):
     password = models.CharField(
         max_length=20, verbose_name='密码', blank=True, null=True, default='123456')
     gender = models.CharField(
-        max_length=2, verbose_name='性别', choices=USER_GENDER, blank=True, null=True)
+        max_length=2, verbose_name='性别', blank=True, null=True)
     phone = models.CharField(
         max_length=20, verbose_name='电话', unique=True, blank=True, null=True)
     post = models.CharField(
         max_length=20, verbose_name='职位', blank=True, null=True)
     status = models.CharField(
-        max_length=20, verbose_name='状态', choices=USER_STATUS, blank=True, null=True, default='1')
+        max_length=20, verbose_name='状态', blank=True, null=True, default='离线')
     avatar = models.CharField(
         max_length=200, verbose_name='头像', blank=True, null=True)
 
@@ -563,11 +553,6 @@ class ProductType(models.Model):
 
 
 class Product(models.Model):
-    PRODUCT_RESULT = (
-        ('1', '合格'),
-        ('2', '不合格'),
-    )
-
     key = models.AutoField(primary_key=True, verbose_name='主键')
     workOrder = models.OneToOneField(WorkOrder, related_name='workOrder',
                                      on_delete=models.CASCADE, verbose_name='对应工单')
@@ -578,8 +563,8 @@ class Product(models.Model):
     name = models.CharField(max_length=200, verbose_name='产品名称')
     number = models.CharField(max_length=20, verbose_name='产品编号')
     batch = models.DateField(auto_now_add=True, verbose_name='产品批次')
-    result = models.CharField(choices=PRODUCT_RESULT,
-                              max_length=2, verbose_name='检测结果', blank=True, null=True)
+    result = models.CharField(
+        max_length=20, verbose_name='检测结果', blank=True, null=True)
     reason = models.CharField(
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
     outPos = models.CharField(
@@ -595,10 +580,6 @@ class Product(models.Model):
 
 
 class ProductStandard(models.Model):
-    STANDARD_RESULT = (
-        ('1', '合格'),
-        ('2', '不合格'),
-    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     product = models.ForeignKey(Product, related_name='standards',
                                 on_delete=models.CASCADE, verbose_name='目标产品', blank=True, null=True)
@@ -608,8 +589,8 @@ class ProductStandard(models.Model):
         max_length=20, verbose_name='预期值', blank=True, null=True)
     realValue = models.CharField(
         max_length=20, verbose_name='实际值', blank=True, null=True)
-    result = models.CharField(choices=STANDARD_RESULT,
-                              max_length=2, verbose_name='检测结果', blank=True, null=True)
+    result = models.CharField(
+        max_length=20, verbose_name='检测结果', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -636,10 +617,6 @@ class Event(models.Model):
 
 
 class Material(models.Model):
-    MATERIAL_TYPE = (
-        ('1', '自制'),
-        ('2', '外采')
-    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     store = models.ForeignKey(Store, related_name='materials',
                               on_delete=models.CASCADE, verbose_name='所在仓库', blank=True, null=True)
@@ -649,8 +626,8 @@ class Material(models.Model):
         max_length=20, verbose_name='物料规格', blank=True, null=True)
     unit = models.CharField(
         max_length=20, verbose_name='基本单位', blank=True, null=True)
-    mateType = models.CharField(choices=MATERIAL_TYPE,
-                                max_length=2, verbose_name='物料类型', blank=True, null=True)
+    mateType = models.CharField(
+        max_length=2, verbose_name='物料类型', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -660,10 +637,6 @@ class Material(models.Model):
 
 
 class Tool(models.Model):
-    TOOL_TYPE = (
-        ('1', '自制'),
-        ('2', '外采')
-    )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     store = models.ForeignKey(Store, related_name='tools',
                               on_delete=models.CASCADE, verbose_name='所在仓库', blank=True, null=True)
@@ -673,8 +646,8 @@ class Tool(models.Model):
         max_length=20, verbose_name='工具规格', blank=True, null=True)
     unit = models.CharField(
         max_length=20, verbose_name='基本单位', blank=True, null=True)
-    toolType = models.CharField(choices=TOOL_TYPE,
-                                max_length=2, verbose_name='工具类型', blank=True, null=True)
+    toolType = models.CharField(
+        max_length=2, verbose_name='工具类型', blank=True, null=True)
 
     def __str__(self):
         return self.name

@@ -146,7 +146,6 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
 
-    status = serializers.SerializerMethodField()
     authority = serializers.SerializerMethodField(read_only=True)
     role = serializers.SlugRelatedField(
         queryset=Role.objects.all(), label='角色', slug_field='name', required=False)
@@ -158,9 +157,6 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.role.authority
         except:
             return
-
-    def get_status(self, obj):
-        return obj.get_status_display()
 
     class Meta:
         model = User
@@ -360,7 +356,6 @@ class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
     orderType = serializers.SerializerMethodField()
     palletStr = serializers.SerializerMethodField()
-    result = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
     prodType = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
@@ -379,9 +374,6 @@ class ProductSerializer(serializers.ModelSerializer):
         states = list(map(lambda event: {'name': event.time.strftime('%Y-%m-%d %H:%M:%S'), 'label': event.title,
                                          'description': '%s' % event.title}, Event.objects.filter(Q(workOrder=obj.workOrder))))
         return states
-
-    def get_result(self, obj):
-        return obj.get_result_display()
 
     def get_palletStr(self, obj):
         res = ''
@@ -440,7 +432,6 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 class ProductStandardSerializer(serializers.ModelSerializer):
     batch = serializers.SerializerMethodField()
-    result = serializers.SerializerMethodField()
     orderType = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
@@ -450,9 +441,6 @@ class ProductStandardSerializer(serializers.ModelSerializer):
             return obj.product.batch.strftime('%Y-%m-%d')
         except:
             return ''
-
-    def get_result(self, obj):
-        return obj.get_result_display()
 
     def get_orderType(self, obj):
         try:

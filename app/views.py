@@ -34,11 +34,11 @@ def recordWeight(request):
             Q(name='重量', product=product))
         standard.realValue = float(params[4])
         if np.abs(standard.realValue-float(standard.expectValue)) <= product.prodType.errorRange:
-            standard.result = '1'
-            product.result = '1'
+            standard.result = '合格'
+            product.result = '合格'
         else:
-            standard.result = '2'
-            product.result = '2'
+            standard.result = '不合格'
+            product.result = '不合格'
             product.reason = '重量不足'
         standard.save()
         product.save()
@@ -76,13 +76,13 @@ def wincc5(request):
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
         if random.random() > 0.5:
-            product.result = '1'
-            standard.result = '1'
+            product.result = '合格'
+            standard.result = '合格'
             standard.realValue = '合格'
         else:
-            product.result = '2'
+            product.result = '不合格'
             product.reason = '检测不合格'
-            standard.result = '2'
+            standard.result = '不合格'
             standard.realValue = '不合格'
         product.save()
         standard.save()
@@ -143,13 +143,13 @@ def wincc4(request):
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
         if random.random() > 0.5:
-            product.result = '1'
-            standard.result = '1'
+            product.result = '合格'
+            standard.result = '合格'
             standard.realValue = '合格'
         else:
-            product.result = '2'
+            product.result = '不合格'
             product.reason = '检测不合格'
-            standard.result = '2'
+            standard.result = '不合格'
             standard.realValue = '不合格'
         product.save()
         standard.save()
@@ -211,13 +211,13 @@ def wincc3(request):
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
         if random.random() > 0.5:
-            product.result = '1'
-            standard.result = '1'
+            product.result = '合格'
+            standard.result = '合格'
             standard.realValue = '合格'
         else:
-            product.result = '2'
+            product.result = '不合格'
             product.reason = '检测不合格'
-            standard.result = '2'
+            standard.result = '不合格'
             standard.realValue = '不合格'
         product.save()
         standard.save()
@@ -283,13 +283,13 @@ def wincc2(request):
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
         if random.random() > 0.5:
-            product.result = '1'
-            standard.result = '1'
+            product.result = '合格'
+            standard.result = '合格'
             standard.realValue = '合格'
         else:
-            product.result = '2'
+            product.result = '不合格'
             product.reason = '检测不合格'
-            standard.result = '2'
+            standard.result = '不合格'
             standard.realValue = '不合格'
         product.save()
         standard.save()
