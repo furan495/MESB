@@ -13,11 +13,6 @@ def addkey(obj, objs):
     return obj
 
 
-def updateDevice(device):
-    device.process = None
-    device.save()
-
-
 def updatePalletContent(hole, params, holeContent):
     if hole:
         return params if holeContent == None or holeContent == '' else holeContent

@@ -452,25 +452,13 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True)
     def process(self, request, pk=None):
         params = request.data
-        list(map(lambda obj: updateDevice(obj), Device.objects.filter(
-            Q(process__route__key=pk))))
-        Process.objects.filter(
-            route=ProcessRoute.objects.get(key=pk)).delete()
-        orders = json.loads(params['value'])['linkDataArray']
         processes = json.loads(params['value'])['nodeDataArray']
-
-        for i in range(len(processes)):
-            process = Process()
-            process.route = ProcessRoute.objects.get(key=pk)
-            if i == len(processes)-1:
-                proc = list(
-                    filter(lambda obj: obj['key'] == orders[-1]['to'], processes))
-                process.name = proc[0]['text']
-            else:
-                proc = list(
-                    filter(lambda obj: obj['key'] == orders[i]['from'], processes))
-                process.name = proc[0]['text']
-            process.save()
+        if Process.objects.filter(Q(route__key=pk)).count() == 0:
+            for process in processes:
+                process = Process()
+                process.route = ProcessRoute.objects.get(key=pk)
+                process.name = process['text']
+                process.save()
         return Response('ok')
 
     @action(methods=['post'], detail=False)
@@ -540,7 +528,8 @@ class StoreViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
