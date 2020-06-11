@@ -131,7 +131,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     def get_process(self, obj):
         try:
-            return '%s单元' % obj.process.name
+            return obj.process.name
         except:
             return '未分配'
 

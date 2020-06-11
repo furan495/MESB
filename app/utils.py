@@ -122,8 +122,8 @@ def powerChart(orderType, start, stop, all):
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            expectData.append([day, random.randint(1, 100)])
-            realData.append([day, random.randint(1, 100)])
+            expectData.append([day, random.randint(1, 10)])
+            realData.append([day, random.randint(1, 10)])
             goodRate.append([day, round(random.random(), 2)])
 
     data = [
@@ -163,8 +163,8 @@ def qualityChart(orderType, start, stop, all):
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            goodData.append([day, random.randint(1, 100)])
-            badData.append([day, random.randint(1, 100)])
+            goodData.append([day, random.randint(1, 10)])
+            badData.append([day, random.randint(1, 10)])
         for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
             reasonData.append({'name': reason, 'y': random.randint(20, 100)})
 

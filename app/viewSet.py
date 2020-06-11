@@ -473,21 +473,6 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
             process.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=True)
-    def processParams(self, request, pk=None):
-        params = request.data
-        processParam = ProcessParams()
-        processParam.name = params['name']
-        processParam.value = params['value']
-        processParam.tagName = params['tagName']
-        processParam.topLimit = params['topLimit']
-        processParam.lowLimit = params['lowLimit']
-        processParam.unit = '' if params['unit'] == '无' else params['unit']
-        processParam.process = Process.objects.get(
-            Q(name=params['process'], route__key=pk))
-        processParam.save()
-        return Response('ok')
-
     @action(methods=['post'], detail=False)
     def upload(self, request):
         url = request.POST['url']
