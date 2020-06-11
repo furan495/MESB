@@ -645,6 +645,12 @@ class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')
     serializer_class = DeviceSerializer
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.process = None
+        instance.save()
+        return Response('ok')
+
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
