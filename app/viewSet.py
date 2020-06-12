@@ -454,10 +454,10 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
         params = request.data
         processes = json.loads(params['value'])['nodeDataArray']
         if Process.objects.filter(Q(route__key=pk)).count() == 0:
-            for process in processes:
+            for proc in processes:
                 process = Process()
                 process.route = ProcessRoute.objects.get(key=pk)
-                process.name = process['text']
+                process.name = proc['text']
                 process.save()
         return Response('ok')
 
@@ -645,10 +645,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')
     serializer_class = DeviceSerializer
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.process = None
-        instance.save()
+    @action(methods=['put'], detail=True)
+    def unbanding(self, request, pk):
+        device = Device.objects.get(key=pk)
+        device.process = None
+        device.save()
         return Response('ok')
 
     @action(methods=['get'], detail=False)
