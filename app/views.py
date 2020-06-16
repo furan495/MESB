@@ -609,11 +609,11 @@ def queryProducing(request):
         producing = list(
             map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架')}, workOrderList))
     if params['order'] == '机加':
-        """ 
+        """
             河北
             producing = list(
             map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description,'order': obj.order.number}, workOrderList)) """
-        """ 
+        """
             湖北
             producing = list(
             map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startA': positionSelect(obj, '视觉模块开始'), 'startB': positionSelect(obj, '数控车模块开始'), 'startC': positionSelect(obj, '加工中心模块开始'), 'startD': positionSelect(obj, '精雕机模块开始'), 'startF': positionSelect(obj, '清洗打标块开始'), 'startG': positionSelect(obj, '焊接模块开始'), 'startH': positionSelect(obj, '打磨模块开始'), 'startF2': positionSelect(obj, '二次清洗开始'), 'startI': positionSelect(obj, '装配模块开始'), 'startJ': positionSelect(obj, '立体库模块开始'), }, workOrderList)) """
@@ -633,19 +633,15 @@ def queryCharts(request):
     stop = datetime.datetime.strptime(
         params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
     data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
-        'batch'), good=Count('result', filter=Q(result='1')), bad=Count('result', filter=Q(result='2'))).values('batch', 'good', 'bad', 'expects', 'reals')
+        'batch'), good=Count('result', filter=Q(result='合格')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
         map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
-    badRate = list(
-        map(lambda obj: [dataX(obj['batch']), round(1-rateY(obj), 2)], data))
-    times = list(map(lambda obj: [obj.number[-4:], round((dataX(obj.endTime)-dataX(obj.startTime))/60000, 2)], list(
-        WorkOrder.objects.filter(Q(order__orderType__name=params['order'], status__name='已完成')))))
     productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
         Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
-    store = StoreSerializer(Store.objects.get(Q(storeType__name='混合库', productLine__lineType__name=params['order']) | Q(
-        storeType__name='成品库', productLine__lineType__name=params['order'])))
+    progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number[-4:], 'progress': round(obj.events.all().count()/(
+        len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100}, WorkOrder.objects.all()))
 
     if data.count() == 0:
         goodRate, badRate, times, productFake = [], [], [], []
@@ -655,31 +651,50 @@ def queryCharts(request):
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             goodRate.append([day, round(random.random(), 2)])
             badRate.append([day, round(random.random(), 2)])
-    if len(times) == 0:
-        for i in range(35):
-            times.append(['工单%s' % str(i+1), random.randint(1, 10)])
+            totalTimes.append([day, random.randint(10, 50)])
 
     if Product.objects.all().count() == 0:
         productData = list(map(lambda obj: {'name': obj.name, 'y': random.randint(
             1, 10)}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+    if StorePosition.objects.filter(Q(store__storeType__name='成品库') | Q(store__storeType__name='混合库')).count() == 0:
+        storeData = [{'name': '空闲', 'y': random.randint(
+            10, 20)}, {'name': '有料', 'y': random.randint(10, 20)}]
+    else:
+        storeData = [
+            {'name': '空闲', 'y': StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4') | Q(
+                store__storeType__name='混合库', status='4')).count()},
+            {'name': '有料', 'y': StorePosition.objects.filter(Q(store__storeType__name='成品库', status='3') | Q(
+                store__storeType__name='混合库',  status='3')).count()}
+        ]
 
     rate = [
         {'name': '合格率', 'type': 'line',
             'color': 'rgb(155,183,255)', 'data': goodRate},
-        {'name': '不合格率', 'type': 'line',
-            'color': 'rgb(190,147,255)', 'data': badRate}
     ]
-
-    times = [{'name': '生产耗时', 'type': 'bar',  'color': {
-        'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-        'stops': [
-            [0, 'rgb(190,147,255)'],
-            [1, 'rgb(155,183,255)']
-        ]
-    }, 'data': times[-35:]}]
-
     product = [
-        {'type': 'pie', 'innerSize': '60%', 'name': '成品数量', 'data': productData}
+        {'type': 'pie', 'innerSize': '60%', 'name': '数量', 'data': productData}
+    ]
+    store = [
+        {'type': 'pie', 'innerSize': '60%', 'name': '数量', 'data': storeData}
     ]
 
-    return JsonResponse({'store': store.data, 'material': storeAna(params['order']), 'times': times, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})
+    totalTimes, part1, part2, part3, part4 = [], [], [], [], []
+    for day in np.arange(int(time.mktime(time.strptime('2020-05-20', '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        totalTimes.append([day, random.randint(10, 50)])
+        part1.append([day, random.randint(10, 50)])
+        part2.append([day, random.randint(10, 50)])
+        part3.append([day, random.randint(10, 50)])
+        part4.append([day, random.randint(10, 50)])
+
+    total = [
+        {'type': 'areaspline', 'name': '开机时长',
+            'color': 'rgb(155,183,255)', 'data': totalTimes}
+    ]
+    part = [
+        {'type': 'line', 'name': '模块1', 'data': part1},
+        {'type': 'line', 'name': '模块2', 'data': part2},
+        {'type': 'line', 'name': '模块3', 'data': part3},
+        {'type': 'line', 'name': '模块4', 'data': part4},
+    ]
+
+    return JsonResponse({'store': store, 'progress': progress[-20:], 'total': total, 'part': part, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})

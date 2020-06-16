@@ -844,10 +844,10 @@ class ProductViewSet(viewsets.ModelViewSet):
                 obj), '历史状态': ('->').join(list(map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title), Event.objects.filter(Q(workOrder=obj.workOrder)))))}, Product.objects.all())
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
-                '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='2'))
+                '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='不合格'))
         if params['model'] == 'qualityChart':
             excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
-                'batch'), 合格数=Count('result', filter=Q(result='1')), 不合格数=Count('result', filter=Q(result='2'))).values('日期', '合格数', '不合格数')
+                'batch'), 合格数=Count('result', filter=Q(result='合格')), 不合格数=Count('result', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
         if params['model'] == 'materialChart':
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
@@ -866,7 +866,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
-                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='1')), output_field=FloatField()) / Count('number', filter=Q(workOrder__status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
+                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(workOrder__status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])

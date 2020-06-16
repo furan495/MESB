@@ -122,15 +122,15 @@ def powerChart(orderType, start, stop, all):
             goodRate.append([day, round(random.random(), 2)])
 
     data = [
-        {'name': '预期产量', 'type': 'column', 'data': expectData},
-        {'name': '实际产量', 'type': 'column', 'data': realData},
+        {'name': '计划生产', 'type': 'column', 'data': expectData},
+        {'name': '实际生产', 'type': 'column', 'data': realData},
         {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
     ]
     if all:
         data = [
-            {'name': '预期产量', 'type': 'column',
+            {'name': '计划生产', 'type': 'column',
              'color': 'rgb(155,183,255)', 'data': expectData[-15:]},
-            {'name': '实际产量', 'type': 'column',
+            {'name': '实际生产', 'type': 'column',
              'color': 'rgb(190,147,255)', 'data': realData[-15:]},
         ]
     return data
