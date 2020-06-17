@@ -338,11 +338,11 @@ class Device(models.Model):
         max_length=20, verbose_name='出厂日期', blank=True, null=True)
     facPeo = models.CharField(
         max_length=20, verbose_name='厂家联系人', blank=True, null=True)
-    facPho = models.CharField(
-        max_length=20, verbose_name='厂家电话', blank=True, null=True)
+    typeNumber = models.CharField(
+        max_length=20, verbose_name='设备型号', blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.name+'/'+self.typeNumber
 
     class Meta:
         verbose_name = '设备'

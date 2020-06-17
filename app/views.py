@@ -629,6 +629,8 @@ def queryProducing(request):
 @csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
     start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
     stop = datetime.datetime.strptime(
         params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
@@ -637,25 +639,31 @@ def queryCharts(request):
 
     goodRate = list(
         map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
+
+    categories = list(Product.objects.all().values('batch'))
+
+    if Product.objects.all().count() == 0:
+        start = '%s-%s-20' % (str(year), str(month-1))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+            goodRate.append([day, round(random.random(), 2)])
+            categories.append(time.strftime(
+                '%m-%d', time.localtime(day/1000)))
+
     productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
         Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
 
     progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number[-4:], 'progress': round(obj.events.all().count()/(
-        len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100}, WorkOrder.objects.all()))
+        len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100}, WorkOrder.objects.filter(Q(status__name='加工中'))))
 
-    if data.count() == 0:
-        goodRate, badRate, times, productFake = [], [], [], []
-        year = datetime.datetime.now().year
-        month = datetime.datetime.now().month
-        start = '%s-%s-20' % (str(year), str(month-1))
-        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            goodRate.append([day, round(random.random(), 2)])
-            badRate.append([day, round(random.random(), 2)])
-            totalTimes.append([day, random.randint(10, 50)])
+    if WorkOrder.objects.filter(Q(status__name='加工中')).count() == 0:
+        for i in range(20):
+            progress.append({'key': i, 'number': '工单',
+                             'progress': random.randint(0, 100)})
 
     if Product.objects.all().count() == 0:
         productData = list(map(lambda obj: {'name': obj.name, 'y': random.randint(
             1, 10)}, ProductType.objects.filter(Q(orderType__name=params['order']))))
+
     if StorePosition.objects.filter(Q(store__storeType__name='成品库') | Q(store__storeType__name='混合库')).count() == 0:
         storeData = [{'name': '空闲', 'y': random.randint(
             10, 20)}, {'name': '有料', 'y': random.randint(10, 20)}]
@@ -678,23 +686,17 @@ def queryCharts(request):
         {'type': 'pie', 'innerSize': '60%', 'name': '数量', 'data': storeData}
     ]
 
-    totalTimes, part1, part2, part3, part4 = [], [], [], [], []
-    for day in np.arange(int(time.mktime(time.strptime('2020-05-20', '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-        totalTimes.append([day, random.randint(10, 50)])
-        part1.append([day, random.randint(10, 50)])
-        part2.append([day, random.randint(10, 50)])
-        part3.append([day, random.randint(10, 50)])
-        part4.append([day, random.randint(10, 50)])
+    part = []
 
-    total = [
-        {'type': 'areaspline', 'name': '开机时长',
-            'color': 'rgb(155,183,255)', 'data': totalTimes}
-    ]
-    part = [
-        {'type': 'line', 'name': '模块1', 'data': part1},
-        {'type': 'line', 'name': '模块2', 'data': part2},
-        {'type': 'line', 'name': '模块3', 'data': part3},
-        {'type': 'line', 'name': '模块4', 'data': part4},
-    ]
+    for device in Device.objects.filter(~Q(process=None)):
+        if DeviceState.objects.filter(Q(name='开机')).count() < 50:
+            fakePart = []
+            for day in np.arange(int(time.mktime(time.strptime('2020-05-20', '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
+                fakePart.append([day, random.randint(10, 50)])
+            part.append({'type': 'line', 'name': device.name,
+                         'data': fakePart})
+        else:
+            part.append({'type': 'line', 'name': device.name,
+                         'data': calcPartTimes(device)})
 
-    return JsonResponse({'store': store, 'progress': progress[-20:], 'total': total, 'part': part, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})
+    return JsonResponse({'store': store, 'progress': progress[-15:], 'categories': categories, 'part': part, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})

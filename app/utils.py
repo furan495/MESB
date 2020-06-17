@@ -13,6 +13,23 @@ def addkey(obj, objs):
     return obj
 
 
+def calcPartTimes(device):
+    dates, data = [], []
+    for state in DeviceState.objects.all():
+        dates.append(state.time.strftime('%Y-%m-%d'))
+    for date in np.sort(list(set(dates))):
+        closeList = list(DeviceState.objects.filter(
+            Q(device=device, name='关机', time__gte=datetime.datetime.strptime(date, '%Y-%m-%d'), time__lte=datetime.datetime.strptime(date, '%Y-%m-%d')+datetime.timedelta(hours=24))).values_list('time', flat=True))
+        openList = list(DeviceState.objects.filter(
+            Q(device=device, name='开机', time__gte=datetime.datetime.strptime(date, '%Y-%m-%d'), time__lte=datetime.datetime.strptime(date, '%Y-%m-%d')+datetime.timedelta(hours=24))).values_list('time', flat=True))
+        if len(openList)-len(closeList) == 1:
+            closeList.append(datetime.datetime.now())
+        data.append([int(time.mktime(time.strptime(date, '%Y-%m-%d')))*1000+8*60*60*1000, round(np.sum(np.array(closeList) -
+                                                                                                       np.array(openList)).total_seconds()/60, 2)])
+
+    return data
+
+
 def updatePalletContent(hole, params, holeContent):
     if hole:
         return params if holeContent == None or holeContent == '' else holeContent
@@ -122,8 +139,10 @@ def powerChart(orderType, start, stop, all):
             goodRate.append([day, round(random.random(), 2)])
 
     data = [
-        {'name': '计划生产', 'type': 'column', 'data': expectData},
-        {'name': '实际生产', 'type': 'column', 'data': realData},
+        {'name': '计划生产', 'type': 'column',
+            'color': 'rgb(155,183,255)', 'data': expectData},
+        {'name': '实际生产', 'type': 'column',
+            'color': 'rgb(190,147,255)', 'data': realData},
         {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
     ]
     if all:
@@ -143,51 +162,26 @@ def qualityChart(orderType, start, stop, all):
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
         map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
-    reasonData = list(
-        map(lambda obj: {'name': obj['reason'], 'y': obj['count']},
-            Product.objects.filter(
-                Q(result='不合格', workOrder__order__orderType__name=orderType))
-            .values('reason')
-            .annotate(count=Count('reason'))
-            .values('reason', 'count'))
-    )
 
     if data.count() == 0:
-        goodData, badData, reasonData = [], [], []
+        goodData, badData = [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            goodData.append([day, random.randint(1, 10)])
-            badData.append([day, random.randint(1, 10)])
-        for reason in ['原因1', '原因2', '原因3', '原因4', '原因5']:
-            reasonData.append({'name': reason, 'y': random.randint(20, 100)})
+            if all:
+                goodData.append(random.randint(10, 20))
+                badData.append(random.randint(-20, -10))
+            else:
+                goodData.append([day, random.randint(10, 20)])
+                badData.append([day, random.randint(10, 20)])
 
     data = [
-        {'name': '合格', 'type': 'column', 'data': goodData},
-        {'name': '不合格', 'type': 'column', 'data': badData},
-        {'name': '原因汇总', 'type': 'pie', 'data': reasonData, 'innerSize': '50%',
-            'center': [150, 80], 'size':200}
+        {'name': '合格', 'type': 'bar' if all else 'column',
+         'color': 'rgb(155,183,255)', 'data': goodData[-15:]},
+        {'name': '不合格', 'type': 'bar' if all else 'column',
+         'color': 'rgb(190,147,255)', 'data': badData[-15:]},
     ]
-    if all:
-        data = [
-            {'name': '合格', 'type': 'areaspline',
-                'color': {
-                    'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                    'stops': [
-                     [0, 'rgba(155,183,255,0)'],
-                     [1, 'rgba(155,183,255,1)']
-                    ]
-                }, 'data': goodData},
-            {'name': '不合格', 'type': 'areaspline',
-                'color': {
-                    'linearGradient': {'x1': 0, 'x2': 0, 'y1': 1, 'y2': 0},
-                    'stops': [
-                     [0, 'rgba(190,147,255,0)'],
-                     [1, 'rgba(190,147,255,1)']
-                    ]
-                }, 'data': badData},
-        ]
 
     return data
 
