@@ -126,32 +126,22 @@ def powerChart(orderType, start, stop, all):
     expectData = list(
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
-    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:
-        expectData, realData, goodRate = [], [], []
+        expectData, realData = [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             expectData.append([day, random.randint(1, 10)])
             realData.append([day, random.randint(1, 10)])
-            goodRate.append([day, round(random.random(), 2)])
 
     data = [
         {'name': '计划生产', 'type': 'column',
             'color': 'rgb(155,183,255)', 'data': expectData},
         {'name': '实际生产', 'type': 'column',
             'color': 'rgb(190,147,255)', 'data': realData},
-        {'name': '合格率', 'type': 'line', 'yAxis': 1, 'data': goodRate},
     ]
-    if all:
-        data = [
-            {'name': '计划生产', 'type': 'column',
-             'color': 'rgb(155,183,255)', 'data': expectData[-15:]},
-            {'name': '实际生产', 'type': 'column',
-             'color': 'rgb(190,147,255)', 'data': realData[-15:]},
-        ]
     return data
 
 
@@ -162,6 +152,7 @@ def qualityChart(orderType, start, stop, all):
         map(lambda obj: [dataX(obj['batch']), obj['good']], data))
     badData = list(
         map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
+    goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:
         goodData, badData = [], []
@@ -175,6 +166,7 @@ def qualityChart(orderType, start, stop, all):
             else:
                 goodData.append([day, random.randint(10, 20)])
                 badData.append([day, random.randint(10, 20)])
+                goodRate.append([day, round(random.random(), 2)])
 
     data = [
         {'name': '合格', 'type': 'bar' if all else 'column',
@@ -182,6 +174,10 @@ def qualityChart(orderType, start, stop, all):
         {'name': '不合格', 'type': 'bar' if all else 'column',
          'color': 'rgb(190,147,255)', 'data': badData[-15:]},
     ]
+
+    if not all:
+        data.append({'name': '合格率', 'type': 'line',
+                     'yAxis': 1, 'data': goodRate[-15:]})
 
     return data
 

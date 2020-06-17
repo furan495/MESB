@@ -676,7 +676,7 @@ def queryCharts(request):
         ]
 
     rate = [
-        {'name': '合格率', 'type': 'line',
+        {'name': '合格率', 'type': 'areaspline',
             'color': 'rgb(155,183,255)', 'data': goodRate},
     ]
     product = [
@@ -699,4 +699,16 @@ def queryCharts(request):
             part.append({'type': 'line', 'name': device.name,
                          'data': calcPartTimes(device)})
 
-    return JsonResponse({'store': store, 'progress': progress[-15:], 'categories': categories, 'part': part, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': powerChart(params['order'], start, stop, all=True)})
+    target = WorkOrder.objects.filter(
+        Q(createTime__gte=datetime.datetime.now(), status__name='等待中')).count()
+
+    current = WorkOrder.objects.filter(
+        Q(createTime__gte=datetime.datetime.now(), status__name='已完成')).count()
+
+    good = WorkOrder.objects.filter(
+        Q(createTime__gte=datetime.datetime.now(), status__name='已完成', workOrder__result='合格')).count()
+
+    power = {'target': target if target != 0 else 100, 'current': current if current != 0 else random.randint(0, 100), 'good': good if good != 0 else 0,
+             'series': [{'data': [{'y':  current if current != 0 else random.randint(0, 100), 'target': target if target != 0 else 100}]}]}
+
+    return JsonResponse({'store': store, 'progress': progress[-15:], 'categories': categories, 'part': part, 'product': product, 'mateana': materialChart(params['order'], start, stop, all=False), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
