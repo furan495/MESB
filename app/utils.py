@@ -128,43 +128,26 @@ def rateY(obj):
 
 
 def powerChart(orderType, start, stop, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
-        'batch'), good=Count('result', filter=Q(result='合格'))).values('batch', 'good', 'expects', 'reals')
-    expectData = list(
-        map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
-    realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
-
-    bullet = []
-    if data.count() == 0:
-        expectData, realData = [], []
+    data = []
+    if Product.objects.all().count() == 0:
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
-        #start = '%s-%s-%s' % (str(year), str(month), str(day-7))
         start = '%s-%s' % (str(month), str(day-7))
-        """ for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            expectData.append([day, random.randint(1, 10)])
-            realData.append([day, random.randint(1, 10)]) """
         for i in range(7):
-            bullet.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
-                          {'data': [{'y': random.randint(0, 100), 'target': 100}]}]})
+            data.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
+                {'data': [{'y': random.randint(0, 100), 'target': 100}]}]})
+    else:
+        for category in list(Product.objects.all().values_list('batch', flat=True).distinct()):
+            data.append({'container': category, 'categories': [category], 'series': [
+                {'data': [{'y': Product.objects.filter(Q(batch=category, workOrder__status__name='已完成')).count(), 'target': Product.objects.filter(Q(batch=category)).count()}]}]})
 
-    data = [
-        {'name': '计划生产', 'type': 'column',
-            'color': 'rgb(155,183,255)', 'data': expectData},
-        {'name': '实际生产', 'type': 'column',
-            'color': 'rgb(190,147,255)', 'data': realData},
-    ]
-    return bullet
+    return data
 
 
 def qualityChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count(
-        'result', filter=Q(result='合格')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad')
-    goodData = list(
-        map(lambda obj: [dataX(obj['batch']), obj['good']], data))
-    badData = list(
-        map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
+        'result', filter=Q(result='合格')), reals=Count('batch', filter=Q(workOrder__status__name='已完成')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'reals')
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:
@@ -172,7 +155,7 @@ def qualityChart(orderType, start, stop, all):
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
-        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             if all:
                 goodData.append(random.randint(10, 20))
                 badData.append(random.randint(-20, -10))
@@ -180,6 +163,17 @@ def qualityChart(orderType, start, stop, all):
                 goodData.append([day, random.randint(10, 20)])
                 badData.append([day, random.randint(10, 20)])
                 goodRate.append([day, round(random.random(), 2)])
+    else:
+        if all:
+            goodData = list(
+                map(lambda obj: obj['good'], data))
+            badData = list(
+                map(lambda obj: -obj['bad'], data))
+        else:
+            goodData = list(
+                map(lambda obj: [dataX(obj['batch']), obj['good']], data))
+            badData = list(
+                map(lambda obj: [dataX(obj['batch']), obj['bad']], data))
 
     data = [
         {'name': '合格', 'type': 'bar' if all else 'column',
@@ -242,12 +236,6 @@ def materialChart(orderType, start, stop, all):
             {'name': '蓝粒', 'type': 'column', 'data': blue},
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
         ]
-    if orderType == '机加':
-        data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(
-            count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
-        day = list(map(lambda obj: [dataX(obj['batch']), obj['count']], data))
-
-        data = [{'name': '原料棒', 'type': 'column', 'data': day}]
     if orderType == '电子装配':
         materialDict = {}
         materials = Material.objects.filter(
@@ -264,9 +252,17 @@ def materialChart(orderType, start, stop, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    if len(data[0]['data']) == 0:
-        one, two, three, four, five, six, seven, eight, nine, ten = [
-        ], [], [], [], [], [], [], [], [], []
+
+    products = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(
+        count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
+
+    for batch in list(Product.objects.all().values_list('batch', flat=True).distinct()):
+        for bom in BOMContent.objects.all():
+            data.append({'name': bom.material.split('/')[0], 'type': 'line', 'data': list(
+                map(lambda obj: [dataX(obj['batch']), bom.counts*obj['count']], products))})
+
+    if len(data) == 0:
+        one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         start = '%s-%s-20' % (str(year), str(month-1))
@@ -274,24 +270,10 @@ def materialChart(orderType, start, stop, all):
             one.append([day, random.randint(1, 100)])
             two.append([day, random.randint(1, 100)])
             three.append([day, random.randint(1, 100)])
-            four.append([day, random.randint(1, 100)])
-            five.append([day, random.randint(1, 100)])
-            six.append([day, random.randint(1, 100)])
-            seven.append([day, random.randint(1, 100)])
-            eight.append([day, random.randint(1, 100)])
-            nine.append([day, random.randint(1, 100)])
-            ten.append([day, random.randint(1, 100)])
         data = [
-            {'name': '物料1', 'type': 'column', 'data': one},
-            {'name': '物料2', 'type': 'column', 'data': two},
-            {'name': '物料3', 'type': 'column',  'data': three},
-            {'name': '物料4', 'type': 'column', 'data': four},
-            {'name': '物料5', 'type': 'column', 'data': five},
-            {'name': '物料6', 'type': 'column', 'data': six},
-            {'name': '物料7', 'type': 'column', 'data': seven},
-            {'name': '物料8', 'type': 'column', 'data': eight},
-            {'name': '物料9', 'type': 'column', 'data': nine},
-            {'name': '物料10', 'type': 'column', 'data': ten},
+            {'name': '物料1', 'type': 'line', 'data': one},
+            {'name': '物料2', 'type': 'line', 'data': two},
+            {'name': '物料3', 'type': 'line',  'data': three},
         ]
 
     return data

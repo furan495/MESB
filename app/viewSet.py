@@ -361,11 +361,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         eaOutPosition, eaInPosition = {}, {}
 
-        """ outPos = {}
-        for store in Store.objects.filter(Q(storeType__name='原料库')):
-            outPos[store.name] = StorePosition.objects.filter(
-                Q(store=store, status='3')).values_list('number', flat=True) """
-
         for i in range(workOrder.count()):
             if params['orderType'] == '电子装配':
                 for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
@@ -377,17 +372,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.name = workOrder[i].description
             product.number = str(time.time()*1000000)
             product.workOrder = workOrder[i]
-            product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
-                '-')[0]
+            """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
+                '-')[0] """
             product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split(
                 '-')[0]
             product.prodType = ProductType.objects.get(
                 Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
 
-            outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
+            """ outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
             outP.status = '4'
-            outP.save()
+            outP.save() """
             inP = inPos[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0]
             inP.status = '3'
             inP.save()
