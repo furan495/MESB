@@ -403,16 +403,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
-    @action(methods=['get'], detail=True)
-    def gantt(self, request, pk=None):
-        order = Order.objects.get(key=pk)
-        yAxis = list(map(
-            lambda obj: obj[-4:], WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')).values_list('number', flat=True)))
-        data = map(lambda obj: {'x': ganteX(obj.startTime, obj), 'x2': ganteX(
-            obj.endTime, obj), 'y': yAxis.index(obj.number[-4:]), 'partialFill': round(obj.events.all().count()/(len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)}, WorkOrder.objects.filter(Q(order=order) & ~Q(status__name='等待中')))
-        return Response({'yAxis': yAxis, 'data': data})
-
-
 class ProductLineViewSet(viewsets.ModelViewSet):
     queryset = ProductLine.objects.all().order_by('-key')
     serializer_class = ProductLineSerializer
