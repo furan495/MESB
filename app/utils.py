@@ -13,6 +13,13 @@ def addkey(obj, objs):
     return obj
 
 
+def calcTimes(closeList, openList):
+    if type(np.sum(np.array(closeList) - np.array(openList))) is datetime.timedelta:
+        return round(np.sum(np.array(closeList) - np.array(openList)).total_seconds()/60, 2)
+    else:
+        return 0
+
+
 def calcPartTimes(device):
     dates, data = [], []
     for state in DeviceState.objects.all():
@@ -24,8 +31,8 @@ def calcPartTimes(device):
             Q(device=device, name='开机', time__gte=datetime.datetime.strptime(date, '%Y-%m-%d'), time__lte=datetime.datetime.strptime(date, '%Y-%m-%d')+datetime.timedelta(hours=24))).values_list('time', flat=True))
         if len(openList)-len(closeList) == 1:
             closeList.append(datetime.datetime.now())
-        data.append([int(time.mktime(time.strptime(date, '%Y-%m-%d')))*1000+8*60*60*1000, round(np.sum(np.array(closeList) -
-                                                                                                       np.array(openList)).total_seconds()/60, 2)])
+        data.append(
+            [int(time.mktime(time.strptime(date, '%Y-%m-%d')))*1000+8*60*60*1000, calcTimes(closeList, openList)])
 
     return data
 
@@ -127,14 +134,20 @@ def powerChart(orderType, start, stop, all):
         map(lambda obj: [dataX(obj['batch']), obj['expects']], data))
     realData = list(map(lambda obj: [dataX(obj['batch']), obj['reals']], data))
 
+    bullet = []
     if data.count() == 0:
         expectData, realData = [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
-        start = '%s-%s-20' % (str(year), str(month-1))
-        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        day = datetime.datetime.now().day
+        #start = '%s-%s-%s' % (str(year), str(month), str(day-7))
+        start = '%s-%s' % (str(month), str(day-7))
+        """ for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             expectData.append([day, random.randint(1, 10)])
-            realData.append([day, random.randint(1, 10)])
+            realData.append([day, random.randint(1, 10)]) """
+        for i in range(7):
+            bullet.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
+                          {'data': [{'y': random.randint(0, 100), 'target': 100}]}]})
 
     data = [
         {'name': '计划生产', 'type': 'column',
@@ -142,7 +155,7 @@ def powerChart(orderType, start, stop, all):
         {'name': '实际生产', 'type': 'column',
             'color': 'rgb(190,147,255)', 'data': realData},
     ]
-    return data
+    return bullet
 
 
 def qualityChart(orderType, start, stop, all):
@@ -286,7 +299,7 @@ def materialChart(orderType, start, stop, all):
 
 def storeAna(order):
     data = [
-        {'name': '库存统计', 'type': 'pie', 'innerSize': '60%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
+        {'type': 'pie', 'innerSize': '60%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
             counts=Count('size')).values('name', 'counts')))}
     ]
     return data
