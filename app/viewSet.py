@@ -403,6 +403,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
+
 class ProductLineViewSet(viewsets.ModelViewSet):
     queryset = ProductLine.objects.all().order_by('-key')
     serializer_class = ProductLineSerializer
@@ -538,8 +539,7 @@ class StoreViewSet(viewsets.ModelViewSet):
             for i in range(count):
                 position = StorePosition()
                 position.store = instance
-                #position.number = '%s-%s' % (str(i+1), instance.key)
-                position.number = ''
+                position.number = '%s-%s' % (str(i+1), instance.key)
                 position.status = '4'
                 position.description = selectDescription(
                     storeType, i, count, request.data['rows'], request.data['columns'])
@@ -558,21 +558,51 @@ class StoreViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    @action(methods=['put'], detail=False)
-    def positionGroup(self, request):
-        params = request.data
-        position = StorePosition.objects.get(
-            Q(number=params['item'].split('/')[0]))
-        position.description = params['value']
-        position.save()
-        return Response('ok')
-
     @action(methods=['post'], detail=False)
     def counts(self, request):
         params = request.data
         count = Store.objects.filter(
             Q(storeType__name=params['storeType'], productLine__name=params['productLine'])).count()
         return Response(count)
+
+    @action(methods=['put'], detail=True)
+    def positions(self, request, pk=None):
+        params = request.data
+        if params['area'] != '':
+            for key in params['contents']:
+                pos = StorePosition.objects.get(key=key)
+                pos.description = params['area']
+                pos.save()
+        return Response('ok')
+
+    @action(methods=['put'], detail=True)
+    def rules(self, request, pk=None):
+        params = request.data
+        store = Store.objects.get(key=pk)
+        store.direction = params['direction']
+        store.save()
+        if params['rule'] == '左上起点':
+            if params['direction'] == '行优先':
+                numbers = np.arange(1, store.rows*store.columns+1)
+            else:
+                numbers = np.arange(
+                    1, store.rows*store.columns+1).reshape(store.columns, store.rows).T
+            for pos, num in zip(store.positions.all(),  np.ravel(numbers)):
+                pos.number = '%s-%s' % (num, pk)
+                pos.save()
+        if params['rule'] == '左下起点':
+            if params['direction'] == '行优先':
+                numberMatrix = np.arange(
+                    1, store.rows*store.columns+1).reshape(store.rows, store.columns)
+            else:
+                numberMatrix = np.arange(
+                    1, store.rows*store.columns+1).reshape(store.columns, store.rows).T
+            numberFlip = np.flip(numberMatrix, axis=0)
+            for pos, num in zip(store.positions.all(), np.ravel(numberFlip)):
+                pos.number = '%s-%s' % (num, pk)
+                pos.save()
+
+        return Response('ok')
 
     @action(methods=['get'], detail=False)
     def export(self, request):

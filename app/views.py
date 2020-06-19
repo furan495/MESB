@@ -542,10 +542,10 @@ def querySelect(request):
         }
     if params['model'] == 'store':
         selectList = {
-            'direction': ['行优先', '列优先'],
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
             'storeType': list(map(lambda obj: obj.name, StoreType.objects.all())),
             'productLine': list(map(lambda obj: obj.name, ProductLine.objects.all())),
+            'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(orderType__name=params['order'])))),
         }
     if params['model'] == 'productLine':
         selectList = {
