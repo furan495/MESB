@@ -102,14 +102,6 @@ def positionSelect(obj, position):
     except Exception as e:
         return ''
 
-
-def ganteX(date, obj):
-    try:
-        return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
-    except:
-        return int(time.mktime(obj.events.all().order_by('-key')[0].time.timetuple())) * 1000+8*60*60*1000
-
-
 def dataX(date):
     try:
         return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
@@ -154,7 +146,8 @@ def qualityChart(orderType, start, stop, all):
         goodData, badData = [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
-        start = '%s-%s-20' % (str(year), str(month-1))
+        day = datetime.datetime.now().day
+        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             if all:
                 goodData.append(random.randint(10, 20))
@@ -252,7 +245,6 @@ def materialChart(orderType, start, stop, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-
     products = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(
         count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
 
@@ -265,8 +257,9 @@ def materialChart(orderType, start, stop, all):
         one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
-        start = '%s-%s-20' % (str(year), str(month-1))
-        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
+        day = datetime.datetime.now().day
+        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             one.append([day, random.randint(1, 100)])
             two.append([day, random.randint(1, 100)])
             three.append([day, random.randint(1, 100)])

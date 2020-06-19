@@ -639,10 +639,11 @@ def queryCharts(request):
     goodRate = list(
         map(lambda obj: [dataX(obj['batch']), round(rateY(obj), 2)], data))
 
-    categories = list(Product.objects.all().values_list('batch',flat=True).distinct())
+    categories = list(Product.objects.all().values_list(
+        'batch', flat=True).distinct())
 
     if Product.objects.all().count() == 0:
-        start = '%s-%s-%s' % (str(year), str(month), str(day-7))
+        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             goodRate.append([day, round(random.random(), 2)])
             categories.append(time.strftime(
@@ -652,8 +653,8 @@ def queryCharts(request):
         len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100}, WorkOrder.objects.filter(Q(status__name='加工中'))))
 
     if WorkOrder.objects.filter(Q(status__name='加工中')).count() == 0:
-        for i in range(20):
-            progress.append({'key': i, 'number': '工单',
+        for i in range(15):
+            progress.append({'key': i, 'number': '工单%s' % (str(i+1)),
                              'progress': random.randint(0, 100)})
 
     if Product.objects.all().count() == 0:

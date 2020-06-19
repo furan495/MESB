@@ -305,12 +305,19 @@ class StoreSerializer(serializers.ModelSerializer):
         queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
     positions = serializers.SerializerMethodField()
     lineType = serializers.SerializerMethodField()
+    dimensions = serializers.SerializerMethodField()
 
     def get_lineType(self, obj):
         try:
             return obj.productLine.lineType.name
         except:
             return ''
+    
+    def get_dimensions(self, obj):
+        try:
+            return np.array(obj.positions.all().values_list('key',flat=True)).reshape(obj.rows,obj.columns)
+        except:
+            return []
 
     def get_positions(self, obj):
         if obj.productLine and obj.productLine.lineType.name == '灌装':
@@ -320,7 +327,7 @@ class StoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine', 'lineType',
-                  'number', 'storeType', 'positions')
+                  'number', 'storeType', 'positions','dimensions')
 
 
 class StorePositionSerializer(serializers.ModelSerializer):

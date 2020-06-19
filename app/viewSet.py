@@ -538,7 +538,8 @@ class StoreViewSet(viewsets.ModelViewSet):
             for i in range(count):
                 position = StorePosition()
                 position.store = instance
-                position.number = '%s-%s' % (str(i+1), instance.key)
+                #position.number = '%s-%s' % (str(i+1), instance.key)
+                position.number = ''
                 position.status = '4'
                 position.description = selectDescription(
                     storeType, i, count, request.data['rows'], request.data['columns'])
