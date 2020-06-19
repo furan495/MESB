@@ -234,19 +234,19 @@ class OrderViewSet(viewsets.ModelViewSet):
                                 res = 'err'
                                 info = '%s不足，无法排产' % parti
             if orderType == '机加':
-                count = 0
-                descriptions = params['description']
-                for desc in descriptions.split(';')[:-1]:
-                    count = count+int(desc.split('x')[1])
-                if count > StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4')).count():
-                    res = 'err'
-                    info = '成品库仓位不足，无法排产'
-                else:
-                    for store in Store.objects.filter(Q(storeType__name='原料库') & ~Q(name__icontains='车间')):
-                        if count > StorePosition.objects.filter(Q(store=store, status='3')).count():
-                            res = 'err'
-                            info = '%s不足，无法排产' % Material.objects.filter(Q(store=store))[
-                                0].name
+                for desc in params['description'].split(';')[:-1]:
+                    product = desc.split('x')[0]
+                    count = int(desc.split('x')[1])
+                    if count > StorePosition.objects.filter(Q(description=product, status='4')).count():
+                        res = 'err'
+                        info = '%s仓位不足，无法排产' % product
+                    else:
+                        boms = BOMContent.objects.filter(
+                            Q(bom__product__name=product)).values_list('material', flat=True)
+                        for material in boms:
+                            if count > StorePosition.objects.filter(Q(description=material.split('/')[0], status='3')).count():
+                                res = 'err'
+                                info = '%s不足，无法排产' % material.split('/')[0]
             if orderType == '电子装配':
                 eaOutPosition, eaInPosition = {}, {}
                 for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
@@ -355,9 +355,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         outPos = list(StorePosition.objects.filter(
             Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料') | Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='原料库', status='3')))[:workOrder.count()]
         outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
-        inPos = list(StorePosition.objects.filter(
-            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='4', description__icontains='成品') | Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='成品库', status='4')).order_by('-key'))[:workOrder.count()]
-        inPosition = list(map(lambda obj: obj.number.split('-')[0], inPos))
 
         eaOutPosition, eaInPosition = {}, {}
 
@@ -374,18 +371,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.workOrder = workOrder[i]
             """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
                 '-')[0] """
-            product.inPos = inPosition[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0].number.split(
-                '-')[0]
+            inPosition = StorePosition.objects.filter(
+                Q(description=workOrder[i].description, status='4'))[0]
+            inPosition.status = '3'
+            product.inPos = inPosition.number.split('-')[0]
             product.prodType = ProductType.objects.get(
                 Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
-
-            """ outP = outPos[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0]
-            outP.status = '4'
-            outP.save() """
-            inP = inPos[i] if params['orderType'] == '机加' else eaInPosition[workOrder[i].description][0]
-            inP.status = '3'
-            inP.save()
+            inPosition.save()
 
             standard = ProductStandard()
             standard.name = '外观'
@@ -541,8 +534,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 position.store = instance
                 position.number = '%s-%s' % (str(i+1), instance.key)
                 position.status = '4'
-                position.description = selectDescription(
-                    storeType, i, count, request.data['rows'], request.data['columns'])
+                position.description = ''
                 position.save()
                 if storeType == '灌装':
                     pallet = Pallet()

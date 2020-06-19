@@ -91,11 +91,10 @@ def wincc5(request):
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
-        product = workOrder.workOrder
 
+        product = workOrder.workOrder
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.status = '3'
         storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
 
@@ -159,12 +158,13 @@ def wincc4(request):
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
         workOrder.save()
+
         product = workOrder.workOrder
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.status = '3'
         storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
+
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
             order.status = OrderStatus.objects.get(Q(name='已完成'))
@@ -234,8 +234,6 @@ def wincc3(request):
         product = workOrder.workOrder
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
         order = workOrder.order
         if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
@@ -307,8 +305,6 @@ def wincc2(request):
 
         storePosition = StorePosition.objects.get(
             Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.status = '3'
-        storePosition.content = '%s-%s' % (product.name, workOrder.number)
         storePosition.save()
 
         order = workOrder.order
@@ -544,6 +540,7 @@ def querySelect(request):
         selectList = {
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
             'storeType': list(map(lambda obj: obj.name, StoreType.objects.all())),
+            'material': list(set(map(lambda obj: obj.name, Material.objects.all()))),
             'productLine': list(map(lambda obj: obj.name, ProductLine.objects.all())),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(orderType__name=params['order'])))),
         }
