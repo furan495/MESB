@@ -562,10 +562,10 @@ class StoreViewSet(viewsets.ModelViewSet):
     @action(methods=['put'], detail=True)
     def positions(self, request, pk=None):
         params = request.data
-        if params['area'] != '':
+        if params['product'] != '':
             for key in params['contents']:
                 pos = StorePosition.objects.get(key=key)
-                pos.description = params['area']
+                pos.description = params['product']
                 pos.save()
         return Response('ok')
 
