@@ -365,20 +365,22 @@ class OrderViewSet(viewsets.ModelViewSet):
                         Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name))
                     eaInPosition[pro.name] = StorePosition.objects.filter(
                         Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).order_by('-key')
+
+            inPosition = StorePosition.objects.filter(
+                Q(description=workOrder[i].description, status='4'))[0]
+            inPosition.status = '3'
+            inPosition.save()
+
             product = Product()
             product.name = workOrder[i].description
             product.number = str(time.time()*1000000)
             product.workOrder = workOrder[i]
             """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
                 '-')[0] """
-            inPosition = StorePosition.objects.filter(
-                Q(description=workOrder[i].description, status='4'))[0]
-            inPosition.status = '3'
             product.inPos = inPosition.number.split('-')[0]
             product.prodType = ProductType.objects.get(
                 Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
-            inPosition.save()
 
             standard = ProductStandard()
             standard.name = '外观'
@@ -513,20 +515,20 @@ class StoreViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         storeType = request.data['storeType']
+
         count = request.data['rows']*request.data['columns']
         if storeType == '电子装配':
             left = np.arange(
                 0, count/2).reshape(request.data['rows'], int(request.data['columns']/2))
             right = np.arange(
                 count/2, count).reshape(request.data['rows'], int(request.data['columns']/2))
-            martix = np.hstack((left, right)).reshape(1, count)
-            for i in np.ravel(martix):
+            matrix = np.hstack((left, right))
+            for i in np.ravel(np.flip(matrix, axis=0)):
                 position = StorePosition()
                 position.store = instance
                 position.number = '%s-%s' % (str(int(i)+1), instance.key)
-                position.status = selectStatus(storeType, i, count)
-                position.description = selectDescription(
-                    storeType, i, count, request.data['rows'], request.data['columns'])
+                position.status = '4'
+                position.description = ''
                 position.save()
         else:
             for i in range(count):

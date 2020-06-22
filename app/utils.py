@@ -62,39 +62,6 @@ def loopOrganization(organization):
     return data
 
 
-def selectStatus(storeType, index, count):
-    if '灌装' == storeType:
-        return '1'
-    if '机加' == storeType:
-        return '4'
-    if '电子装配' == storeType:
-        return '4'
-
-
-def selectDescription(storeType, index, count, row, col):
-    if '机加' == storeType:
-        if index < int(count/2):
-            return '原料'
-        else:
-            return '成品'
-    if '电子装配' == storeType:
-        if ProductType.objects.filter(Q(orderType__name='电子装配')).count() > 0:
-            products = ProductType.objects.filter(
-                Q(orderType__name='电子装配')).values_list('name')
-            if index < int(count/2):
-                for i in range(len(products)):
-                    if int(i*col/2) <= index < int(i*col/2)+4:
-                        return '%s原料' % products[i][0]
-            else:
-                for i in range(len(products)):
-                    if (row+i)*col/2 <= index < (row+i)*col/2+4:
-                        return '%s成品' % products[i][0]
-        else:
-            return '待定仓位'
-    else:
-        return '分组'
-
-
 def positionSelect(obj, position):
     try:
         return Event.objects.get(workOrder=obj, source=position).time.strftime(
@@ -150,8 +117,8 @@ def qualityChart(orderType, start, stop, all):
         start = '%s-%s-%s' % (str(year), str(month), str(day-14))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             if all:
-                goodData.append(random.randint(10, 20))
-                badData.append(random.randint(-20, -10))
+                badData.append(random.randint(10, 20))
+                goodData.append(random.randint(-20, -10))
             else:
                 goodData.append([day, random.randint(10, 20)])
                 badData.append([day, random.randint(10, 20)])
@@ -159,9 +126,9 @@ def qualityChart(orderType, start, stop, all):
     else:
         if all:
             goodData = list(
-                map(lambda obj: obj['good'], data))
+                map(lambda obj: -obj['good'], data))
             badData = list(
-                map(lambda obj: -obj['bad'], data))
+                map(lambda obj: obj['bad'], data))
         else:
             goodData = list(
                 map(lambda obj: [dataX(obj['batch']), obj['good']], data))
