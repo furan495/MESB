@@ -642,7 +642,7 @@ def queryCharts(request):
     if Product.objects.all().count() == 0:
         start = '%s-%s-%s' % (str(year), str(month), str(day-14))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
-            goodRate.append([day, round(random.random(), 2)])
+            goodRate.append([day+8*60*60*1000, round(random.random(), 2)])
             categories.append(time.strftime(
                 '%m-%d', time.localtime(day/1000)))
 
@@ -654,49 +654,10 @@ def queryCharts(request):
             progress.append({'key': i, 'number': '工单%s' % (str(i+1)),
                              'progress': random.randint(0, 100)})
 
-    if Product.objects.all().count() == 0:
-        productData = list(map(lambda obj: {'name': obj.name, 'y': random.randint(
-            1, 10)}, ProductType.objects.filter(Q(orderType__name=params['order']))))
-    else:
-        productData = list(map(lambda obj: {'name': obj.name, 'y': Product.objects.filter(
-            Q(name__icontains=obj.name)).count()}, ProductType.objects.filter(Q(orderType__name=params['order']))))
-
-    if StorePosition.objects.filter(Q(store__storeType__name='成品库') | Q(store__storeType__name='混合库')).count() == 0:
-        storeData = [{'name': '空闲', 'y': random.randint(
-            10, 20)}, {'name': '有料', 'y': random.randint(10, 20)}]
-    else:
-        storeData = [
-            {'name': '空闲', 'y': StorePosition.objects.filter(Q(store__storeType__name='成品库', status='4') | Q(
-                store__storeType__name='混合库', status='4')).count()},
-            {'name': '有料', 'y': StorePosition.objects.filter(Q(store__storeType__name='成品库', status='3') | Q(
-                store__storeType__name='混合库',  status='3')).count()}
-        ]
-
     rate = [
         {'name': '合格率', 'type': 'areaspline',
             'color': 'rgb(190,147,255)', 'data': goodRate},
     ]
-    product = [
-        {'type': 'pie', 'innerSize': '60%', 'name': '数量', 'data': productData}
-    ]
-    store = [
-        {'type': 'pie', 'innerSize': '60%', 'name': '数量', 'data': storeData}
-    ]
-
-    part = []
-
-    for device in Device.objects.filter(~Q(process=None)):
-        if DeviceState.objects.filter(Q(name='开机')).count() < 50:
-            fakePart = []
-            start = '%s-%s-%s' % (str(year), str(month),
-                                  str(datetime.datetime.now().day-7))
-            for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
-                fakePart.append([day, random.randint(10, 50)])
-            part.append({'type': 'line', 'name': device.name,
-                         'data': fakePart})
-        else:
-            part.append({'type': 'line', 'name': device.name,
-                         'data': calcPartTimes(device)})
 
     target = WorkOrder.objects.filter(
         Q(createTime__gte=datetime.datetime.now().date())).count()
@@ -710,4 +671,4 @@ def queryCharts(request):
     power = {'target': target if target != 0 else 100, 'current': current if current != 0 else 0, 'good': good if good != 0 else 0,
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}
 
-    return JsonResponse({'store': store, 'progress': progress[-15:], 'categories': categories, 'part': part, 'product': product, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
+    return JsonResponse({'progress': progress[-15:], 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})

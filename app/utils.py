@@ -13,30 +13,6 @@ def addkey(obj, objs):
     return obj
 
 
-def calcTimes(closeList, openList):
-    if type(np.sum(np.array(closeList) - np.array(openList))) is datetime.timedelta:
-        return round(np.sum(np.array(closeList) - np.array(openList)).total_seconds()/60, 2)
-    else:
-        return 0
-
-
-def calcPartTimes(device):
-    dates, data = [], []
-    for state in DeviceState.objects.all():
-        dates.append(state.time.strftime('%Y-%m-%d'))
-    for date in np.sort(list(set(dates))):
-        closeList = list(DeviceState.objects.filter(
-            Q(device=device, name='关机', time__gte=datetime.datetime.strptime(date, '%Y-%m-%d'), time__lte=datetime.datetime.strptime(date, '%Y-%m-%d')+datetime.timedelta(hours=24))).values_list('time', flat=True))
-        openList = list(DeviceState.objects.filter(
-            Q(device=device, name='开机', time__gte=datetime.datetime.strptime(date, '%Y-%m-%d'), time__lte=datetime.datetime.strptime(date, '%Y-%m-%d')+datetime.timedelta(hours=24))).values_list('time', flat=True))
-        if len(openList)-len(closeList) == 1:
-            closeList.append(datetime.datetime.now())
-        data.append(
-            [int(time.mktime(time.strptime(date, '%Y-%m-%d')))*1000+8*60*60*1000, calcTimes(closeList, openList)])
-
-    return data
-
-
 def updatePalletContent(hole, params, holeContent):
     if hole:
         return params if holeContent == None or holeContent == '' else holeContent
@@ -95,7 +71,7 @@ def powerChart(orderType, start, stop, all):
         start = '%s-%s' % (str(month), str(day-7))
         for i in range(7):
             data.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
-                {'data': [{'y': random.randint(0, 100), 'target': 100}]}]})
+                {'data': [{'y': random.randint(50, 100), 'target': random.randint(100,150)}]}]})
     else:
         for category in list(Product.objects.all().values_list('batch', flat=True).distinct()):
             data.append({'container': category, 'categories': [category], 'series': [
