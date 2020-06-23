@@ -207,9 +207,9 @@ def materialChart(orderType, start, stop, all):
             two.append([day, random.randint(1, 100)])
             three.append([day, random.randint(1, 100)])
         data = [
-            {'name': '物料1', 'type': 'line', 'data': one},
-            {'name': '物料2', 'type': 'line', 'data': two},
-            {'name': '物料3', 'type': 'line',  'data': three},
+            {'name': '物料1', 'type': 'column', 'data': one},
+            {'name': '物料2', 'type': 'column', 'data': two},
+            {'name': '物料3', 'type': 'column',  'data': three},
         ]
 
     return data
