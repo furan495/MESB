@@ -155,26 +155,12 @@ class ProcessRoute(models.Model):
         verbose_name = '工艺路线'
 
 
-class LineState(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=20, verbose_name='产线状态', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '产线状态'
-
-
 class ProductLine(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     lineType = models.ForeignKey(
         OrderType, related_name='lines', on_delete=models.CASCADE, verbose_name='产线类别', blank=True, null=True)
     workShop = models.ForeignKey(WorkShop, related_name='productLines',
                                  on_delete=models.CASCADE, verbose_name='隶属车间', blank=True, null=True)
-    state = models.ForeignKey(LineState, related_name='productLines',
-                              on_delete=models.CASCADE, verbose_name='产线状态', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='产线名称', unique=True, blank=True, null=True)
     number = models.CharField(
@@ -331,13 +317,8 @@ class Device(models.Model):
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='设备编号', unique=True, blank=True, null=True)
-    joinTime = models.DateTimeField(auto_now_add=True, verbose_name='入库时间')
     factory = models.CharField(
         max_length=20, verbose_name='设备厂家', blank=True, null=True)
-    facTime = models.CharField(
-        max_length=20, verbose_name='出厂日期', blank=True, null=True)
-    facPeo = models.CharField(
-        max_length=20, verbose_name='厂家联系人', blank=True, null=True)
     typeNumber = models.CharField(
         max_length=20, verbose_name='设备型号', blank=True, null=True)
 
@@ -352,7 +333,7 @@ class DeviceState(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     device = models.ForeignKey(Device, related_name='states',
                                on_delete=models.CASCADE, verbose_name='对应设备')
-    name = models.CharField(max_length=20, verbose_name='状态名称')
+    name = models.CharField(max_length=20, verbose_name='状态名称',blank=True,null=True)
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):
@@ -360,23 +341,6 @@ class DeviceState(models.Model):
 
     class Meta:
         verbose_name = '设备状态'
-
-
-class DeviceFault(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    device = models.ForeignKey(Device, related_name='faults',
-                               on_delete=models.CASCADE, verbose_name='对应设备')
-    isRepair = models.BooleanField(default=False, verbose_name='是否返修')
-    startTime = models.DateTimeField(auto_now_add=True, verbose_name='开始返修')
-    endTime = models.DateTimeField(auto_now=True, verbose_name='结束返修')
-    operator = models.CharField(max_length=20, verbose_name='操作人')
-    result = models.CharField(max_length=20, verbose_name='返修结果')
-
-    def __str__(self):
-        return self.name+'/'+str(self.time)
-
-    class Meta:
-        verbose_name = '设备故障'
 
 
 class WorkOrderStatus(models.Model):

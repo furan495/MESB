@@ -546,7 +546,6 @@ def querySelect(request):
         }
     if params['model'] == 'productLine':
         selectList = {
-            'state': list(map(lambda obj: obj.name, LineState.objects.all())),
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
             'lineType': list(map(lambda obj: obj.name, OrderType.objects.all())),
         }

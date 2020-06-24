@@ -665,8 +665,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '设备状态': list(DeviceState.objects.filter(Q(device=obj)))[-1].name, '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '入库时间': obj.joinTime.strftime(
-            '%Y-%m-%d %H:%M:%S'), '设备厂家': obj.factory, '出厂日期': obj.facTime, '厂家联系人': obj.facPeo, '厂家电话': obj.facPho}, Device.objects.all())
+        excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '设备厂家': obj.factory,'设备型号':obj.typeNumber}, Device.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -708,11 +707,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return Response('ok')
 
 
-class LineStateViewSet(viewsets.ModelViewSet):
-    queryset = LineState.objects.all()
-    serializer_class = LineStateSerializer
-
-
 class DocTypeViewSet(viewsets.ModelViewSet):
     queryset = DocType.objects.all()
     serializer_class = DocTypeSerializer
@@ -726,11 +720,6 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
 class DeviceStateViewSet(viewsets.ModelViewSet):
     queryset = DeviceState.objects.all()
     serializer_class = DeviceStateSerializer
-
-
-class DeviceFaultViewSet(viewsets.ModelViewSet):
-    queryset = DeviceFault.objects.all()
-    serializer_class = DeviceFaultSerializer
 
 
 class MaterialViewSet(viewsets.ModelViewSet):

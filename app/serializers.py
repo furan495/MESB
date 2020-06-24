@@ -88,14 +88,6 @@ class DeviceStateSerializer(serializers.ModelSerializer):
         fields = ('key', 'device', 'name', 'time')
 
 
-class DeviceFaultSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DeviceFault
-        fields = ('key', 'device', 'isRepair', 'startTime',
-                  'endTime', 'operator', 'result')
-
-
 class ProcessParamsSerializer(serializers.ModelSerializer):
 
     process = serializers.SlugRelatedField(
@@ -108,26 +100,9 @@ class ProcessParamsSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
-    stateList = serializers.SerializerMethodField()
-    joinTime = serializers.SerializerMethodField()
     process = serializers.SerializerMethodField()
-    state = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
         queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
-
-    def get_state(self, obj):
-        states = list(DeviceState.objects.filter(
-            Q(device=obj)).order_by('time'))
-        return states[-1].name if len(states) > 0 else '关机'
-
-    def get_stateList(self, obj):
-        states = []
-        states = list(map(lambda state: {'name': state.time.strftime('%Y-%m-%d %H:%M:%S'), 'label': state.name,
-                                         'description': '%s' % state.name}, obj.states.all()))
-        return states
-
-    def get_joinTime(self, obj):
-        return obj.joinTime.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_process(self, obj):
         try:
@@ -137,8 +112,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('key', 'deviceType', 'process', 'name', 'number', 'joinTime',
-                  'factory', 'facTime', 'facPeo', 'typeNumber', 'state', 'stateList')
+        fields = ('key', 'deviceType', 'process', 'name',
+                  'number', 'factory', 'typeNumber')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -187,28 +162,18 @@ class ProductLineSerializer(serializers.ModelSerializer):
 
     workShop = serializers.SlugRelatedField(
         queryset=WorkShop.objects.all(), label='隶属车间', slug_field='name', required=False)
-    state = serializers.SlugRelatedField(
-        queryset=LineState.objects.all(), label='产线状态', slug_field='name', required=False)
     lineType = serializers.SlugRelatedField(
         queryset=OrderType.objects.all(), label='产线类别', slug_field='name', required=False)
 
     class Meta:
         model = ProductLine
-        fields = ('key', 'workShop', 'name', 'state',
-                  'number', 'description', 'lineType')
+        fields = ('key', 'workShop', 'name', 'number', 'description', 'lineType')
 
 
 class BottleStateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BottleState
-        fields = ('key', 'name')
-
-
-class LineStateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = LineState
         fields = ('key', 'name')
 
 
