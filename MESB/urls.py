@@ -53,6 +53,7 @@ urlpatterns = [
     url(r'^api/wincc3/',  views.wincc3),
     url(r'^api/wincc4/',  views.wincc4),
     url(r'^api/wincc5/',  views.wincc5),
+    url(r'^api/deviceState/',  views.deviceState),
     url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/querySelect/',  views.querySelect),

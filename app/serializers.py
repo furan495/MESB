@@ -101,9 +101,17 @@ class ProcessParamsSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     process = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
         queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
 
+    
+    def get_state(self,obj):
+        try:
+            return obj.states.last().name
+        except:
+            return ''
+    
     def get_process(self, obj):
         try:
             return obj.process.name
@@ -112,7 +120,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('key', 'deviceType', 'process', 'name',
+        fields = ('key', 'deviceType', 'process', 'name','state',
                   'number', 'factory', 'typeNumber')
 
 

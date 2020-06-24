@@ -671,3 +671,17 @@ def queryCharts(request):
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}
 
     return JsonResponse({'progress': progress[-15:], 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
+
+
+@csrf_exempt
+def deviceState(request):
+    states = {'device': 3, 'user': 'x1,y1,z1',
+              'tool': 'x2,y2,z2', 'angle': 'J1,J2,J3,J4,J5,J6'}
+    name = ''
+    for key, val in zip(states.keys(), states.values()):
+        name += '%s:%s;' % (key, val)
+    state = DeviceState()
+    state.device = Device.objects.get(key=states['device'])
+    state.name = name
+    state.save()
+    return JsonResponse({'res': 'ok'})
