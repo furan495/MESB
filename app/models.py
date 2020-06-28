@@ -329,11 +329,30 @@ class Device(models.Model):
         verbose_name = '设备'
 
 
+class DeviceBase(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    device = models.ForeignKey(Device, related_name='properties',
+                               on_delete=models.CASCADE, verbose_name='对应设备')
+    name = models.CharField(
+        max_length=20, verbose_name='属性名称', blank=True, null=True)
+    value = models.CharField(
+        max_length=20, verbose_name='属性值', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '设备属性'
+
+
 class DeviceState(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     device = models.ForeignKey(Device, related_name='states',
                                on_delete=models.CASCADE, verbose_name='对应设备')
-    name = models.CharField(max_length=2000, verbose_name='状态名称',blank=True,null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='状态名称', blank=True, null=True)
+    value = models.CharField(
+        max_length=200, verbose_name='状态值', blank=True, null=True)
     time = models.DateTimeField(auto_now_add=True, verbose_name='发生时间')
 
     def __str__(self):

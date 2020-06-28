@@ -480,6 +480,11 @@ class BottleViewSet(viewsets.ModelViewSet):
     serializer_class = BottleSerializer
 
 
+class DeviceBaseViewSet(viewsets.ModelViewSet):
+    queryset = DeviceBase.objects.all()
+    serializer_class = DeviceBaseSerializer
+
+
 class BottleStateViewSet(viewsets.ModelViewSet):
     queryset = BottleState.objects.all()
     serializer_class = BottleStateSerializer

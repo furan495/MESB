@@ -26,6 +26,12 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ('key', 'name', 'authority')
 
 
+class DeviceBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceBase
+        fields = ('key', 'device', 'name', 'value')
+
+
 class OrderStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderStatus
@@ -102,16 +108,22 @@ class ProcessParamsSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     process = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
+    bases = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
         queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
 
-    
-    def get_state(self,obj):
+    def get_state(self, obj):
         try:
             return obj.states.last().name
         except:
             return ''
-    
+
+    def get_bases(self, obj):
+        try:
+            return list(map(lambda obj: {'key': obj.key, 'name': obj.name, 'value': obj.value}, obj.properties.all()))
+        except:
+            return []
+
     def get_process(self, obj):
         try:
             return obj.process.name
@@ -120,8 +132,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('key', 'deviceType', 'process', 'name','state',
-                  'number', 'factory', 'typeNumber')
+        fields = ('key', 'deviceType', 'process', 'name', 'state',
+                  'number', 'factory', 'typeNumber', 'bases')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -175,7 +187,8 @@ class ProductLineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductLine
-        fields = ('key', 'workShop', 'name', 'number', 'description', 'lineType')
+        fields = ('key', 'workShop', 'name',
+                  'number', 'description', 'lineType')
 
 
 class BottleStateSerializer(serializers.ModelSerializer):
