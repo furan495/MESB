@@ -226,23 +226,23 @@ class Order(models.Model):
         verbose_name = '订单'
 
 
-class BottleState(models.Model):
+class ProductState(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
-        max_length=20, verbose_name='瓶子状态', blank=True, null=True)
+        max_length=20, verbose_name='成品状态', blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name = '瓶子状态'
+        verbose_name = '成品状态'
 
 
 class Bottle(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     order = models.ForeignKey(Order, related_name='bottles',
                               on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
-    status = models.ForeignKey(BottleState, related_name='bottles',
+    status = models.ForeignKey(ProductState, related_name='bottles',
                                on_delete=models.CASCADE, verbose_name='瓶子状态', blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='瓶号', blank=True, null=True)
@@ -372,30 +372,6 @@ class WorkOrderStatus(models.Model):
 
     class Meta:
         verbose_name = '工单状态'
-
-
-class WorkOrder(models.Model):
-
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    order = models.ForeignKey(Order, related_name='workOrders',
-                              on_delete=models.CASCADE, verbose_name='隶属订单')
-    status = models.ForeignKey(WorkOrderStatus, related_name='status',
-                               on_delete=models.CASCADE, verbose_name='工单状态', blank=True, null=True)
-    number = models.CharField(max_length=20, verbose_name='工单编号')
-    bottle = models.CharField(
-        max_length=20, verbose_name='工单瓶号', blank=True, null=True)
-    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    startTime = models.DateTimeField(
-        verbose_name='开始时间', blank=True, null=True)
-    endTime = models.DateTimeField(
-        verbose_name='结束时间', blank=True, null=True)
-    description = models.CharField(max_length=200, verbose_name='工单描述')
-
-    def __str__(self):
-        return self.number
-
-    class Meta:
-        verbose_name = '工单'
 
 
 class StoreType(models.Model):
@@ -537,15 +513,19 @@ class ProductType(models.Model):
 
 class Product(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    workOrder = models.OneToOneField(WorkOrder, related_name='workOrder',
-                                     on_delete=models.CASCADE, verbose_name='对应工单')
+    order = models.ForeignKey(Order, related_name='products',
+                              on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
+    status = models.ForeignKey(ProductState, related_name='products',
+                               on_delete=models.CASCADE, verbose_name='产品状态', blank=True, null=True)
     pallet = models.ForeignKey(Pallet, related_name='products',
                                on_delete=models.CASCADE, verbose_name='存放托盘', blank=True, null=True)
     prodType = models.ForeignKey(ProductType, related_name='products',
                                  on_delete=models.CASCADE, verbose_name='产品类型', blank=True, null=True)
     name = models.CharField(max_length=200, verbose_name='产品名称')
-    number = models.CharField(max_length=20, verbose_name='产品编号')
-    batch = models.DateField(auto_now_add=True, verbose_name='产品批次')
+    number = models.CharField(
+        max_length=20, verbose_name='产品编号', blank=True, null=True)
+    batch = models.DateField(
+        auto_now_add=True, verbose_name='产品批次', blank=True, null=True)
     result = models.CharField(
         max_length=20, verbose_name='检测结果', blank=True, null=True)
     reason = models.CharField(
@@ -560,6 +540,32 @@ class Product(models.Model):
 
     class Meta:
         verbose_name = '产品'
+
+
+class WorkOrder(models.Model):
+
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    order = models.ForeignKey(Order, related_name='workOrders',
+                              on_delete=models.CASCADE, verbose_name='隶属订单')
+    product = models.ForeignKey(Product, related_name='workOrders',
+                                on_delete=models.CASCADE, verbose_name='隶属产品', blank=True, null=True)
+    status = models.ForeignKey(WorkOrderStatus, related_name='status',
+                               on_delete=models.CASCADE, verbose_name='工单状态', blank=True, null=True)
+    number = models.CharField(max_length=20, verbose_name='工单编号')
+    bottle = models.CharField(
+        max_length=20, verbose_name='工单瓶号', blank=True, null=True)
+    createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    startTime = models.DateTimeField(
+        verbose_name='开始时间', blank=True, null=True)
+    endTime = models.DateTimeField(
+        verbose_name='结束时间', blank=True, null=True)
+    description = models.CharField(max_length=200, verbose_name='工单描述')
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = '工单'
 
 
 class ProductStandard(models.Model):

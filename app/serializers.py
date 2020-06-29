@@ -191,10 +191,10 @@ class ProductLineSerializer(serializers.ModelSerializer):
                   'number', 'description', 'lineType')
 
 
-class BottleStateSerializer(serializers.ModelSerializer):
+class ProductStateSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = BottleState
+        model = ProductState
         fields = ('key', 'name')
 
 
@@ -233,7 +233,7 @@ class ProcessSerializer(serializers.ModelSerializer):
 class BottleSerializer(serializers.ModelSerializer):
 
     status = serializers.SlugRelatedField(
-        queryset=BottleState.objects.all(), label='瓶子状态', slug_field='name', required=False)
+        queryset=ProductState.objects.all(), label='瓶子状态', slug_field='name', required=False)
 
     class Meta:
         model = Bottle
@@ -242,8 +242,6 @@ class BottleSerializer(serializers.ModelSerializer):
 
 
 class WorkOrderSerializer(serializers.ModelSerializer):
-
-    progress = serializers.SerializerMethodField()
     orderNum = serializers.SerializerMethodField()
     orderType = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
@@ -272,13 +270,10 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     def get_orderType(self, obj):
         return obj.order.orderType.name
 
-    def get_progress(self, obj):
-        return round(obj.events.all().count()/(len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100
-
     class Meta:
         model = WorkOrder
         fields = ('key', 'orderNum', 'bottle', 'number', 'createTime', 'orderType',
-                  'startTime', 'endTime', 'status', 'description', 'events', 'progress')
+                  'startTime', 'endTime', 'status', 'description', 'events')
 
 
 class StoreSerializer(serializers.ModelSerializer):
@@ -350,11 +345,14 @@ class ProductSerializer(serializers.ModelSerializer):
     prodType = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
 
-    workOrder = serializers.SlugRelatedField(
-        queryset=WorkOrder.objects.all(), label='对应工单', slug_field='number', required=False)
+    order = serializers.SlugRelatedField(
+        queryset=Order.objects.all(), label='对应订单', slug_field='number', required=False)
 
     def get_orderType(self, obj):
-        return obj.workOrder.order.orderType.name
+        try:
+            return obj.workOrder.order.orderType.name
+        except:
+            return ''
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
@@ -362,7 +360,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_stateList(self, obj):
         states = []
         states = list(map(lambda event: {'name': event.time.strftime('%Y-%m-%d %H:%M:%S'), 'label': event.title,
-                                         'description': '%s' % event.title}, Event.objects.filter(Q(workOrder=obj.workOrder))))
+                                         'description': '%s' % event.title}, Event.objects.filter(Q(workOrder__product=obj))))
         return states
 
     def get_palletStr(self, obj):
@@ -397,16 +395,17 @@ class ProductSerializer(serializers.ModelSerializer):
                                         obj.pallet.position.number.split('-')[0], '9')
         else:
             try:
-                pos = StorePosition.objects.get(
-                    content='%s-%s' % (obj.name, obj.workOrder.number))
+                pos = StorePosition.objects.filter(
+                    Q(content=obj.number)).last()
                 res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
-            except:
+            except Exception as e:
+                print(e)
                 res = ''
         return res
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'workOrder', 'pallet', 'orderType', 'inPos', 'outPos',
+        fields = ('key', 'prodType', 'order', 'pallet', 'orderType', 'inPos', 'outPos',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
 
 

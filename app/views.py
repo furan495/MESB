@@ -114,67 +114,36 @@ def wincc5(request):
 @csrf_exempt
 def wincc4(request):
 
-    position = {'startA': '视觉模块开始', 'stopA': '视觉模块结束', 'startB': '数控车模块开始', 'stopB': '数控车模块结束', 'startC': '加工中心模块开始', 'stopC': '加工中心模块结束', 'startD': '精雕机模块开始', 'stopD': '精雕机模块结束', 'startF': '清洗打标块开始', 'stopF': '清洗打标块结束',
-                'startG': '焊接模块开始', 'stopG': '焊接模块结束', 'startH': '打磨模块开始', 'stopH': '打磨模块结束', 'startF2': '二次清洗开始', 'stopF2': '二次清洗结束', 'startI': '装配模块开始', 'stopI': '装配模块结束', 'check': '质检', 'startJ': '立体库模块开始', 'stopJ': '立体库模块结束'}
+    position = {'startA': '3D视觉分拣模块开始', 'stopA': '3D视觉分拣模块结束', 'startB': '数控车模块开始', 'stopB': '数控车模块结束', 'startC': '加工中心模块开始', 'stopC': '加工中心模块结束', 'startD': '精雕机模块开始', 'stopD': '精雕机模块结束', 'startF': '清洗打标模块开始', 'stopF': '清洗打标模块结束',
+                'startG': '焊接模块开始', 'stopG': '焊接模块结束', 'startH': '打磨模块开始', 'stopH': '打磨模块结束', 'startF2': '二次清洗开始', 'stopF2': '二次清洗结束', 'startI': '装配模块开始', 'stopI': '装配模块结束', 'check': '质检', 'startJ': '成品库模块开始', 'stopJ': '成品库模块结束'}
+
     """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',') """
 
     params = str(request.body, 'utf8').split(',')
 
-    print(params)
-
-    store = Store.objects.get(
-        Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
-
-    if position[params[0]] == '视觉模块开始' or position[params[0]] == '数控车模块开始' or position[params[0]] == '加工中心模块开始' or position[params[0]] == '精雕机模块开始':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1]))
+    workOrder = WorkOrder.objects.get(Q(number=params[1]))
+    if 'start' in params[0]:
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-        workOrder.save()
-        order = workOrder.order
-        order.status = OrderStatus.objects.get(Q(name='加工中'))
-        order.save()
-    if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1]))
-        product = workOrder.workOrder
-        standard = ProductStandard.objects.get(
-            Q(name='外观', product=product))
-        if random.random() > 0.5:
-            product.result = '合格'
-            standard.result = '合格'
-            standard.realValue = '合格'
-        else:
-            product.result = '不合格'
-            product.reason = '检测不合格'
-            standard.result = '不合格'
-            standard.realValue = '不合格'
-        product.save()
-        standard.save()
-    if position[params[0]] == '立体库模块结束':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1]))
+    if 'stop' in params[0]:
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-        workOrder.save()
-
-        product = workOrder.workOrder
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.content = '%s-%s' % (product.name, workOrder.number)
-        storePosition.save()
-
-        order = workOrder.order
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
-            order.status = OrderStatus.objects.get(Q(name='已完成'))
-            order.save()
+    if params[0] == 'stopJ':
+        product = workOrder.product
+        product.status = ProductState.objects.get(name='入库')
+        product.save()
+        order=product.order
+        order.status=OrderStatus.objects.get(name='已完成')
+        order.save()
+    workOrder.save()
 
     event = Event()
-    event.workOrder = WorkOrder.objects.get(Q(number=params[1]))
-    event.source = position[params[0]]
+    event.workOrder = workOrder
+    event.source = position[params[0]][:-2]
     event.title = position[params[0]]
     event.save()
+
     return JsonResponse({'ok': 'ok'})
 
 
@@ -598,8 +567,12 @@ def queryProducing(request):
         if os.path.exists(BASE_DIR+'/listen.txt'):
             os.remove(BASE_DIR+'/listen.txt')
 
-    workOrderList = WorkOrder.objects.filter(
-        Q(status__name='等待中', order__orderType__name=params['order']) | Q(status__name='加工中', order__orderType__name=params['order']))
+    """ workOrderList = WorkOrder.objects.filter(
+        Q(status__name='等待中', order__orderType__name=params['order']) | Q(status__name='加工中', order__orderType__name=params['order'])) """
+
+    productList = Product.objects.filter(
+        Q(workOrders__status__name='等待中', order__orderType__name=params['order']) | Q(workOrders__status__name='加工中', order__orderType__name=params['order'])).distinct()
+
     if params['order'] == '灌装':
         producing = list(
             map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架')}, workOrderList))
@@ -610,7 +583,7 @@ def queryProducing(request):
             map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description,'order': obj.order.number}, workOrderList)) """
         # 湖北
         producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startA': positionSelect(obj, '视觉模块开始'), 'startB': positionSelect(obj, '数控车模块开始'), 'startC': positionSelect(obj, '加工中心模块开始'), 'startD': positionSelect(obj, '精雕机模块开始'), 'startF': positionSelect(obj, '清洗打标块开始'), 'startG': positionSelect(obj, '焊接模块开始'), 'startH': positionSelect(obj, '打磨模块开始'), 'startF2': positionSelect(obj, '二次清洗开始'), 'startI': positionSelect(obj, '装配模块开始'), 'startJ': positionSelect(obj, '立体库模块开始'), }, workOrderList))
+            map(lambda obj: {'key': obj.key, 'name': obj.name, 'startA': positionSelect(obj, '3D视觉分拣模块开始'), 'startB': positionSelect(obj, '数控车模块开始'), 'startC': positionSelect(obj, '加工中心模块开始'), 'startD': positionSelect(obj, '精雕机模块开始'), 'startF': positionSelect(obj, '清洗打标模块开始'), 'startG': positionSelect(obj, '焊接模块开始'), 'startH': positionSelect(obj, '打磨模块开始'), 'startF2': positionSelect(obj, '二次清洗开始'), 'startI': positionSelect(obj, '装配模块开始'), 'startJ': positionSelect(obj, '成品库模块开始'), }, productList))
         """ producing = list(
             map(lambda obj: {'key': obj.key, 'workOrder': obj.number,  'startB': positionSelect(obj, '出库开始'), 'startC': positionSelect(obj, '数控车开始'), 'startD': positionSelect(obj, '加工中心开始'), 'startE': positionSelect(obj, '检测包装开始'), 'startF': positionSelect(obj, '入库开始'), 'stopB': positionSelect(obj, '出库结束'), 'stopC': positionSelect(obj, '数控车结束'), 'stopD': positionSelect(obj, '加工中心结束'), 'stopE': positionSelect(obj, '检测包装结束'), 'stopF': positionSelect(obj, '入库结束')}, workOrderList)) """
     if params['order'] == '电子装配':
@@ -629,7 +602,7 @@ def queryCharts(request):
     start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
     stop = datetime.datetime.strptime(
         params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrder__status__name='已完成')), expects=Count(
+    data = Product.objects.filter(Q(order__orderType__name=params['order'])).values('batch').annotate(reals=Count('batch', filter=Q(workOrders__status__name='已完成')), expects=Count(
         'batch'), good=Count('result', filter=Q(result='合格')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'expects', 'reals')
 
     goodRate = list(
@@ -645,12 +618,12 @@ def queryCharts(request):
             categories.append(time.strftime(
                 '%m-%d', time.localtime(day/1000)))
 
-    progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number[-4:], 'progress': round(obj.events.all().count()/(
-        len(json.loads(obj.order.route.data)['nodeDataArray'])*2+1), 2)*100}, WorkOrder.objects.filter(Q(status__name='加工中'))))
+    progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number, 'progress': round(obj.workOrders.all().filter(Q(status__name='已完成')).count(
+    )/(obj.workOrders.all().count()), 2)}, Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).distinct()))
 
-    if WorkOrder.objects.filter(Q(status__name='加工中')).count() == 0:
+    if Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).count() == 0:
         for i in range(15):
-            progress.append({'key': i, 'number': '工单%s' % (str(i+1)),
+            progress.append({'key': i, 'number': '产品%s' % (str(i+1)),
                              'progress': random.randint(0, 100)})
 
     rate = [
@@ -658,14 +631,14 @@ def queryCharts(request):
             'color': 'rgb(190,147,255)', 'data': goodRate},
     ]
 
-    target = WorkOrder.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date())).count()
+    target = Product.objects.filter(
+        Q(batch__gte=datetime.datetime.now().date())).count()
 
-    current = WorkOrder.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date(), status__name='已完成')).count()
+    current = Product.objects.filter(
+        Q(batch__gte=datetime.datetime.now().date(), status__name='入库')).count()
 
-    good = WorkOrder.objects.filter(
-        Q(createTime__gte=datetime.datetime.now().date(), status__name='已完成', workOrder__result='合格')).count()
+    good = Product.objects.filter(
+        Q(batch__gte=datetime.datetime.now().date(), result='合格')).count()
 
     power = {'target': target if target != 0 else 100, 'current': current if current != 0 else 0, 'good': good if good != 0 else 0,
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}

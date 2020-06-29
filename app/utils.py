@@ -40,10 +40,11 @@ def loopOrganization(organization):
 
 def positionSelect(obj, position):
     try:
-        return Event.objects.get(workOrder=obj, source=position).time.strftime(
+        return Event.objects.get(workOrder__product=obj, title=position).time.strftime(
             '%Y-%m-%d %H:%M:%S')
     except Exception as e:
         return ''
+
 
 def dataX(date):
     try:
@@ -71,18 +72,18 @@ def powerChart(orderType, start, stop, all):
         start = '%s-%s' % (str(month), str(day-7))
         for i in range(7):
             data.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
-                {'data': [{'y': random.randint(50, 100), 'target': random.randint(100,150)}]}]})
+                {'data': [{'y': random.randint(50, 100), 'target': random.randint(100, 150)}]}]})
     else:
         for category in list(Product.objects.all().values_list('batch', flat=True).distinct()):
             data.append({'container': category, 'categories': [category], 'series': [
-                {'data': [{'y': Product.objects.filter(Q(batch=category, workOrder__status__name='已完成')).count(), 'target': Product.objects.filter(Q(batch=category)).count()}]}]})
+                {'data': [{'y': Product.objects.filter(Q(batch=category, status__name='入库')).count(), 'target': Product.objects.filter(Q(batch=category)).count()}]}]})
 
     return data
 
 
 def qualityChart(orderType, start, stop, all):
-    data = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(good=Count(
-        'result', filter=Q(result='合格')), reals=Count('batch', filter=Q(workOrder__status__name='已完成')), bad=Count('result', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'reals')
+    data = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(good=Count(
+        'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='入库')), bad=Count('number', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'reals')
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:
@@ -188,8 +189,8 @@ def materialChart(orderType, start, stop, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    products = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values('batch').annotate(
-        count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count')
+    products = Product.objects.filter(Q(order__orderType__name=orderType,order__createTime__gte=start,order__createTime__lte=stop)).values('batch').annotate(
+        count=Count('batch', filter=Q(workOrders__status__name='已完成'))).values('batch', 'count')
 
     for batch in list(Product.objects.all().values_list('batch', flat=True).distinct()):
         for bom in BOMContent.objects.all():
@@ -255,8 +256,7 @@ def selectPosition(product):
                                     product.pallet.position.number.split('-')[0], '9')
     else:
         try:
-            pos = StorePosition.objects.get(
-                content='%s-%s' % (product.name, product.workOrder.number))
+            pos = StorePosition.objects.filter(Q(content=product.number)).last()
             res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         except Exception as e:
             res = ''

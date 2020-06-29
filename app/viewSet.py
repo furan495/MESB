@@ -192,103 +192,26 @@ class OrderViewSet(viewsets.ModelViewSet):
             bottle.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
-    def preScheduling(self, request):
+    @action(methods=['put'], detail=True)
+    def preScheduling(self, request, pk=None):
         res, info = 'ok', ''
         params = request.data
+        order = self.get_object()
         orderType = params['orderType']
         line = ProductLine.objects.get(name=params['line'])
         route = ProcessRoute.objects.get(name=params['route'])
         if orderType == line.lineType.name and orderType == route.routeType.name:
-            if orderType == '灌装':
-                particles, fieldDict, bottleCounts = {}, {}, False
-                descriptions = params['description'].split(';')[:-1]
-                for field in apps.get_model('app', 'Bottle')._meta.fields:
-                    fieldDict[field.verbose_name] = field.name
-                for desc in descriptions:
-                    count = desc.split(',')[-1].split(':')[1]
-                    bottle = desc.split(',')[0].split(':')[1]
-                    try:
-                        occupyBot = Bottle.objects.filter(
-                            Q(color=bottle, order__status__name='已排产', order__orderType__name='灌装')).count()
-                    except:
-                        occupyBot = 0
-                    if Material.objects.filter(Q(name=bottle)).count()-occupyBot < int(count):
-                        res = 'err'
-                        bottleCounts = True
-                        info = '%s不足，无法排产' % bottle
-                    if not bottleCounts:
-                        for particle in desc.split(',')[1:-1]:
-                            particleKey = particle.split(':')[0]
-                            particles[particleKey] = Sum(
-                                'bottles__%s' % fieldDict[particleKey])
-                        particleCounts = Order.objects.filter(key=pk).annotate(
-                            **particles).values(*particles.keys())
-                        for parti in particleCounts[0].keys():
-                            try:
-                                occupyPar = Order.objects.filter(Q(status__name='已排产', order__orderType__name='灌装')).annotate(counts=Sum(
-                                    'bottles__%s' % fieldDict[parti])).values('counts')[0]['counts']
-                            except:
-                                occupyPar = 0
-                            if Material.objects.filter(Q(name=parti)).count()-occupyPar < particleCounts[0][parti]:
-                                res = 'err'
-                                info = '%s不足，无法排产' % parti
-            if orderType == '机加':
-                for desc in params['description'].split(';')[:-1]:
-                    product = desc.split('x')[0]
-                    count = int(desc.split('x')[1])
-                    if count > StorePosition.objects.filter(Q(description=product, status='4')).count():
-                        res = 'err'
-                        info = '%s仓位不足，无法排产' % product
-                    else:
-                        boms = BOMContent.objects.filter(
-                            Q(bom__product__name=product)).values_list('material', flat=True)
-                        for material in boms:
-                            if count > StorePosition.objects.filter(Q(description=material.split('/')[0], status='3')).count():
-                                res = 'err'
-                                info = '%s不足，无法排产' % material.split('/')[0]
-            if orderType == '电子装配':
-                eaOutPosition, eaInPosition = {}, {}
-                for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
-                    eaOutPosition[pro.name] = StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name)).count()
-                    eaInPosition[pro.name] = StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).count()
-                descriptions = params['description']
-                materialStr, materialDict, bed = '', {}, False
-                for desc in descriptions.split(';')[:-1]:
-                    product = desc.split('x')[0]
-                    productCount = desc.split('x')[1]
-                    bom = BOM.objects.get(Q(product__name=product))
-                    matStr = map(lambda obj: obj.material, bom.contents.all())
-                    materialStr = materialStr + ','.join(list(matStr))+','
-                    if eaOutPosition[product] < int(productCount):
-                        bed = True
-                        res = 'err'
-                        info = '%s原料底座不足，无法排产' % product
-                    if eaInPosition[product] < int(productCount):
-                        bed = True
-                        res = 'err'
-                        info = '%s成品仓位不足，无法排产' % product
-                if not bed:
-                    for material in list(set(materialStr.split(',')))[1:]:
-                        materialKey = material.split('/')[0]
-                        materialDict[materialKey] = 0
-                    # print(materialDict)
-                    for desc in descriptions.split(';')[:-1]:
-                        count = desc.split('x')[1]
-                        product = desc.split('x')[0]
-                        bom = BOM.objects.get(Q(product__name=product))
-                        for mat in bom.contents.all():
-                            counts = mat.counts*int(count)
-                            matKey = mat.material.split('/')[0]
-                            materialDict[matKey] = materialDict[matKey] + counts
-                    for mat in list(set(materialStr.split(',')))[1:]:
-                        if Material.objects.filter(Q(name=mat.split('/')[0], size__icontains=mat.split('/')[1])).count() < materialDict[mat.split('/')[0]]:
+            products = order.products.all().values_list('name', flat=True).distinct()
+            for product in products:
+                count = order.products.all().filter(Q(name=product)).count()
+                if count > StorePosition.objects.filter(Q(description=product, status='4')).count():
+                    res = 'err'
+                    info = '%s仓位不足，无法排产' % product
+                else:
+                    for bom in BOMContent.objects.filter(Q(bom__product__name=product)):
+                        if count*bom.counts > StorePosition.objects.filter(Q(description=bom.material.split('/')[0], status='3')).count():
                             res = 'err'
-                            info = '%s不足，无法排产' % mat
-            else:
-                pass
+                            info = '%s不足，无法排产' % bom.material.split('/')[0]
         else:
             res = 'err'
             info = '产线或工艺不符，无法排产'
@@ -297,96 +220,30 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=True)
     def scheduling(self, request, pk=None):
-        params = request.data
-        order = Order.objects.get(key=pk)
-        orderDesc = params['description'].split(';')
+        order = self.get_object()
         order.status = OrderStatus.objects.get(name='已排产')
         order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         order.save()
-        if params['orderType'] == '灌装':
-            for description in orderDesc:
-                if len(description.split(',')) > 1:
-                    for i in range(int(description.split(',')[-1].split(':')[1])):
-                        workOrder = WorkOrder()
-                        workOrder.order = order
-                        time.sleep(0.1)
-                        workOrder.number = str(time.time()*1000000)[:15]
-                        workOrder.status = WorkOrderStatus.objects.get(
-                            name='等待中')
-                        workOrder.description = ','.join(
-                            description.split(',')[:4])
-                        workOrder.save()
-
-                        product = Product()
-                        product.name = workOrder.description.split(',')[
-                            0].split(':')[1]
-                        product.number = str(time.time()*1000000)
-                        product.workOrder = workOrder
-                        product.prodType = ProductType.objects.get(Q(orderType=order.orderType, name__icontains=workOrder.description.split(',')[
-                            0].split(':')[1]))
-                        product.save()
-
-                        standard = ProductStandard()
-                        standard.name = '重量'
-                        standard.expectValue = str(np.sum(list(map(lambda obj: int(obj)*5, re.findall(
-                            '\d+', description[:description.index('份数')])))))
-                        standard.product = product
-                        standard.save()
-        else:
-            for description in orderDesc:
-                if len(description.split('x')) > 1:
-                    for i in range(int(description.split('x')[1])):
-                        workOrder = WorkOrder()
-                        workOrder.order = order
-                        time.sleep(0.1)
-                        workOrder.number = str(time.time()*1000000)[:15]
-                        workOrder.status = WorkOrderStatus.objects.get(
-                            name='等待中')
-                        workOrder.description = description.split('x')[0]
-                        workOrder.save()
-        return Response('ok')
-
-    @action(methods=['post'], detail=False)
-    def products(self, request):
-        params = request.data
-        workOrder = WorkOrder.objects.filter(
-            Q(order__key=params['key']))
-        outPos = list(StorePosition.objects.filter(
-            Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='混合库', status='3', description__icontains='原料') | Q(store__productLine__lineType__name=params['orderType'], store__storeType__name='原料库', status='3')))[:workOrder.count()]
-        outPosition = list(map(lambda obj: obj.number.split('-')[0], outPos))
-
-        eaOutPosition, eaInPosition = {}, {}
-
-        for i in range(workOrder.count()):
-            if params['orderType'] == '电子装配':
-                for pro in ProductType.objects.filter(Q(orderType__name='电子装配')):
-                    eaOutPosition[pro.name] = StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='3', description__icontains='%s原料' % pro.name))
-                    eaInPosition[pro.name] = StorePosition.objects.filter(
-                        Q(store__productLine__lineType__name='电子装配', store__storeType__name='混合库', status='4', description__icontains='%s成品' % pro.name)).order_by('-key')
-
+        products = order.products.all()
+        processes = order.route.processes.all()
+        for product, index in zip(products, range(products.count())):
+            for process in processes:
+                workOrder = WorkOrder()
+                workOrder.order = order
+                workOrder.product = product
+                workOrder.status = WorkOrderStatus.objects.get(name='等待中')
+                workOrder.number = str(time.time()*1000000)[:16]
+                workOrder.description = '%s:%s' % (process.name, product.name)
+                workOrder.save()
             inPosition = StorePosition.objects.filter(
-                Q(description=workOrder[i].description, status='4'))[0]
+                Q(description=product, status='4'))[0]
             inPosition.status = '3'
+            inPosition.content = '%s-%s' % (product.batch, str(index+1))
             inPosition.save()
-
-            product = Product()
-            product.name = workOrder[i].description
-            product.number = str(time.time()*1000000)
-            product.workOrder = workOrder[i]
-            """ product.outPos = outPosition[i] if params['orderType'] == '机加' else eaOutPosition[workOrder[i].description][0].number.split(
-                '-')[0] """
+            product.number = '%s-%s' % (product.batch, str(index+1))
             product.inPos = inPosition.number.split('-')[0]
-            product.prodType = ProductType.objects.get(
-                Q(orderType__name=params['orderType'], name__icontains=workOrder[i].description.split('x')[0]))
             product.save()
-
-            standard = ProductStandard()
-            standard.name = '外观'
-            standard.expectValue = '合格'
-            standard.product = product
-            standard.save()
         return Response('ok')
 
     @action(methods=['get'], detail=False)
@@ -406,8 +263,8 @@ class ProductLineViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'产线名称': obj.name, '产线类别': obj.lineType, '隶属车间': obj.workShop.name,
-                                 '产线编号': obj.number, '产线状态': obj.state.name, '产线描述': obj.description}, ProductLine.objects.all())
+        excel = map(lambda obj: {'产线名称': obj.name, '产线类别': obj.lineType.name, '隶属车间': obj.workShop.name,
+                                 '产线编号': obj.number, '产线描述': obj.description}, ProductLine.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -485,9 +342,9 @@ class DeviceBaseViewSet(viewsets.ModelViewSet):
     serializer_class = DeviceBaseSerializer
 
 
-class BottleStateViewSet(viewsets.ModelViewSet):
-    queryset = BottleState.objects.all()
-    serializer_class = BottleStateSerializer
+class ProductStateViewSet(viewsets.ModelViewSet):
+    queryset = ProductState.objects.all()
+    serializer_class = ProductStateSerializer
 
 
 class WorkOrderViewSet(viewsets.ModelViewSet):
@@ -670,7 +527,8 @@ class DeviceViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '所在工序': obj.process.name if obj.process else '', '设备编号': obj.number, '设备厂家': obj.factory,'设备型号':obj.typeNumber}, Device.objects.all())
+        excel = map(lambda obj: {'设备名称': obj.name, '设备类型': obj.deviceType.name, '所在工序': obj.process.name if obj.process else '',
+                                 '设备编号': obj.number, '设备厂家': obj.factory, '设备型号': obj.typeNumber}, Device.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -822,6 +680,24 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('-key')
     serializer_class = ProductSerializer
 
+    def create(self, request, *args, **kwargs):
+        params = request.data
+        for i in range(params['counts']):
+            product = Product()
+            product.name = params['product']
+            product.order = Order.objects.get(key=params['key'])
+            product.batch = datetime.datetime.now().strftime('%Y-%m-%d')
+            product.prodType = ProductType.objects.get(name=params['product'])
+            product.save()
+
+            standard = ProductStandard()
+            standard.name = '外观'
+            standard.expectValue = '合格'
+            standard.product = product
+            standard.save()
+
+        return Response('ok')
+
     @action(methods=['get'], detail=False)
     def powerChart(self, request):
         params = request.query_params
@@ -844,21 +720,21 @@ class ProductViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.query_params
         if params['model'] == 'product':
-            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime('%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': selectPosition(
-                obj), '历史状态': ('->').join(list(map(lambda event: '%s/%s' % (event.time.strftime('%Y-%m-%d %H:%M:%S'), event.title), Event.objects.filter(Q(workOrder=obj.workOrder)))))}, Product.objects.all())
+            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
+                '%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': selectPosition(obj)}, Product.objects.all())
         if params['model'] == 'unqualified':
-            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应工单': obj.workOrder.number, '成品批次': obj.batch.strftime(
+            excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
                 '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='不合格'))
         if params['model'] == 'qualityChart':
-            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
-                'batch'), 合格数=Count('result', filter=Q(result='合格')), 不合格数=Count('result', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
+            excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
+                'batch'), 合格数=Count('number', filter=Q(result='合格')), 不合格数=Count('number', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
         if params['model'] == 'materialChart':
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
                     'color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cap', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues'))
             if params['orderType'] == '机加':
-                excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '原料棒': obj['count']}, Product.objects.filter(Q(workOrder__order__orderType__name='机加')).values('batch').annotate(
-                    count=Count('batch', filter=Q(workOrder__status__name='已完成'))).values('batch', 'count'))
+                excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '原料棒': obj['count']}, Product.objects.filter(Q(order__orderType__name='机加')).values('batch').annotate(
+                    count=Count('batch', filter=Q(status__name='入库'))).values('batch', 'count'))
             if params['orderType'] == '电子装配':
                 materialDict = {}
                 materials = Material.objects.filter(
@@ -869,8 +745,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
                     'batch').annotate(**materialDict).values('batch', *materialDict.keys())
         if params['model'] == 'powerChart':
-            excel = Product.objects.filter(Q(workOrder__order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
-                workOrder__status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(workOrder__status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
+            excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
+                status__name='入库')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='入库'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
