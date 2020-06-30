@@ -133,8 +133,8 @@ def wincc4(request):
         product = workOrder.product
         product.status = ProductState.objects.get(name='入库')
         product.save()
-        order=product.order
-        order.status=OrderStatus.objects.get(name='已完成')
+        order = product.order
+        order.status = OrderStatus.objects.get(name='已完成')
         order.save()
     workOrder.save()
 
@@ -482,8 +482,12 @@ def queryPallet(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
-        pos.status='3'
+    """ for pos in StorePosition.objects.filter(Q(store__storeType__name='成品库')):
+        pos.status='4'
+        pos.save()
+
+    for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
+        pos.status = '3'
         pos.save() """
 
     params = json.loads(request.body)
@@ -498,7 +502,7 @@ def querySelect(request):
         }
     if params['model'] == 'bom':
         selectList = {
-            'materials': list(set(map(lambda obj: obj.name+'/'+obj.size, Material.objects.filter(Q(store__productLine__lineType__name=params['order']))))),
+            'materials': list(set(map(lambda obj: obj.name+'/'+obj.size, Material.objects.all()))),
             'product': list(map(lambda obj: obj.name, ProductType.objects.filter(Q(bom=None)))),
         }
     if params['model'] == 'processRoute':

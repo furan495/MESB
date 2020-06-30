@@ -204,12 +204,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             products = order.products.all().values_list('name', flat=True).distinct()
             for product in products:
                 count = order.products.all().filter(Q(name=product)).count()
-                if count > StorePosition.objects.filter(Q(description=product, status='4')).count():
+                if count > StorePosition.objects.filter(Q(description__icontains=product, status='4')).count():
                     res = 'err'
                     info = '%s仓位不足，无法排产' % product
                 else:
                     for bom in BOMContent.objects.filter(Q(bom__product__name=product)):
-                        if count*bom.counts > StorePosition.objects.filter(Q(description=bom.material.split('/')[0], status='3')).count():
+                        if count*bom.counts > StorePosition.objects.filter(Q(description__icontains=bom.material.split('/')[0], status='3')).count():
                             res = 'err'
                             info = '%s不足，无法排产' % bom.material.split('/')[0]
         else:
@@ -234,13 +234,15 @@ class OrderViewSet(viewsets.ModelViewSet):
                 workOrder.product = product
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.number = str(time.time()*1000000)[:16]
-                workOrder.description = '%s:%s' % (process.name, product.name)
+                workOrder.description = process.name
                 workOrder.save()
+
             inPosition = StorePosition.objects.filter(
-                Q(description=product, status='4'))[0]
+                Q(description__icontains=product, store__storeType__name='成品库', status='4') | Q(description__icontains=product, store__storeType__name='混合库', status='4'))[0]
             inPosition.status = '3'
             inPosition.content = '%s-%s' % (product.batch, str(index+1))
             inPosition.save()
+
             product.number = '%s-%s' % (product.batch, str(index+1))
             product.inPos = inPosition.number.split('-')[0]
             product.save()
@@ -591,7 +593,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Material.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name', 'store__productLine__lineType__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     def update(self, request, *args, **kwargs):
@@ -637,7 +639,7 @@ class ToolViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Tool.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name', 'store__productLine__lineType__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     def update(self, request, *args, **kwargs):

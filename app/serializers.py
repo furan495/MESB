@@ -243,7 +243,6 @@ class BottleSerializer(serializers.ModelSerializer):
 
 class WorkOrderSerializer(serializers.ModelSerializer):
     orderNum = serializers.SerializerMethodField()
-    orderType = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     startTime = serializers.SerializerMethodField()
     endTime = serializers.SerializerMethodField()
@@ -267,12 +266,9 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     def get_orderNum(self, obj):
         return obj.order.number
 
-    def get_orderType(self, obj):
-        return obj.order.orderType.name
-
     class Meta:
         model = WorkOrder
-        fields = ('key', 'orderNum', 'bottle', 'number', 'createTime', 'orderType',
+        fields = ('key', 'orderNum', 'bottle', 'number', 'createTime',
                   'startTime', 'endTime', 'status', 'description', 'events')
 
 
@@ -285,14 +281,7 @@ class StoreSerializer(serializers.ModelSerializer):
     productLine = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='目标产线', slug_field='name', required=False)
     positions = serializers.SerializerMethodField()
-    lineType = serializers.SerializerMethodField()
     dimensions = serializers.SerializerMethodField()
-
-    def get_lineType(self, obj):
-        try:
-            return obj.productLine.lineType.name
-        except:
-            return ''
 
     def get_dimensions(self, obj):
         try:
@@ -307,7 +296,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Store
-        fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine', 'lineType',
+        fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine',
                   'number', 'storeType', 'positions', 'dimensions')
 
 
@@ -339,20 +328,8 @@ class PalletSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
-    orderType = serializers.SerializerMethodField()
     palletStr = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
-    prodType = serializers.SlugRelatedField(
-        queryset=ProductType.objects.all(), label='产品类型', slug_field='name', required=False)
-
-    order = serializers.SlugRelatedField(
-        queryset=Order.objects.all(), label='对应订单', slug_field='number', required=False)
-
-    def get_orderType(self, obj):
-        try:
-            return obj.workOrder.order.orderType.name
-        except:
-            return ''
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
@@ -405,7 +382,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'order', 'pallet', 'orderType', 'inPos', 'outPos',
+        fields = ('key', 'prodType', 'order', 'pallet', 'inPos', 'outPos',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
 
 
@@ -421,7 +398,6 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 class ProductStandardSerializer(serializers.ModelSerializer):
     batch = serializers.SerializerMethodField()
-    orderType = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
 
@@ -431,16 +407,9 @@ class ProductStandardSerializer(serializers.ModelSerializer):
         except:
             return ''
 
-    def get_orderType(self, obj):
-        try:
-            return obj.product.workOrder.order.orderType.name
-        except:
-            return None
-
     class Meta:
         model = ProductStandard
-        fields = ('key', 'product', 'name', 'batch', 'orderType',
-                  'expectValue', 'realValue', 'result')
+        fields = ('key', 'product', 'name', 'batch', 'expectValue', 'realValue', 'result')
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -489,7 +458,6 @@ class BOMContentSerializer(serializers.ModelSerializer):
 
 class BOMSerializer(serializers.ModelSerializer):
 
-    productType = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     contents = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
@@ -497,12 +465,6 @@ class BOMSerializer(serializers.ModelSerializer):
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
-
-    def get_productType(self, obj):
-        try:
-            return obj.product.orderType.name
-        except:
-            return ''
 
     def get_contents(self, obj):
         contentList = obj.contents.all()
@@ -513,5 +475,5 @@ class BOMSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BOM
-        fields = ('key', 'product', 'name', 'productType',
+        fields = ('key', 'product', 'name',
                   'contents', 'creator', 'createTime')
