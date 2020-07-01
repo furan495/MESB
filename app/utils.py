@@ -91,7 +91,7 @@ def qualityChart(orderType, start, stop, all):
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
-        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
+        start = '%s-%s-%s' % (str(year), str(month-1 if day<14 else month ), str(np.abs(day-14)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             if all:
                 badData.append(random.randint(10, 20))

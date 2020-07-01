@@ -598,7 +598,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         params = request.data
-        for i in range(params['count']):
+        for i in range(params['counts']):
             material = Material()
             material.name = params['name']
             material.size = params['size']

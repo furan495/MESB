@@ -616,7 +616,7 @@ def queryCharts(request):
         'batch', flat=True).distinct())
 
     if Product.objects.all().count() == 0:
-        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
+        start = '%s-%s-%s' % (str(year), str(month-1 if day<14 else month ), str(np.abs(day-14)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             goodRate.append([day+8*60*60*1000, round(random.random(), 2)])
             categories.append(time.strftime(
@@ -626,7 +626,7 @@ def queryCharts(request):
     )/(obj.workOrders.all().count()), 2)}, Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).distinct()))
 
     if Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).count() == 0:
-        for i in range(15):
+        for i in range(10):
             progress.append({'key': i, 'number': '产品%s' % (str(i+1)),
                              'progress': random.randint(0, 100)})
 
@@ -647,7 +647,9 @@ def queryCharts(request):
     power = {'target': target if target != 0 else 100, 'current': current if current != 0 else 0, 'good': good if good != 0 else 0,
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}
 
-    return JsonResponse({'progress': progress[-15:], 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
+    
+
+    return JsonResponse({'progress': progress, 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
 
 
 @csrf_exempt
