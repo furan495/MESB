@@ -41,7 +41,7 @@ def loopOrganization(organization):
 def positionSelect(obj, position):
     try:
         return Event.objects.get(workOrder__product=obj, title=position).time.strftime(
-            '%Y-%m-%d %H:%M:%S')
+            '%m-%d %H:%M:%S')
     except Exception as e:
         return ''
 

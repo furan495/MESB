@@ -511,6 +511,8 @@ def querySelect(request):
         }
     if params['model'] == 'store':
         selectList = {
+            'direction': ['行优先', '列优先'],
+            'origin': ['左上起点', '左下起点'],
             'workShop': list(map(lambda obj: obj.name, WorkShop.objects.all())),
             'storeType': list(map(lambda obj: obj.name, StoreType.objects.all())),
             'material': list(set(map(lambda obj: obj.name, Material.objects.all()))),
@@ -616,7 +618,8 @@ def queryCharts(request):
         'batch', flat=True).distinct())
 
     if Product.objects.all().count() == 0:
-        start = '%s-%s-%s' % (str(year), str(month-1 if day<14 else month ), str(np.abs(day-14)))
+        start = '%s-%s-%s' % (str(year), str(month-1 if day <
+                                             14 else month), str(np.abs(day-14)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             goodRate.append([day+8*60*60*1000, round(random.random(), 2)])
             categories.append(time.strftime(
@@ -646,8 +649,6 @@ def queryCharts(request):
 
     power = {'target': target if target != 0 else 100, 'current': current if current != 0 else 0, 'good': good if good != 0 else 0,
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}
-
-    
 
     return JsonResponse({'progress': progress, 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
 

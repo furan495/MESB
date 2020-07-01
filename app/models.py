@@ -400,6 +400,8 @@ class Store(models.Model):
         max_length=20, verbose_name='仓库编号', unique=True, blank=True, null=True)
     rows = models.IntegerField(verbose_name='仓库行数', blank=True, null=True)
     columns = models.IntegerField(verbose_name='仓库列数', blank=True, null=True)
+    origin = models.CharField(
+        max_length=20, verbose_name='原点位置', blank=True, null=True)
     direction = models.CharField(
         max_length=20, verbose_name='仓库排向', blank=True, null=True)
 

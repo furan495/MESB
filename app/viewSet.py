@@ -378,14 +378,18 @@ class StoreViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        storeType = request.data['storeType']
+        instance.positions.all().delete()
 
-        count = request.data['rows']*request.data['columns']
+        rows = request.data['rows']
+        columns = request.data['columns']
+        storeType = request.data['storeType']
+        counts = rows*columns
+
         if storeType == '电子装配':
             left = np.arange(
-                0, count/2).reshape(request.data['rows'], int(request.data['columns']/2))
+                0, counts/2).reshape(rows, int(columns/2))
             right = np.arange(
-                count/2, count).reshape(request.data['rows'], int(request.data['columns']/2))
+                counts/2, counts).reshape(rows, int(columns/2))
             matrix = np.hstack((left, right))
             for i in np.ravel(np.flip(matrix, axis=0)):
                 position = StorePosition()
@@ -395,7 +399,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 position.description = ''
                 position.save()
         else:
-            for i in range(count):
+            for i in range(counts):
                 position = StorePosition()
                 position.store = instance
                 position.number = '%s-%s' % (str(i+1), instance.key)
@@ -409,10 +413,26 @@ class StoreViewSet(viewsets.ModelViewSet):
                     pallet.number = str(i+1)
                     pallet.save()
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
+        if request.data['origin'] == '左上起点':
+            if request.data['direction'] == '行优先':
+                numbers = np.arange(1, counts+1)
+            else:
+                numbers = np.arange(
+                    1, counts+1).reshape(columns, rows).T
+            for pos, num in zip(instance.positions.all(),  np.ravel(numbers)):
+                pos.number = '%s-%s' % (num, instance.key)
+                pos.save()
+        if request.data['origin'] == '左下起点':
+            if request.data['direction'] == '行优先':
+                numberMatrix = np.arange(
+                    1, counts+1).reshape(rows, columns)
+            else:
+                numberMatrix = np.arange(
+                    1, counts+1).reshape(columns, rows).T
+            numberFlip = np.flip(numberMatrix, axis=0)
+            for pos, num in zip(instance.positions.all(), np.ravel(numberFlip)):
+                pos.number = '%s-%s' % (num, instance.key)
+                pos.save()
 
         return Response(serializer.data)
 
@@ -431,35 +451,6 @@ class StoreViewSet(viewsets.ModelViewSet):
                 pos = StorePosition.objects.get(key=key)
                 pos.description = params['product']
                 pos.save()
-        return Response('ok')
-
-    @action(methods=['put'], detail=True)
-    def rules(self, request, pk=None):
-        params = request.data
-        store = Store.objects.get(key=pk)
-        store.direction = params['direction']
-        store.save()
-        if params['rule'] == '左上起点':
-            if params['direction'] == '行优先':
-                numbers = np.arange(1, store.rows*store.columns+1)
-            else:
-                numbers = np.arange(
-                    1, store.rows*store.columns+1).reshape(store.columns, store.rows).T
-            for pos, num in zip(store.positions.all(),  np.ravel(numbers)):
-                pos.number = '%s-%s' % (num, pk)
-                pos.save()
-        if params['rule'] == '左下起点':
-            if params['direction'] == '行优先':
-                numberMatrix = np.arange(
-                    1, store.rows*store.columns+1).reshape(store.rows, store.columns)
-            else:
-                numberMatrix = np.arange(
-                    1, store.rows*store.columns+1).reshape(store.columns, store.rows).T
-            numberFlip = np.flip(numberMatrix, axis=0)
-            for pos, num in zip(store.positions.all(), np.ravel(numberFlip)):
-                pos.number = '%s-%s' % (num, pk)
-                pos.save()
-
         return Response('ok')
 
     @action(methods=['get'], detail=False)

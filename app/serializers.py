@@ -285,19 +285,19 @@ class StoreSerializer(serializers.ModelSerializer):
 
     def get_dimensions(self, obj):
         try:
-            return np.array(list(map(lambda obj: '#%s-%s-%s' % (obj.number.split('-')[0], obj.key, obj.description), obj.positions.all()))).reshape(obj.rows, obj.columns)
+            return np.array(list(map(lambda obj: '#%s-%s-%s-%s' % (obj.number.split('-')[0], obj.key, obj.description, obj.status), obj.positions.all()))).reshape(obj.rows, obj.columns)
         except:
             return []
 
     def get_positions(self, obj):
         if obj.productLine and obj.productLine.lineType.name == '灌装':
             return list(map(lambda obj: {'key': obj.key, 'rate': obj.rate*100, 'number': obj.number}, Pallet.objects.all()))
-        return list(map(lambda obj: {'key': obj.key, 'status': obj.status, 'description': obj.description}, obj.positions.all()))
+        return list(map(lambda obj: {'key': obj.key, 'status': obj.status, 'description': obj.description, 'number': obj.number.split('-')[0]}, obj.positions.all()))
 
     class Meta:
         model = Store
         fields = ('key', 'workShop', 'name', 'rows', 'columns', 'direction', 'productLine',
-                  'number', 'storeType', 'positions', 'dimensions')
+                  'number', 'storeType', 'positions', 'dimensions', 'origin')
 
 
 class StorePositionSerializer(serializers.ModelSerializer):
@@ -409,7 +409,8 @@ class ProductStandardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductStandard
-        fields = ('key', 'product', 'name', 'batch', 'expectValue', 'realValue', 'result')
+        fields = ('key', 'product', 'name', 'batch',
+                  'expectValue', 'realValue', 'result')
 
 
 class EventSerializer(serializers.ModelSerializer):
