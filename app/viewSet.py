@@ -367,7 +367,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all().order_by('-key')
+    queryset = Store.objects.all().order_by('-storeType')
     serializer_class = StoreSerializer
 
     def update(self, request, *args, **kwargs):
