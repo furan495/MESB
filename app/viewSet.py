@@ -343,6 +343,21 @@ class DeviceBaseViewSet(viewsets.ModelViewSet):
     queryset = DeviceBase.objects.all()
     serializer_class = DeviceBaseSerializer
 
+    def create(self, request, *args, **kwargs):
+        params = request.data
+        if 'typeNum' in params.keys():
+            devices = Device.objects.filter(
+                Q(typeNumber=params['typeNum'], deviceType__name=params['type']))
+        else:
+            devices = Device.objects.filter(Q(deviceType__name=params['type']))
+        for device in devices:
+            base = DeviceBase()
+            base.device = device
+            base.name = params['name']
+            base.value = params['value']
+            base.save()
+        return Response('ok')
+
 
 class ProductStateViewSet(viewsets.ModelViewSet):
     queryset = ProductState.objects.all()
@@ -517,6 +532,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
         device.save()
         return Response('ok')
 
+    @action(methods=['post'], detail=False)
+    def numbers(self, request):
+        params = request.data
+        return Response(Device.objects.filter(Q(deviceType__name=params['typeNumber'])).values_list('typeNumber', flat=True).distinct())
+
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
@@ -571,6 +591,9 @@ class DocTypeViewSet(viewsets.ModelViewSet):
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects.all()
     serializer_class = DeviceTypeSerializer
+
+    def list(self, request, *args, **kwargs):
+        return Response(DeviceType.objects.all().values_list('name', flat=True))
 
 
 class DeviceStateViewSet(viewsets.ModelViewSet):

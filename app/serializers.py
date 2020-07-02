@@ -91,7 +91,7 @@ class DeviceStateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceState
-        fields = ('key', 'device', 'name', 'time')
+        fields = ('key', 'device', 'name', 'value', 'time')
 
 
 class ProcessParamsSerializer(serializers.ModelSerializer):
@@ -107,16 +107,19 @@ class ProcessParamsSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     process = serializers.SerializerMethodField()
-    state = serializers.SerializerMethodField()
+    states = serializers.SerializerMethodField()
     bases = serializers.SerializerMethodField()
     deviceType = serializers.SlugRelatedField(
         queryset=DeviceType.objects.all(), label='设备类型', slug_field='name', required=False)
 
-    def get_state(self, obj):
+    def get_states(self, obj):
+        stateList = []
+        for state in obj.states.all().values_list('name', flat=True).distinct():
+            stateList.append(obj.states.all().filter(Q(name=state)).last())
         try:
-            return obj.states.last().name
+            return list(map(lambda obj: {'key': obj.key, 'name': obj.name, 'value': obj.value}, stateList))
         except:
-            return ''
+            return []
 
     def get_bases(self, obj):
         try:
@@ -132,7 +135,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('key', 'deviceType', 'process', 'name', 'state',
+        fields = ('key', 'deviceType', 'process', 'name', 'states',
                   'number', 'factory', 'typeNumber', 'bases')
 
 
