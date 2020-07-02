@@ -69,14 +69,13 @@ def powerChart(orderType, start, stop, all):
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
-        start = '%s-%s' % (str(month), str(day-7))
         for i in range(7):
-            data.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month), str(day-i))], 'series': [
+            data.append({'container': 'container%s' % (str(i+1)), 'categories': ['%s-%s' % (str(month if day > 7 else month-1), str(day-i if day > 7 else 30-i))], 'series': [
                 {'data': [{'y': random.randint(50, 100), 'target': random.randint(100, 150)}]}]})
     else:
         for category in list(Product.objects.all().values_list('batch', flat=True).distinct()):
             data.append({'container': category, 'categories': [category], 'series': [
-                {'data': [{'y': Product.objects.filter(Q(batch=category, status__name='入库')).count(), 'target': Product.objects.filter(Q(batch=category)).count()}]}]})
+                {'data': [{'y': Product.objects.filter(Q(batch=category, status__name='入库', order__createTime__gte=start, order__createTime__lte=stop)).count(), 'target': Product.objects.filter(Q(batch=category, order__createTime__gte=start, order__createTime__lte=stop)).count()}]}]})
 
     return data
 
@@ -91,7 +90,8 @@ def qualityChart(orderType, start, stop, all):
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
-        start = '%s-%s-%s' % (str(year), str(month-1 if day<14 else month ), str(np.abs(day-14)))
+        start = '%s-%s-%s' % (str(year), str(month-1 if day <
+                                             14 else month), str(np.abs(day-14)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             if all:
                 badData.append(random.randint(10, 20))
@@ -189,7 +189,7 @@ def materialChart(orderType, start, stop, all):
                 map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
             })
 
-    products = Product.objects.filter(Q(order__orderType__name=orderType,order__createTime__gte=start,order__createTime__lte=stop)).values('batch').annotate(
+    products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(
         count=Count('batch', filter=Q(workOrders__status__name='已完成'))).values('batch', 'count')
 
     for batch in list(Product.objects.all().values_list('batch', flat=True).distinct()):
@@ -202,7 +202,8 @@ def materialChart(orderType, start, stop, all):
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
-        start = '%s-%s-%s' % (str(year), str(month), str(day-14))
+        start = '%s-%s-%s' % (str(year), str(month-1 if day <
+                                             14 else month), str(np.abs(day-14)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
             one.append([day, random.randint(1, 100)])
             two.append([day, random.randint(1, 100)])
@@ -256,7 +257,8 @@ def selectPosition(product):
                                     product.pallet.position.number.split('-')[0], '9')
     else:
         try:
-            pos = StorePosition.objects.filter(Q(content=product.number)).last()
+            pos = StorePosition.objects.filter(
+                Q(content=product.number)).last()
             res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         except Exception as e:
             res = ''

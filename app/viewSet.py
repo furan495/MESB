@@ -367,7 +367,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all().order_by('-storeType')
+    queryset = Store.objects.all().order_by('-key')
     serializer_class = StoreSerializer
 
     def update(self, request, *args, **kwargs):
@@ -635,7 +635,7 @@ class ToolViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         params = request.data
-        for i in range(params['count']):
+        for i in range(params['counts']):
             tool = Tool()
             tool.name = params['name']
             tool.size = params['size']

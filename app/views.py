@@ -134,8 +134,9 @@ def wincc4(request):
         product.status = ProductState.objects.get(name='入库')
         product.save()
         order = product.order
-        order.status = OrderStatus.objects.get(name='已完成')
-        order.save()
+        if order.products.all().filter(Q(status=None)).count() != 0:
+            order.status = OrderStatus.objects.get(name='已完成')
+            order.save()
     workOrder.save()
 
     event = Event()
