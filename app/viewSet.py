@@ -532,10 +532,10 @@ class DeviceViewSet(viewsets.ModelViewSet):
         device.save()
         return Response('ok')
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['get'], detail=False)
     def numbers(self, request):
-        params = request.data
-        return Response(Device.objects.filter(Q(deviceType__name=params['typeNumber'])).values_list('typeNumber', flat=True).distinct())
+        params = request.query_params
+        return Response(Device.objects.filter(Q(deviceType__name=params['number'])).values_list('typeNumber', flat=True).distinct())
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -748,22 +748,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             if params['orderType'] == '灌装':
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
                     'color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cap', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues'))
-            if params['orderType'] == '机加':
-                kward = {}
-                for bom in BOMContent.objects.filter(Q(bom__product__orderType__name=params['orderType'])):
-                    kward[bom.material] = Count('batch', filter=Q(
-                        prodType__bom__contents__material=bom.material))*bom.counts
-                excel = Product.objects.filter(
-                    Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), **kward).values('日期', *kward.keys())
-            if params['orderType'] == '电子装配':
-                materialDict = {}
-                materials = Material.objects.filter(
-                    Q(store__storeType__name='混合库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
-                for material in materials:
-                    materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
-                        prodType__bom__contents__material=material['name']+'/'+material['size']))
-                excel = Product.objects.filter(Q(workOrder__order__orderType__name='电子装配')).values(
-                    'batch').annotate(**materialDict).values('batch', *materialDict.keys())
+            kward = {}
+            for bom in BOMContent.objects.filter(Q(bom__product__orderType__name=params['orderType'])):
+                kward[bom.material] = Count('batch', filter=Q(
+                    prodType__bom__contents__material=bom.material))*bom.counts
+            excel = Product.objects.filter(
+                Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), **kward).values('日期', *kward.keys())
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
                 status__name='入库')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='入库'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')

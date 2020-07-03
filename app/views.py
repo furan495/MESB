@@ -626,7 +626,7 @@ def queryCharts(request):
             categories.append(time.strftime(
                 '%m-%d', time.localtime(day/1000)))
 
-    progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number, 'progress': round(obj.workOrders.all().filter(Q(status__name='已完成')).count(
+    progress = list(map(lambda obj: {'key': obj.key, 'number': obj.number[-4:], 'progress': round(obj.workOrders.all().filter(Q(status__name='已完成')).count(
     )/(obj.workOrders.all().count()), 2)}, Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).distinct()))
 
     if Product.objects.filter(Q(workOrders__status__name='加工中') | Q(workOrders__status__name='等待中')).count() == 0:

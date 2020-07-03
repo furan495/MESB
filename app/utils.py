@@ -197,7 +197,7 @@ def materialChart(orderType, start, stop, all):
             data.append({'name': bom.material.split('/')[0], 'type': 'line', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), bom.counts*obj['count']], products))})
 
-    if len(data) == 0:
+    if len(data[0]['data']) == 0:
         one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
