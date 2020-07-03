@@ -262,10 +262,12 @@ class Bottle(models.Model):
 
 class Process(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
-    skip = models.BooleanField(verbose_name='可否跳过', default=False)
     route = models.ForeignKey(ProcessRoute, related_name='processes',
-                              on_delete=models.CASCADE, verbose_name='隶属工艺')
-    name = models.CharField(max_length=20, verbose_name='工序名称')
+                              on_delete=models.CASCADE, verbose_name='隶属工艺', blank=True, null=True)
+    name = models.CharField(
+        max_length=20, verbose_name='工序名称', blank=True, null=True)
+    number = models.CharField(
+        max_length=20, verbose_name='工序编号', blank=True, null=True)
     path = models.CharField(
         max_length=200, verbose_name='工序图片', blank=True, null=True)
 
@@ -549,6 +551,8 @@ class WorkOrder(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     order = models.ForeignKey(Order, related_name='workOrders',
                               on_delete=models.CASCADE, verbose_name='隶属订单')
+    process = models.ForeignKey(Process, related_name='processes',
+                                on_delete=models.CASCADE, verbose_name='目标工位', blank=True, null=True)
     product = models.ForeignKey(Product, related_name='workOrders',
                                 on_delete=models.CASCADE, verbose_name='隶属产品', blank=True, null=True)
     status = models.ForeignKey(WorkOrderStatus, related_name='status',

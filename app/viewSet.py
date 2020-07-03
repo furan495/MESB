@@ -232,6 +232,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 workOrder = WorkOrder()
                 workOrder.order = order
                 workOrder.product = product
+                workOrder.process = process
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.number = str(time.time()*1000000)[:16]
                 workOrder.description = process.name
@@ -244,6 +245,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition.save()
 
             product.number = str(time.time()*1000000)[:16]
+            product.status = ProductState.objects.get(name='已排产')
             product.inPos = inPosition.number.split('-')[0]
             product.save()
         return Response('ok')

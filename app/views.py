@@ -510,6 +510,10 @@ def querySelect(request):
         selectList = {
             'routeType': list(map(lambda obj: obj.name, OrderType.objects.all())),
         }
+    if params['model'] == 'processe':
+        selectList = {
+            'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
+        }
     if params['model'] == 'store':
         selectList = {
             'direction': ['行优先', '列优先'],

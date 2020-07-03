@@ -224,13 +224,16 @@ class ProcessSerializer(serializers.ModelSerializer):
 
     params = serializers.SerializerMethodField()
     devices = serializers.StringRelatedField(many=True, read_only=True)
+    route = serializers.SlugRelatedField(
+        queryset=ProcessRoute.objects.all(), label='隶属工艺', slug_field='name', required=False)
 
     def get_params(self, obj):
         return list(map(lambda param: param.name+':'+str(param.value)+param.unit, obj.params.all()))
 
     class Meta:
         model = Process
-        fields = ('key', 'route', 'name', 'skip', 'path', 'devices', 'params')
+        fields = ('key', 'route', 'name', 'path',
+                  'devices', 'number', 'params')
 
 
 class BottleSerializer(serializers.ModelSerializer):
@@ -337,7 +340,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
-    
+
     def get_order(self, obj):
         return obj.order.number
 
