@@ -333,9 +333,13 @@ class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
     palletStr = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
+    order = serializers.SerializerMethodField()
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
+    
+    def get_order(self, obj):
+        return obj.order.number
 
     def get_stateList(self, obj):
         states = []

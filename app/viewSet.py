@@ -243,7 +243,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition.content = '%s-%s' % (product.batch, str(index+1))
             inPosition.save()
 
-            product.number = '%s-%s' % (product.batch, str(index+1))
+            product.number = str(time.time()*1000000)[:16]
             product.inPos = inPosition.number.split('-')[0]
             product.save()
         return Response('ok')
@@ -749,8 +749,12 @@ class ProductViewSet(viewsets.ModelViewSet):
                 excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
                     'color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cap', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues'))
             if params['orderType'] == '机加':
-                excel = map(lambda obj: {'日期': obj['batch'].strftime('%Y-%m-%d'), '原料棒': obj['count']}, Product.objects.filter(Q(order__orderType__name='机加')).values('batch').annotate(
-                    count=Count('batch', filter=Q(status__name='入库'))).values('batch', 'count'))
+                kward = {}
+                for bom in BOMContent.objects.filter(Q(bom__product__orderType__name=params['orderType'])):
+                    kward[bom.material] = Count('batch', filter=Q(
+                        prodType__bom__contents__material=bom.material))*bom.counts
+                excel = Product.objects.filter(
+                    Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), **kward).values('日期', *kward.keys())
             if params['orderType'] == '电子装配':
                 materialDict = {}
                 materials = Material.objects.filter(

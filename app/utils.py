@@ -4,7 +4,7 @@ import random
 import datetime
 import numpy as np
 from app.models import *
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db.models.aggregates import Count, Sum
 
 
