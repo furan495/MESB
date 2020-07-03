@@ -32,7 +32,7 @@ def loopOrganization(organization):
         if Organization.objects.filter(Q(parent=name)).count() != 0:
             return loopOrganization(name)
         else:
-            return list(map(lambda obj: {'key': obj.key, 'title': obj.name, }, User.objects.filter(Q(department__name=name))))
+            return list(map(lambda obj: {'key': name+'-'+str(obj.key), 'title': obj.name, }, User.objects.filter(Q(department__name=name))))
     data = list(map(lambda obj: {
                 'key': obj.key, 'title': obj.name, 'parent': obj.parent, 'children': renderChildren(obj.name)}, Organization.objects.filter(Q(parent=organization))))
     return data

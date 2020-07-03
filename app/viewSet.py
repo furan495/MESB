@@ -501,25 +501,6 @@ class OperateViewSet(viewsets.ModelViewSet):
             obj.time)], Operate.objects.filter(Q(name='登录系统')).order_by('time'))
         return Response([{'type': 'areaspline', 'name': '日访问量', 'data': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))}])
 
-    @action(methods=['get'], detail=False)
-    def operateChart(self, request):
-        dikaer, series = [], []
-        for x, y in product(range(10), range(10)):
-            dikaer.append([x, y])
-        data = [{'data': series}]
-        operateList = Operate.objects.all().order_by('-time')
-        for i in range(len(operateList) if len(operateList) <= 100 else 100):
-            ope = {}
-            ope['value'] = 1
-            ope['x'] = dikaer[i][0]
-            ope['y'] = dikaer[i][1]
-            ope['operate'] = operateList[i].name
-            ope['operator'] = operateList[i].operator
-            ope['time'] = operateList[i].time.strftime('%Y-%m-%d %H:%M:%S')
-            series.append(ope)
-
-        return Response(data)
-
 
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')
@@ -695,6 +676,9 @@ class PalletViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('-key')
     serializer_class = ProductSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['number']
 
     def create(self, request, *args, **kwargs):
         params = request.data

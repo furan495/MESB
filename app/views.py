@@ -534,11 +534,6 @@ def querySelect(request):
         selectList = {
             'docType': list(map(lambda obj: [obj.name, obj.key], DocType.objects.all()))
         }
-    if params['model'] == 'productStandard':
-        selectList = {
-            'result': ['合格', '不合格'],
-            'product': list(map(lambda obj: obj.name, Product.objects.filter(Q(result=1, workOrder__order__orderType__name=params['order'])))),
-        }
     if params['model'] == 'material':
         selectList = {
             'mateType': ['自制', '外采'],
