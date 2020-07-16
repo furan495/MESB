@@ -46,6 +46,16 @@ def positionSelect(obj, position):
         return ''
 
 
+def dataSource(obj):
+    data = {'key': obj.key, 'name': obj.name}
+    for process in Process.objects.all():
+        data['start%s' % process.number] = positionSelect(
+            obj, '%s开始' % process.name)
+        data['stop%s' % process.number] = positionSelect(
+            obj, '%s结束' % process.name)
+    return data
+
+
 def dataX(date):
     try:
         return int(time.mktime(date.timetuple())) * 1000+8*60*60*1000
@@ -197,7 +207,7 @@ def materialChart(orderType, start, stop, all):
             data.append({'name': bom.material.split('/')[0], 'type': 'line', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), bom.counts*obj['count']], products))})
 
-    if len(data[0]['data']) == 0:
+    if len(data) == 0:
         one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month

@@ -49,6 +49,43 @@ def recordWeight(request):
 
 
 @csrf_exempt
+def wincc6(request):
+
+    position = {'startA': '数控铣开始', 'stopA': '数控铣结束', 'startB': '数控车开始', 'stopB': '数控车结束',
+                'startC': '包装开始', 'stopC': '包装结束', 'startD': '入库开始', 'stopD': '入库结束'}
+
+    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
+        'str'].split(',') """
+
+    params = str(request.body, 'utf8').split(',')
+
+    workOrder = WorkOrder.objects.get(Q(number=params[1]))
+    if 'start' in params[0]:
+        workOrder.startTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+    if 'stop' in params[0]:
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+    if params[0] == 'stopJ':
+        product = workOrder.product
+        product.status = ProductState.objects.get(name='入库')
+        product.save()
+        order = product.order
+        if order.products.all().filter(Q(status=None)).count() != 0:
+            order.status = OrderStatus.objects.get(name='已完成')
+            order.save()
+    workOrder.save()
+
+    event = Event()
+    event.workOrder = workOrder
+    event.source = position[params[0]][:-2]
+    event.title = position[params[0]]
+    event.save()
+
+    return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
 def wincc5(request):
     position = {'startB': '出库开始', 'stopB': '出库结束', 'startC': '数控车开始', 'stopC': '数控车结束',
                 'startD': '加工中心开始', 'stopD': '加工中心结束', 'startE': '检测包装开始', 'stopE': '检测包装结束', 'check': '质检', 'startF': '入库开始', 'stopF': '入库结束'}
@@ -572,30 +609,10 @@ def queryProducing(request):
         errTime = 0
         if os.path.exists(BASE_DIR+'/listen.txt'):
             os.remove(BASE_DIR+'/listen.txt')
-
-    """ workOrderList = WorkOrder.objects.filter(
-        Q(status__name='等待中', order__orderType__name=params['order']) | Q(status__name='加工中', order__orderType__name=params['order'])) """
-
+            
     productList = Product.objects.filter(
         Q(workOrders__status__name='等待中', order__orderType__name=params['order']) | Q(workOrders__status__name='加工中', order__orderType__name=params['order'])).distinct()
-
-    if params['order'] == '灌装':
-        producing = list(
-            map(lambda obj: {'key': obj.key, 'bottle': obj.bottle, 'order': obj.order.number, 'LP': positionSelect(obj, '理瓶'), 'SLA': positionSelect(obj, '数粒A'), 'SLB': positionSelect(obj, '数粒B'), 'SLC': positionSelect(obj, '数粒C'), 'XG': positionSelect(obj, '旋盖'), 'CZ': positionSelect(obj, '称重'), 'TB': positionSelect(obj, '贴签'), 'HJ': positionSelect(obj, '桁架')}, workOrderList))
-    if params['order'] == '机加':
-        """
-            河北
-            producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number, 'startB': positionSelect(obj, 'B模块出库'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'stopB': positionSelect(obj, 'B模块入库'), 'description': obj.description,'order': obj.order.number}, workOrderList)) """
-        # 湖北
-        producing = list(
-            map(lambda obj: {'key': obj.key, 'name': obj.name, 'startA': positionSelect(obj, '3D视觉分拣模块开始'), 'startB': positionSelect(obj, '数控车模块开始'), 'startC': positionSelect(obj, '加工中心模块开始'), 'startD': positionSelect(obj, '精雕机模块开始'), 'startF': positionSelect(obj, '清洗打标模块开始'), 'startG': positionSelect(obj, '焊接模块开始'), 'startH': positionSelect(obj, '打磨模块开始'), 'startF2': positionSelect(obj, '二次清洗开始'), 'startI': positionSelect(obj, '装配模块开始'), 'startJ': positionSelect(obj, '成品库模块开始'), }, productList))
-        """ producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number,  'startB': positionSelect(obj, '出库开始'), 'startC': positionSelect(obj, '数控车开始'), 'startD': positionSelect(obj, '加工中心开始'), 'startE': positionSelect(obj, '检测包装开始'), 'startF': positionSelect(obj, '入库开始'), 'stopB': positionSelect(obj, '出库结束'), 'stopC': positionSelect(obj, '数控车结束'), 'stopD': positionSelect(obj, '加工中心结束'), 'stopE': positionSelect(obj, '检测包装结束'), 'stopF': positionSelect(obj, '入库结束')}, workOrderList)) """
-    if params['order'] == '电子装配':
-        producing = list(
-            map(lambda obj: {'key': obj.key, 'workOrder': obj.number+'/'+obj.description, 'startB': positionSelect(obj, 'B模块出库开始'), 'stopB': positionSelect(obj, 'B模块出库结束'), 'startC': positionSelect(obj, 'C模块加工开始'), 'stopC': positionSelect(obj, 'C模块加工结束'), 'startD': positionSelect(obj, 'D模块加工开始'), 'stopD': positionSelect(obj, 'D模块加工结束'), 'startE': positionSelect(obj, 'E模块加工开始'), 'stopE': positionSelect(obj, 'E模块加工结束'), 'startF': positionSelect(obj, 'F模块加工开始'), 'stopF': positionSelect(obj, 'F模块加工结束'), 'startInB': positionSelect(obj, 'B模块入库开始'), 'stopInB': positionSelect(obj, 'B模块入库结束')}, workOrderList))
-
+    producing = list(map(lambda obj: dataSource(obj), productList))
     return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
 
 
@@ -665,3 +682,9 @@ def deviceState(request):
     state.name = name
     state.save()
     return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def test(request):
+    print(request.body)
+    return JsonResponse({'ok': 'ok'})

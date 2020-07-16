@@ -335,6 +335,16 @@ class ProcessViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name', 'route']
 
+    @action(methods=['get'], detail=False)
+    def column(self, request):
+        column = [{'title': '产品名称','dataIndex': 'name', 'inputType': 'text', 'editable': True, 'ellipsis': True}]
+        for process in Process.objects.all():
+            column.append({'title': '%s开始' % process.name,
+                           'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
+            column.append({'title': '%s结束' % process.name,
+                           'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
+        return Response(column)
+
 
 class BottleViewSet(viewsets.ModelViewSet):
     queryset = Bottle.objects.all()
