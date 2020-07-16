@@ -382,8 +382,7 @@ class ProductSerializer(serializers.ModelSerializer):
                                         obj.pallet.position.number.split('-')[0], '9')
         else:
             try:
-                pos = StorePosition.objects.filter(
-                    Q(content=obj.number)).last()
+                pos = StorePosition.objects.get(Q(content='%s-%s'%(obj.name,obj.number)))
                 res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
             except Exception as e:
                 print(e)

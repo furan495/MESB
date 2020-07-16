@@ -200,11 +200,11 @@ def materialChart(orderType, start, stop, all):
             })
 
     products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(
-        count=Count('batch', filter=Q(workOrders__status__name='已完成'))).values('batch', 'count')
+        count=Count('batch', filter=Q(status__name='入库'))).values('batch', 'count')
 
     for batch in list(Product.objects.all().values_list('batch', flat=True).distinct()):
         for bom in BOMContent.objects.all():
-            data.append({'name': bom.material.split('/')[0], 'type': 'line', 'data': list(
+            data.append({'name': bom.material.split('/')[0], 'type': 'column', 'data': list(
                 map(lambda obj: [dataX(obj['batch']), bom.counts*obj['count']], products))})
 
     if len(data) == 0:
@@ -267,8 +267,7 @@ def selectPosition(product):
                                     product.pallet.position.number.split('-')[0], '9')
     else:
         try:
-            pos = StorePosition.objects.filter(
-                Q(content=product.number)).last()
+            pos = StorePosition.objects.get(Q(content='%s-%s'%(obj.name,obj.number)))
             res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         except Exception as e:
             res = ''

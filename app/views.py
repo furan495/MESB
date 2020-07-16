@@ -49,241 +49,23 @@ def recordWeight(request):
 
 
 @csrf_exempt
-def wincc6(request):
-
-    position = {'startA': '数控铣开始', 'stopA': '数控铣结束', 'startB': '数控车开始', 'stopB': '数控车结束',
-                'startC': '包装开始', 'stopC': '包装结束', 'startD': '入库开始', 'stopD': '入库结束'}
-
-    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',') """
-
-    params = str(request.body, 'utf8').split(',')
-
-    workOrder = WorkOrder.objects.get(Q(number=params[1]))
-    if 'start' in params[0]:
-        workOrder.startTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-    if 'stop' in params[0]:
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-    if params[0] == 'stopJ':
-        product = workOrder.product
-        product.status = ProductState.objects.get(name='入库')
-        product.save()
-        order = product.order
-        if order.products.all().filter(Q(status=None)).count() != 0:
-            order.status = OrderStatus.objects.get(name='已完成')
-            order.save()
-    workOrder.save()
-
-    event = Event()
-    event.workOrder = workOrder
-    event.source = position[params[0]][:-2]
-    event.title = position[params[0]]
-    event.save()
-
-    return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
-def wincc5(request):
-    position = {'startB': '出库开始', 'stopB': '出库结束', 'startC': '数控车开始', 'stopC': '数控车结束',
-                'startD': '加工中心开始', 'stopD': '加工中心结束', 'startE': '检测包装开始', 'stopE': '检测包装结束', 'check': '质检', 'startF': '入库开始', 'stopF': '入库结束'}
-    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',') """
-
-    params = str(request.body, 'utf8').split(',')
-
-    print(params)
-
-    store = Store.objects.get(
-        Q(storeType__name='成品库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
-
-    if position[params[0]] == '出库开始':
-        workOrder = WorkOrder.objects.get(Q(number=params[1]))
-        workOrder.startTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-        workOrder.save()
-        order = workOrder.order
-        order.status = OrderStatus.objects.get(Q(name='加工中'))
-        order.save()
-    if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(Q(number=params[1]))
-        product = workOrder.workOrder
-        standard = ProductStandard.objects.get(
-            Q(name='外观', product=product))
-        if random.random() > 0.5:
-            product.result = '合格'
-            standard.result = '合格'
-            standard.realValue = '合格'
-        else:
-            product.result = '不合格'
-            product.reason = '检测不合格'
-            standard.result = '不合格'
-            standard.realValue = '不合格'
-        product.save()
-        standard.save()
-    if position[params[0]] == '入库结束':
-        workOrder = WorkOrder.objects.get(Q(number=params[1]))
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-        workOrder.save()
-
-        product = workOrder.workOrder
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.content = '%s-%s' % (product.name, workOrder.number)
-        storePosition.save()
-
-        order = workOrder.order
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
-            order.status = OrderStatus.objects.get(Q(name='已完成'))
-            order.save()
-
-    event = Event()
-    event.workOrder = WorkOrder.objects.get(Q(number=params[1]))
-    event.source = position[params[0]]
-    event.title = position[params[0]]
-    event.save()
-    return JsonResponse({'res': 'res'})
-
-
-@csrf_exempt
-def wincc4(request):
-
-    position = {'startA': '3D视觉分拣模块开始', 'stopA': '3D视觉分拣模块结束', 'startB': '数控车模块开始', 'stopB': '数控车模块结束', 'startC': '加工中心模块开始', 'stopC': '加工中心模块结束', 'startD': '精雕机模块开始', 'stopD': '精雕机模块结束', 'startF': '清洗打标模块开始', 'stopF': '清洗打标模块结束',
-                'startG': '焊接模块开始', 'stopG': '焊接模块结束', 'startH': '打磨模块开始', 'stopH': '打磨模块结束', 'startF2': '二次清洗开始', 'stopF2': '二次清洗结束', 'startI': '装配模块开始', 'stopI': '装配模块结束', 'check': '质检', 'startJ': '成品库模块开始', 'stopJ': '成品库模块结束'}
-
-    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',') """
-
-    params = str(request.body, 'utf8').split(',')
-
-    workOrder = WorkOrder.objects.get(Q(number=params[1]))
-    if 'start' in params[0]:
-        workOrder.startTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-    if 'stop' in params[0]:
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-    if params[0] == 'stopJ':
-        product = workOrder.product
-        product.status = ProductState.objects.get(name='入库')
-        product.save()
-        order = product.order
-        if order.products.all().filter(Q(status=None)).count() != 0:
-            order.status = OrderStatus.objects.get(name='已完成')
-            order.save()
-    workOrder.save()
-
-    event = Event()
-    event.workOrder = workOrder
-    event.source = position[params[0]][:-2]
-    event.title = position[params[0]]
-    event.save()
-
-    return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
-def wincc3(request):
-
-    position = {'startB': 'B模块出库开始', 'stopB': 'B模块出库结束', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
-                'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'startE': 'E模块加工开始', 'stopE': 'E模块加工结束',
-                'startF': 'F模块加工开始', 'stopF': 'F模块加工结束', 'startInB': 'B模块入库开始', 'stopInB': 'B模块入库结束', 'check': '质检', 'error': '失败'}
-    """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
-        'str'].split(',') """
-
-    params = str(request.body, 'utf8').split(',')
-
-    print(params)
-
-    store = Store.objects.get(
-        Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
-
-    if position[params[0]] == 'B模块出库开始':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        workOrder.startTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-        workOrder.save()
-        order = workOrder.order
-        order.status = OrderStatus.objects.get(Q(name='加工中'))
-        order.save()
-    if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        product = workOrder.workOrder
-        standard = ProductStandard.objects.get(
-            Q(name='外观', product=product))
-        if random.random() > 0.5:
-            product.result = '合格'
-            standard.result = '合格'
-            standard.realValue = '合格'
-        else:
-            product.result = '不合格'
-            product.reason = '检测不合格'
-            standard.result = '不合格'
-            standard.realValue = '不合格'
-        product.save()
-        standard.save()
-    if position[params[0]] == '失败':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        workOrder.status = WorkOrderStatus.objects.get(name='失败')
-        workOrder.save()
-    if position[params[0]] == 'B模块入库结束':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-        workOrder.save()
-        product = workOrder.workOrder
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.save()
-        order = workOrder.order
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
-            order.status = OrderStatus.objects.get(Q(name='已完成'))
-            order.save()
-
-    event = Event()
-    event.workOrder = WorkOrder.objects.get(
-        Q(number=params[1], order__number=params[2]))
-    event.source = position[params[0]]
-    event.title = position[params[0]]
-    event.save()
-    return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
 def wincc2(request):
-    position = {'startB': 'B模块出库', 'startC': 'C模块加工开始', 'stopC': 'C模块加工结束',
-                'startD': 'D模块加工开始', 'stopD': 'D模块加工结束', 'stopB': 'B模块入库', 'check': '质检', 'error': '失败'}
     """ params = json.loads(str(request.body, 'utf8').replace('\'', '\"'))[
         'str'].split(',') """
 
     params = str(request.body, 'utf8').split(',')
 
-    print(params)
-
-    store = Store.objects.get(
-        Q(storeType__name='混合库', productLine=WorkOrder.objects.get(number=params[1]).order.line))
-
-    if position[params[0]] == 'B模块出库':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
+    workOrder = WorkOrder.objects.get(Q(number=params[1]))
+    if 'start' in params[0]:
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = WorkOrderStatus.objects.get(name='加工中')
-        workOrder.save()
-        order = workOrder.order
-        order.status = OrderStatus.objects.get(Q(name='加工中'))
-        order.save()
-        Material.objects.filter(Q(store=store))[0].delete()
-    if position[params[0]] == '质检':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        product = workOrder.workOrder
+    if 'stop' in params[0]:
+        workOrder.endTime = datetime.datetime.now()
+        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+        
+    if params[0] == 'check':
+        workOrder = WorkOrder.objects.get(Q(number=params[1]))
+        product = workOrder.product
         standard = ProductStandard.objects.get(
             Q(name='外观', product=product))
         if random.random() > 0.5:
@@ -297,35 +79,28 @@ def wincc2(request):
             standard.realValue = '不合格'
         product.save()
         standard.save()
-    if position[params[0]] == '失败':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        workOrder.status = WorkOrderStatus.objects.get(name='失败')
-        workOrder.save()
-    if position[params[0]] == 'B模块入库':
-        workOrder = WorkOrder.objects.get(
-            Q(number=params[1], order__number=params[2]))
-        workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
-        workOrder.save()
-        product = workOrder.workOrder
 
-        storePosition = StorePosition.objects.get(
-            Q(number='%s-%s' % (product.inPos, store.key)))
-        storePosition.save()
-
-        order = workOrder.order
-        if WorkOrder.objects.filter(Q(status__name='加工中', order=order)).count() == 0:
-            order.status = OrderStatus.objects.get(Q(name='已完成'))
+    if params[0] == 'stop%s' % Process.objects.all().last().number:
+        product = workOrder.product
+        product.status = ProductState.objects.get(name='入库')
+        product.save()
+        order = product.order
+        if order.products.all().filter(Q(status=None)).count() != 0:
+            order.status = OrderStatus.objects.get(name='已完成')
             order.save()
+    workOrder.save()
 
-    event = Event()
-    event.workOrder = WorkOrder.objects.get(
-        Q(number=params[1], order__number=params[2]))
-    event.source = position[params[0]]
-    event.title = position[params[0]]
-    event.save()
-    return JsonResponse({'res': 'res'})
+    try:
+        event = Event()
+        event.workOrder = workOrder
+        event.source = Process.objects.get(number=params[0][-1]).name
+        event.title = '%s%s' % (Process.objects.get(
+            number=params[0][-1]).name, '开始' if params[0][:-1] == 'start' else '结束')
+        event.save()
+    except:
+        print('跳过质检')
+
+    return JsonResponse({'ok': 'ok'})
 
 
 @csrf_exempt
@@ -388,22 +163,6 @@ def wincc(request):
     except Exception as e:
         print(e, '这里有问题')
 
-    eventList = list(map(lambda obj: obj.source,
-                         Event.objects.filter(Q(bottle=params[1], workOrder__order__number=params[3], workOrder__status__name='加工中'))))
-    try:
-        route = Order.objects.get(number=params[3]).route
-        processList = list(
-            map(lambda obj: obj['text'], json.loads(route.data)['nodeDataArray']))
-        if len(eventList) == 0 or processList[:len(eventList)] != eventList:
-            workOrder = WorkOrder.objects.get(
-                Q(bottle=params[1], order=Order.objects.get(number=params[3])))
-            workOrder.status = WorkOrderStatus.objects.get(name='失败')
-            workOrder.endTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            workOrder.save()
-            with open(BASE_DIR+'/listen.txt', 'w') as f:
-                f.write('工单号:%s-瓶号:%s' % (workOrder.number, workOrder.bottle))
-    except Exception as e:
-        print(e, '这里有问题222')
     return JsonResponse({'res': 'res'})
 
 
@@ -594,26 +353,13 @@ def querySelect(request):
     return JsonResponse({'res': selectList})
 
 
-errTime = 0
 @csrf_exempt
 def queryProducing(request):
-    global errTime
-    info = ''
     params = json.loads(request.body)
-    if os.path.exists(BASE_DIR+'/listen.txt'):
-        errTime = errTime+1
-        with open(BASE_DIR+'/listen.txt') as f:
-            info = f.read()
-
-    if errTime == 3:
-        errTime = 0
-        if os.path.exists(BASE_DIR+'/listen.txt'):
-            os.remove(BASE_DIR+'/listen.txt')
-            
     productList = Product.objects.filter(
         Q(workOrders__status__name='等待中', order__orderType__name=params['order']) | Q(workOrders__status__name='加工中', order__orderType__name=params['order'])).distinct()
     producing = list(map(lambda obj: dataSource(obj), productList))
-    return JsonResponse({'producing': producing, 'res': os.path.exists(BASE_DIR+'/listen.txt'), 'info': info})
+    return JsonResponse({'producing': producing})
 
 
 @csrf_exempt
@@ -675,16 +421,10 @@ def deviceState(request):
     states = {'device': 3, 'user': 'x1,y1,z1',
               'tool': 'x2,y2,z2', 'angle': 'J1,J2,J3,J4,J5,J6'}
     name = ''
-    for key, val in zip(states.keys(), states.values()):
+    """ for key, val in zip(states.keys(), states.values()):
         name += '%s:%s;' % (key, val)
     state = DeviceState()
     state.device = Device.objects.get(key=states['device'])
     state.name = name
-    state.save()
+    state.save() """
     return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
-def test(request):
-    print(request.body)
-    return JsonResponse({'ok': 'ok'})
