@@ -93,12 +93,12 @@ def wincc2(request):
     try:
         event = Event()
         event.workOrder = workOrder
-        event.source = Process.objects.get(number=params[0][-1]).name
+        event.source = Process.objects.get(number=params[0].split('-')[1]).name
         event.title = '%s%s' % (Process.objects.get(
-            number=params[0][-1]).name, '开始' if params[0][:-1] == 'start' else '结束')
+            number=params[0].split('-')[1]).name, '开始' if params[0].split('-')[0] == 'start' else '结束')
         event.save()
-    except:
-        print('跳过质检')
+    except Exception as e:
+        print(e)
 
     return JsonResponse({'ok': 'ok'})
 

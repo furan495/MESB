@@ -183,21 +183,6 @@ def materialChart(orderType, start, stop, all):
             {'name': '蓝粒', 'type': 'column', 'data': blue},
             {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
         ]
-    if orderType == '电子装配':
-        materialDict = {}
-        materials = Material.objects.filter(
-            Q(store__storeType__name='原料库', store__productLine__lineType__name='电子装配')).values('name', 'size').distinct()
-        for material in materials:
-            materialDict[material['name']] = Sum('prodType__bom__contents__counts', filter=Q(
-                prodType__bom__contents__material=material['name']+'/'+material['size']))
-
-        results = Product.objects.filter(Q(workOrder__order__orderType__name=orderType, workOrder__order__createTime__gte=start, workOrder__order__createTime__lte=stop)).values(
-            'batch').annotate(**materialDict).values('batch', *materialDict.keys())
-
-        for mate in materials:
-            data.append({'name': mate['name'], 'type': 'column', 'data': list(
-                map(lambda obj: [dataX(obj['batch']), obj[mate['name']]], results))
-            })
 
     products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(
         count=Count('batch', filter=Q(status__name='入库'))).values('batch', 'count')

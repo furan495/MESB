@@ -242,7 +242,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.number = str(time.time()*1000000)[:16]
 
             inPosition = StorePosition.objects.filter(
-                Q(description__icontains=product, store__storeType__name='成品库', status='4') | Q(description__icontains=product, store__storeType__name='混合库', status='4'))[0]
+                Q(description__icontains=product, store__storeType__name='成品库', status='4') | Q(description__icontains=product, store__storeType__name='混合库', status='4')).first()
             inPosition.status = '3'
             inPosition.content = '%s-%s' % (product.name, product.number)
             inPosition.save()
