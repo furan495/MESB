@@ -92,7 +92,7 @@ def powerChart(orderType, start, stop, all):
 
 def qualityChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(good=Count(
-        'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='入库')), bad=Count('number', filter=Q(result='不合格'))).values('batch', 'good', 'bad', 'reals')
+        'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='入库')), bad=Count('number', filter=Q(result='不合格')))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:
@@ -136,61 +136,24 @@ def qualityChart(orderType, start, stop, all):
     return data
 
 
+def counts(bom, obj):
+    if bom.counts == None:
+        sums = ProductInfo.objects.filter(Q(product__batch=obj)).annotate(sum=Sum(
+            'value', filter=Q(name=bom.material.split('/')[1]))).values_list('sum', flat=True)
+        return sum(list(filter(lambda obj: obj != None, sums)))
+    else:
+        return Product.objects.filter(Q(batch=obj, status__name='入库')).count()
+
+
 def materialChart(orderType, start, stop, all):
     data = []
-    if orderType == '灌装':
-        redBottle = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['count']],
-                Bottle.objects.filter(Q(color='红瓶')).values('createTime').annotate(
-                count=Count('createTime')).values('createTime', 'count')
-                ))
-        greenBottle = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['count']],
-                Bottle.objects.filter(Q(color='绿瓶')).values('createTime').annotate(
-                count=Count('createTime')).values('createTime', 'count')
-                ))
-        blueBottle = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['count']],
-                Bottle.objects.filter(Q(color='蓝瓶')).values('createTime').annotate(
-                count=Count('createTime')).values('createTime', 'count')
-                ))
-        cap = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['count']],
-                Bottle.objects.all().values('createTime').annotate(
-                count=Count('createTime')).values('createTime', 'count')
-                ))
-        red = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['reds']],
-                Bottle.objects.all().values('createTime', 'order', 'red').annotate(
-                    reds=Sum('red')).values('createTime', 'reds').annotate(count=Count('red')).values('createTime', 'reds')
-                ))
-        green = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['greens']],
-                Bottle.objects.all().values('createTime', 'order', 'green').annotate(
-                    greens=Sum('green')).values('createTime', 'greens').annotate(count=Count('green')).values('createTime', 'greens')
-                ))
-        blue = list(
-            map(lambda obj: [dataX(obj['createTime']), obj['blues']],
-                Bottle.objects.all().values('createTime', 'order', 'blue').annotate(
-                    blues=Sum('blue')).values('createTime', 'blues').annotate(count=Count('blue')).values('createTime', 'blues')
-                ))
+    products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values_list(
+        'batch', flat=True).distinct()
+    for bom in BOMContent.objects.all():
+        data.append({'name': bom.material.split('/')[0], 'type': 'column', 'data': list(
+            map(lambda obj: [dataX(obj), counts(bom, obj)], products))})
 
-        data = [
-            {'name': '红粒', 'type': 'column', 'data': red},
-            {'name': '红瓶', 'type': 'column', 'data': redBottle},
-            {'name': '绿粒', 'type': 'column',  'data': green},
-            {'name': '绿瓶', 'type': 'column', 'data': greenBottle},
-            {'name': '蓝粒', 'type': 'column', 'data': blue},
-            {'name': '蓝瓶', 'type': 'column', 'data': blueBottle},
-        ]
-
-    products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(
-        count=Count('batch', filter=Q(status__name='入库'))).values('batch', 'count')
-
-    for batch in list(Product.objects.all().values_list('batch', flat=True).distinct()):
-        for bom in BOMContent.objects.all():
-            data.append({'name': bom.material.split('/')[0], 'type': 'column', 'data': list(
-                map(lambda obj: [dataX(obj['batch']), bom.counts*obj['count']], products))})
+    
 
     if len(data) == 0:
         one, two, three = [], [], []
@@ -214,8 +177,8 @@ def materialChart(orderType, start, stop, all):
 
 def storeAna(order):
     data = [
-        {'type': 'pie', 'innerSize': '60%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(Q(store__productLine__lineType__name=order)).values('name').annotate(
-            counts=Count('size')).values('name', 'counts')))}
+        {'type': 'pie', 'innerSize': '60%', 'name': '库存剩余', 'data': list(map(lambda obj: {'name': obj['name'], 'y':obj['counts']}, Material.objects.filter(
+            Q(store__productLine__lineType__name=order)).values('name').annotate(counts=Count('size'))))}
     ]
     return data
 
@@ -223,36 +186,11 @@ def storeAna(order):
 def selectPosition(product):
     res = ''
     if product.pallet:
-        if product.pallet.hole1Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '1')
-        if product.pallet.hole2Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '2')
-        if product.pallet.hole3Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '3')
-        if product.pallet.hole4Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '4')
-        if product.pallet.hole5Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '5')
-        if product.pallet.hole6Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '6')
-        if product.pallet.hole7Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '7')
-        if product.pallet.hole8Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '8')
-        if product.pallet.hole9Content == product.workOrder.bottle:
-            res = '%s-%s号位-%s号孔' % (product.pallet.position.store.name,
-                                    product.pallet.position.number.split('-')[0], '9')
+        return res
     else:
         try:
-            pos = StorePosition.objects.get(Q(content='%s-%s'%(obj.name,obj.number)))
+            pos = StorePosition.objects.get(
+                Q(content='%s-%s' % (obj.name, obj.number)))
             res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
         except Exception as e:
             res = ''

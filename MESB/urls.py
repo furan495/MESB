@@ -17,7 +17,6 @@ router.register(r'api/orders', viewSet.OrderViewSet)
 router.register(r'api/stores', viewSet.StoreViewSet)
 router.register(r'api/events', viewSet.EventViewSet)
 router.register(r'api/devices', viewSet.DeviceViewSet)
-router.register(r'api/bottles', viewSet.BottleViewSet)
 router.register(r'api/pallets', viewSet.PalletViewSet)
 router.register(r'api/operates', viewSet.OperateViewSet)
 router.register(r'api/products', viewSet.ProductViewSet)
@@ -36,6 +35,7 @@ router.register(r'api/deviceBases', viewSet.DeviceBaseViewSet)
 router.register(r'api/deviceStates', viewSet.DeviceStateViewSet)
 router.register(r'api/productLines', viewSet.ProductLineViewSet)
 router.register(r'api/productTypes', viewSet.ProductTypeViewSet)
+router.register(r'api/productInfos', viewSet.ProductInfoViewSet)
 router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
 router.register(r'api/productStates', viewSet.ProductStateViewSet)
 router.register(r'api/organizations', viewSet.OrganizationViewSet)
@@ -50,13 +50,9 @@ router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api/wincc/',  views.wincc),
-    url(r'^api/wincc2/',  views.wincc2),
     url(r'^api/deviceState/',  views.deviceState),
-    url(r'^api/queryPallet/',  views.queryPallet),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/querySelect/',  views.querySelect),
-    url(r'^api/recordWeight/',  views.recordWeight),
-    url(r'^api/storeOperate/',  views.storeOperate),
     url(r'^api/queryProducing/',  views.queryProducing),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
 ]

@@ -156,7 +156,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('key', 'role', 'department', 'authority', 'post',
-                  'name', 'gender', 'password', 'phone', 'avatar', 'status')
+                  'name', 'gender', 'password', 'phone', 'status')
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -236,17 +236,6 @@ class ProcessSerializer(serializers.ModelSerializer):
                   'devices', 'number', 'params')
 
 
-class BottleSerializer(serializers.ModelSerializer):
-
-    status = serializers.SlugRelatedField(
-        queryset=ProductState.objects.all(), label='瓶子状态', slug_field='name', required=False)
-
-    class Meta:
-        model = Bottle
-        fields = ('key', 'order', 'number', 'color',
-                  'red', 'green', 'blue', 'status')
-
-
 class WorkOrderSerializer(serializers.ModelSerializer):
     orderNum = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
@@ -270,11 +259,11 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         return ''
 
     def get_orderNum(self, obj):
-        return obj.order.number
+        return obj.product.order.number
 
     class Meta:
         model = WorkOrder
-        fields = ('key', 'orderNum', 'bottle', 'number', 'createTime',
+        fields = ('key', 'orderNum', 'number', 'createTime',
                   'startTime', 'endTime', 'status', 'description', 'events')
 
 
@@ -311,6 +300,13 @@ class StorePositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorePosition
         fields = ('key', 'store', 'number', 'status', 'description', 'content')
+
+
+class ProductInfoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProductInfo
+        fields = ('key', 'product', 'name', 'value')
 
 
 class OperateSerializer(serializers.ModelSerializer):
@@ -353,45 +349,18 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_palletStr(self, obj):
         res = ''
         if obj.pallet:
-            if obj.pallet.hole1Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '1')
-            if obj.pallet.hole2Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '2')
-            if obj.pallet.hole3Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '3')
-            if obj.pallet.hole4Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '4')
-            if obj.pallet.hole5Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '5')
-            if obj.pallet.hole6Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '6')
-            if obj.pallet.hole7Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '7')
-            if obj.pallet.hole8Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '8')
-            if obj.pallet.hole9Content == obj.workOrder.bottle:
-                res = '%s-%s号位-%s号孔' % (obj.pallet.position.store.name,
-                                        obj.pallet.position.number.split('-')[0], '9')
+            return res
         else:
             try:
                 pos = StorePosition.objects.get(Q(content='%s-%s'%(obj.name,obj.number)))
                 res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
-            except Exception as e:
-                print(e)
+            except:
                 res = ''
         return res
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'order', 'pallet', 'inPos', 'outPos',
+        fields = ('key', 'prodType', 'order', 'pallet', 'inPos', 'outPos','status',
                   'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
 
 
@@ -424,14 +393,9 @@ class ProductStandardSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
 
-    bottle = serializers.SerializerMethodField()
-
-    def get_bottle(self, obj):
-        return obj.workOrder.bottle
-
     class Meta:
         model = Event
-        fields = ('key', 'title', 'source', 'bottle', 'time', 'workOrder')
+        fields = ('key', 'title', 'source', 'time', 'workOrder')
 
 
 class MaterialSerializer(serializers.ModelSerializer):

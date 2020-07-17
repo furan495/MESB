@@ -8,7 +8,6 @@ from app.utils import *
 from app.models import *
 from django.apps import apps
 from functools import reduce
-from itertools import product
 from app.serializers import *
 from rest_framework import viewsets
 from django.db.models.functions import Cast
@@ -177,21 +176,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-key')
     serializer_class = OrderSerializer
 
-    @action(methods=['post'], detail=True)
-    def bottles(self, request, pk=None):
-        params = request.data
-        order = Order.objects.get(key=pk)
-        for count in range(params['counts']):
-            bottle = Bottle()
-            bottle.number = ''
-            bottle.order = order
-            bottle.red = params['red']
-            bottle.blue = params['blue']
-            bottle.green = params['green']
-            bottle.color = params['product']
-            bottle.save()
-        return Response('ok')
-
     @action(methods=['put'], detail=True)
     def preScheduling(self, request, pk=None):
         res, info = 'ok', ''
@@ -209,7 +193,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     info = '%s仓位不足，无法排产' % product
                 else:
                     for bom in BOMContent.objects.filter(Q(bom__product__name=product)):
-                        if count*bom.counts > StorePosition.objects.filter(Q(description__icontains=bom.material.split('/')[0], status='3')).count():
+                        counts = bom.counts if bom.counts else 1
+                        if count*counts > StorePosition.objects.filter(Q(description__icontains=bom.material.split('/')[0], status='3')).count():
                             res = 'err'
                             info = '%s不足，无法排产' % bom.material.split('/')[0]
         else:
@@ -238,7 +223,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 workOrder.description = process.name
                 workOrder.save()
 
-            
             product.number = str(time.time()*1000000)[:16]
 
             inPosition = StorePosition.objects.filter(
@@ -247,7 +231,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition.content = '%s-%s' % (product.name, product.number)
             inPosition.save()
 
-            product.status = ProductState.objects.get(name='已排产')
             product.inPos = inPosition.number.split('-')[0]
             product.save()
         return Response('ok')
@@ -339,18 +322,14 @@ class ProcessViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=False)
     def column(self, request):
-        column = [{'title': '产品名称','dataIndex': 'name', 'inputType': 'text', 'editable': True, 'ellipsis': True}]
+        column = [{'title': '产品名称', 'dataIndex': 'name',
+                   'inputType': 'text', 'editable': True, 'ellipsis': True}]
         for process in Process.objects.all():
             column.append({'title': '%s开始' % process.name,
                            'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
             column.append({'title': '%s结束' % process.name,
                            'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
         return Response(column)
-
-
-class BottleViewSet(viewsets.ModelViewSet):
-    queryset = Bottle.objects.all()
-    serializer_class = BottleSerializer
 
 
 class DeviceBaseViewSet(viewsets.ModelViewSet):
@@ -383,12 +362,12 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     serializer_class = WorkOrderSerializer
 
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['number', 'status', 'bottle']
+    filterset_fields = ['number', 'status']
 
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '工单瓶号': obj.bottle, '创建时间': obj.createTime.strftime(
+        excel = map(lambda obj: {'工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '创建时间': obj.createTime.strftime(
             '%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description}, WorkOrder.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
@@ -411,8 +390,9 @@ class StoreViewSet(viewsets.ModelViewSet):
 
         rows = request.data['rows']
         columns = request.data['columns']
-        storeType = request.data['storeType']
         counts = rows*columns
+        storeType = ProductLine.objects.get(
+            name=request.data['productLine']).lineType.name
 
         if storeType == '电子装配':
             left = np.arange(
@@ -696,19 +676,31 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         params = request.data
-        for i in range(params['counts']):
+        key = params['key']
+        counts = params['counts']
+        for filed in apps.get_model('app', 'Order')._meta.fields:
+            del params[filed.name]
+        del params['counts']
+        for i in range(counts):
             product = Product()
             product.name = params['product']
-            product.order = Order.objects.get(key=params['key'])
+            product.order = Order.objects.get(key=key)
             product.batch = datetime.datetime.now().strftime('%Y-%m-%d')
             product.prodType = ProductType.objects.get(name=params['product'])
             product.save()
 
             standard = ProductStandard()
-            standard.name = '外观'
-            standard.expectValue = '合格'
+            standard.name = '重量'
+            standard.expectValue = '50'
             standard.product = product
             standard.save()
+
+            for info in list(params.keys())[1:]:
+                pi = ProductInfo()
+                pi.product = product
+                pi.name = info
+                pi.value = params[info]
+                pi.save()
 
         return Response('ok')
 
@@ -743,15 +735,18 @@ class ProductViewSet(viewsets.ModelViewSet):
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
                 'batch'), 合格数=Count('number', filter=Q(result='合格')), 不合格数=Count('number', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
         if params['model'] == 'materialChart':
-            if params['orderType'] == '灌装':
-                excel = map(lambda obj: {'日期': obj['createTime'].strftime('%Y-%m-%d'), '瓶盖': obj['cap'], '红瓶': obj['rbot'], '绿瓶': obj['gbot'], '蓝瓶': obj['bbot'], '红粒': obj['reds'], '绿粒': obj['greens'], '蓝粒': obj['blues']}, Bottle.objects.all().values('createTime').annotate(cap=Count(
-                    'color'), rbot=Count('color', filter=Q(color='红瓶')), gbot=Count('color', filter=Q(color='绿瓶')), bbot=Count('color', filter=Q(color='蓝瓶')), reds=Sum('red'), greens=Sum('green'), blues=Sum('blue')).values('createTime', 'cap', 'rbot', 'gbot', 'bbot', 'reds', 'greens', 'blues'))
             kward = {}
-            for bom in BOMContent.objects.filter(Q(bom__product__orderType__name=params['orderType'])):
-                kward[bom.material] = Count('batch', filter=Q(
-                    prodType__bom__contents__material=bom.material))*bom.counts
+            boms = BOMContent.objects.filter(
+                Q(bom__product__orderType__name=params['orderType']))
+            for bom in boms:
+                if bom.counts:
+                    kward[bom.material] = Count('key', distinct=True)
+                else:
+                    kward[bom.material] = Sum('infos__value', filter=Q(
+                        infos__name=bom.material.split('/')[1]))
             excel = Product.objects.filter(
                 Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), **kward).values('日期', *kward.keys())
+
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
                 status__name='入库')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='入库'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
@@ -791,3 +786,8 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+
+class ProductInfoViewSet(viewsets.ModelViewSet):
+    queryset = ProductInfo.objects.all()
+    serializer_class = ProductInfoSerializer
