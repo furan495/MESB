@@ -215,7 +215,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         for product, index in zip(products, range(products.count())):
             for process in processes:
                 workOrder = WorkOrder()
-                workOrder.order = order
                 workOrder.product = product
                 workOrder.process = process
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
@@ -391,10 +390,10 @@ class StoreViewSet(viewsets.ModelViewSet):
         rows = request.data['rows']
         columns = request.data['columns']
         counts = rows*columns
-        storeType = ProductLine.objects.get(
+        lineType = ProductLine.objects.get(
             name=request.data['productLine']).lineType.name
 
-        if storeType == '电子装配':
+        if lineType == '电子装配':
             left = np.arange(
                 0, counts/2).reshape(rows, int(columns/2))
             right = np.arange(
@@ -415,7 +414,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 position.status = '4'
                 position.description = ''
                 position.save()
-                if storeType == '灌装':
+                if lineType == '灌装' and request.data['storeType']=='成品库':
                     pallet = Pallet()
                     pallet.position = StorePosition.objects.get(
                         number='%s-%s' % (str(i+1), instance.key))
@@ -687,6 +686,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             product.order = Order.objects.get(key=key)
             product.batch = datetime.datetime.now().strftime('%Y-%m-%d')
             product.prodType = ProductType.objects.get(name=params['product'])
+            
             product.save()
 
             standard = ProductStandard()
@@ -740,7 +740,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(bom__product__orderType__name=params['orderType']))
             for bom in boms:
                 if bom.counts:
-                    kward[bom.material] = Count('key', distinct=True)
+                    kward[bom.material] = Count('key', distinct=True)*bom.counts
                 else:
                     kward[bom.material] = Sum('infos__value', filter=Q(
                         infos__name=bom.material.split('/')[1]))

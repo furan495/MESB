@@ -104,7 +104,7 @@ def querySelect(request):
             'orderType': list(map(lambda obj: obj.name, OrderType.objects.all())),
             'route': list(map(lambda obj: obj.name, ProcessRoute.objects.filter(~Q(processes__key=None)))),
             'product': list(map(lambda obj: [obj.name, obj.orderType.name], ProductType.objects.filter(~Q(bom__contents__key=None)))),
-            'materials': list(map(lambda obj: {'name':obj['name'],'size':obj['size']}, Material.objects.all().values('name','size').distinct()))
+            'materials': list(map(lambda obj: {'name': obj['name'], 'size': obj['size']}, Material.objects.all().values('name', 'size').distinct()))
         }
     if params['model'] == 'bom':
         selectList = {
@@ -237,3 +237,20 @@ def deviceState(request):
     state.name = name
     state.save() """
     return JsonResponse({'res': 'ok'})
+
+
+@csrf_exempt
+def supOrder(request):
+    # params=json.loads(request.body)
+    params = {'pos': 'XG', 'number': '1595204249932098'}
+    product = WorkOrder.objects.get(number='1595204249932098').product
+    processes = Process.objects.all().values_list('number', flat=True)
+    for process in processes[:list(processes).index('XG')+1]:
+        workOrder = WorkOrder()
+        workOrder.product = product
+        workOrder.process = Process.objects.get(number=process)
+        workOrder.status = WorkOrderStatus.objects.get(name='补单')
+        workOrder.number = str(time.time()*1000000)[:16]
+        workOrder.description = Process.objects.get(number=process).name
+        workOrder.save()
+    return JsonResponse({'ok': 'ok'})

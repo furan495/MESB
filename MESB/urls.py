@@ -50,6 +50,7 @@ router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api/wincc/',  views.wincc),
+    url(r'^api/supOrder/',  views.supOrder),
     url(r'^api/deviceState/',  views.deviceState),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/querySelect/',  views.querySelect),

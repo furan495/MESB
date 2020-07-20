@@ -138,11 +138,11 @@ def qualityChart(orderType, start, stop, all):
 
 def counts(bom, obj):
     if bom.counts == None:
-        sums = ProductInfo.objects.filter(Q(product__batch=obj)).annotate(sum=Sum(
+        sums = ProductInfo.objects.filter(Q(product__batch=obj,product__status__name='入库')).annotate(sum=Sum(
             'value', filter=Q(name=bom.material.split('/')[1]))).values_list('sum', flat=True)
         return sum(list(filter(lambda obj: obj != None, sums)))
     else:
-        return Product.objects.filter(Q(batch=obj, status__name='入库')).count()
+        return Product.objects.filter(Q(batch=obj, status__name='入库')).count()*bom.counts
 
 
 def materialChart(orderType, start, stop, all):
@@ -153,9 +153,7 @@ def materialChart(orderType, start, stop, all):
         data.append({'name': bom.material.split('/')[0], 'type': 'column', 'data': list(
             map(lambda obj: [dataX(obj), counts(bom, obj)], products))})
 
-    
-
-    if len(data) == 0:
+    if len(data[0]['data']) == 0:
         one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
