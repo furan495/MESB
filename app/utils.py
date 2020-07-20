@@ -13,20 +13,6 @@ def addkey(obj, objs):
     return obj
 
 
-def updatePalletContent(hole, params, holeContent):
-    if hole:
-        return params if holeContent == None or holeContent == '' else holeContent
-    else:
-        return params if params != '0' else ''
-
-
-def updatePalletHole(hole, holeContent):
-    if hole:
-        return True
-    else:
-        return True if holeContent != '0' else False
-
-
 def loopOrganization(organization):
     def renderChildren(name):
         if Organization.objects.filter(Q(parent=name)).count() != 0:
@@ -136,39 +122,17 @@ def qualityChart(orderType, start, stop, all):
     return data
 
 
-def counts(bom, obj):
-    if bom.counts == None:
-        sums = ProductInfo.objects.filter(Q(product__batch=obj,product__status__name='入库')).annotate(sum=Sum(
-            'value', filter=Q(name=bom.material.split('/')[1]))).values_list('sum', flat=True)
-        return sum(list(filter(lambda obj: obj != None, sums)))
-    else:
-        return Product.objects.filter(Q(batch=obj, status__name='入库')).count()*bom.counts
-
-
 def materialChart(orderType, start, stop, all):
-    data = []
-    products = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values_list(
-        'batch', flat=True).distinct()
-    for bom in BOMContent.objects.all():
-        data.append({'name': bom.material.split('/')[0], 'type': 'column', 'data': list(
-            map(lambda obj: [dataX(obj), counts(bom, obj)], products))})
+    data, material = [], {}
+    querySet = ProductInfo.objects.filter(Q(product__order__orderType__name=orderType, product__order__createTime__gte=start,
+                                            product__order__createTime__lte=stop)).values('product__batch')
+    for mat in BOMContent.objects.all().values_list('material', flat=True).distinct():
+        material[mat.split('/')[0]] = Sum('value',filter=Q(name=mat))
 
-    if len(data[0]['data']) == 0:
-        one, two, three = [], [], []
-        year = datetime.datetime.now().year
-        month = datetime.datetime.now().month
-        day = datetime.datetime.now().day
-        start = '%s-%s-%s' % (str(year), str(month-1 if day <
-                                             14 else month), str(np.abs(day-14)))
-        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
-            one.append([day, random.randint(1, 100)])
-            two.append([day, random.randint(1, 100)])
-            three.append([day, random.randint(1, 100)])
-        data = [
-            {'name': '物料1', 'type': 'column', 'data': one},
-            {'name': '物料2', 'type': 'column', 'data': two},
-            {'name': '物料3', 'type': 'column',  'data': three},
-        ]
+    for query in querySet.annotate(**material):
+        for name in list(query.keys())[1:]:
+            data.append({'name': name, 'type': 'column', 'data': [
+                        [dataX(query['product__batch']), query[name]]]})
 
     return data
 

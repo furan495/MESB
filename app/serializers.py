@@ -241,6 +241,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     createTime = serializers.SerializerMethodField()
     startTime = serializers.SerializerMethodField()
     endTime = serializers.SerializerMethodField()
+    process = serializers.SerializerMethodField()
     events = serializers.StringRelatedField(many=True, read_only=True)
     status = serializers.SlugRelatedField(
         queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
@@ -260,11 +261,14 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     def get_orderNum(self, obj):
         return obj.product.order.number
+    
+    def get_process(self, obj):
+        return obj.process.name
 
     class Meta:
         model = WorkOrder
-        fields = ('key', 'orderNum', 'number', 'createTime',
-                  'startTime', 'endTime', 'status', 'description', 'events')
+        fields = ('key', 'orderNum', 'number', 'createTime','process',
+                  'startTime', 'endTime', 'status', 'events')
 
 
 class StoreSerializer(serializers.ModelSerializer):
@@ -280,14 +284,12 @@ class StoreSerializer(serializers.ModelSerializer):
 
     def get_dimensions(self, obj):
         try:
-            return np.array(list(map(lambda obj: '#%s-%s-%s-%s' % (obj.number.split('-')[0], obj.key, obj.description, obj.status), obj.positions.all()))).reshape(obj.rows, obj.columns)
+            return np.array(list(map(lambda obj: '#%s-%s-%s-%s' % (obj.number, obj.key, obj.description, obj.status), obj.positions.all()))).reshape(obj.rows, obj.columns)
         except:
             return []
 
     def get_positions(self, obj):
-        if obj.productLine and obj.productLine.lineType.name == '灌装':
-            return list(map(lambda obj: {'key': obj.key, 'rate': obj.rate*100, 'number': obj.number}, Pallet.objects.all()))
-        return list(map(lambda obj: {'key': obj.key, 'status': obj.status, 'description': obj.description, 'number': obj.number.split('-')[0]}, obj.positions.all()))
+        return list(map(lambda obj: {'key': obj.key, 'status': obj.status, 'description': obj.description, 'number': obj.number}, obj.positions.all()))
 
     class Meta:
         model = Store
@@ -309,6 +311,13 @@ class ProductInfoSerializer(serializers.ModelSerializer):
         fields = ('key', 'product', 'name', 'value')
 
 
+class PalletHoleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PalletHole
+        fields = ('key', 'pallet', 'number', 'status', 'content')
+
+
 class OperateSerializer(serializers.ModelSerializer):
 
     time = serializers.SerializerMethodField()
@@ -324,8 +333,7 @@ class OperateSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'position', 'number', 'rate',
-                  'hole1', 'hole2', 'hole3', 'hole4', 'hole5', 'hole6', 'hole7', 'hole8', 'hole9', 'hole1Content', 'hole2Content', 'hole3Content', 'hole4Content', 'hole5Content', 'hole6Content', 'hole7Content', 'hole8Content', 'hole9Content')
+        fields = ('key', 'position', 'number')
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -347,11 +355,14 @@ class ProductSerializer(serializers.ModelSerializer):
         return states
 
     def get_position(self, obj):
-        return obj.position.content
+        try:
+            return obj.position.content
+        except:
+            return ''        
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'order', 'inPos', 'outPos', 'status', 'position',
+        fields = ('key', 'prodType', 'order', 'outPos', 'status', 'position',
                   'name', 'number',  'batch', 'reason', 'result', 'stateList')
 
 

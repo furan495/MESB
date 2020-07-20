@@ -418,40 +418,29 @@ class Pallet(models.Model):
     position = models.ForeignKey(StorePosition, related_name='positions',
                                  on_delete=models.CASCADE, verbose_name='隶属仓位', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='托盘编号')
-    rate = models.FloatField(verbose_name='利用率', default=0.0)
-    hole1 = models.BooleanField(verbose_name='孔位1状态', default=False)
-    hole2 = models.BooleanField(verbose_name='孔位2状态', default=False)
-    hole3 = models.BooleanField(verbose_name='孔位3状态', default=False)
-    hole4 = models.BooleanField(verbose_name='孔位4状态', default=False)
-    hole5 = models.BooleanField(verbose_name='孔位5状态', default=False)
-    hole6 = models.BooleanField(verbose_name='孔位6状态', default=False)
-    hole7 = models.BooleanField(verbose_name='孔位7状态', default=False)
-    hole8 = models.BooleanField(verbose_name='孔位8状态', default=False)
-    hole9 = models.BooleanField(verbose_name='孔位9状态', default=False)
-    hole1Content = models.CharField(
-        max_length=200, verbose_name='孔位1内容', blank=True, null=True)
-    hole2Content = models.CharField(
-        max_length=200, verbose_name='孔位2内容', blank=True, null=True)
-    hole3Content = models.CharField(
-        max_length=200, verbose_name='孔位3内容', blank=True, null=True)
-    hole4Content = models.CharField(
-        max_length=200, verbose_name='孔位4内容', blank=True, null=True)
-    hole5Content = models.CharField(
-        max_length=200, verbose_name='孔位5内容', blank=True, null=True)
-    hole6Content = models.CharField(
-        max_length=200, verbose_name='孔位6内容', blank=True, null=True)
-    hole7Content = models.CharField(
-        max_length=200, verbose_name='孔位7内容', blank=True, null=True)
-    hole8Content = models.CharField(
-        max_length=200, verbose_name='孔位8内容', blank=True, null=True)
-    hole9Content = models.CharField(
-        max_length=200, verbose_name='孔位9内容', blank=True, null=True)
+
 
     def __str__(self):
         return self.number
 
     class Meta:
         verbose_name = '托盘'
+
+
+class PalletHole(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    pallet = models.ForeignKey(Pallet, related_name='holes',
+                               on_delete=models.CASCADE, verbose_name='隶属托盘')
+    number = models.CharField(max_length=20, verbose_name='孔号')
+    status = models.BooleanField(verbose_name='空位状态', default=False)
+    content = models.CharField(
+        max_length=20, verbose_name='存放物', blank=True, null=True)
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = '托盘孔'
 
 
 class Operate(models.Model):
@@ -496,7 +485,7 @@ class Product(models.Model):
     status = models.ForeignKey(ProductState, related_name='products',
                                on_delete=models.CASCADE, verbose_name='产品状态', blank=True, null=True)
     position = models.ForeignKey(StorePosition, related_name='products',
-                               on_delete=models.CASCADE, verbose_name='存放仓位', blank=True, null=True)
+                                 on_delete=models.CASCADE, verbose_name='存放仓位', blank=True, null=True)
     prodType = models.ForeignKey(ProductType, related_name='products',
                                  on_delete=models.CASCADE, verbose_name='产品类型', blank=True, null=True)
     name = models.CharField(max_length=200, verbose_name='产品名称')
@@ -510,8 +499,6 @@ class Product(models.Model):
         max_length=200, verbose_name='不合格原因', blank=True, null=True)
     outPos = models.CharField(
         max_length=20, verbose_name='出库位', blank=True, null=True)
-    inPos = models.CharField(
-        max_length=20, verbose_name='入库位', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -549,7 +536,6 @@ class WorkOrder(models.Model):
         verbose_name='开始时间', blank=True, null=True)
     endTime = models.DateTimeField(
         verbose_name='结束时间', blank=True, null=True)
-    description = models.CharField(max_length=200, verbose_name='工单描述')
 
     def __str__(self):
         return self.number

@@ -89,6 +89,10 @@ def wincc(request):
 def querySelect(request):
     """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status = '1'
+        pos.save() 
+
+    for pos in StorePosition.objects.filter(Q(store__storeType__name='成品库')):
+        pos.status = '2'
         pos.save() """
 
     params = json.loads(request.body)
@@ -247,6 +251,5 @@ def supOrder(request):
         workOrder.process = Process.objects.get(number=process)
         workOrder.status = WorkOrderStatus.objects.get(name='补单')
         workOrder.number = str(time.time()*1000000)[:16]
-        workOrder.description = Process.objects.get(number=process).name
         workOrder.save()
     return JsonResponse({'ok': 'ok'})

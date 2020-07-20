@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from app.utils import *
 from app.models import *
-from django.apps import apps
 from functools import reduce
 from app.serializers import *
 from rest_framework import viewsets
@@ -194,7 +193,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 else:
                     for bom in BOMContent.objects.filter(Q(bom__product__name=product)):
                         counts = bom.counts if bom.counts else 1
-                        if count*counts > StorePosition.objects.filter(Q(description__icontains=bom.material.split('/')[0], status='3')).count():
+                        if count*counts > StorePosition.objects.filter(Q(description__icontains=bom.material.split('/')[0], status='1')).count():
                             res = 'err'
                             info = '%s不足，无法排产' % bom.material.split('/')[0]
         else:
@@ -219,7 +218,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 workOrder.process = process
                 workOrder.status = WorkOrderStatus.objects.get(name='等待中')
                 workOrder.number = str(time.time()*1000000)[:16]
-                workOrder.description = process.name
                 workOrder.save()
 
             product.number = str(time.time()*1000000)[:16]
@@ -227,12 +225,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition = StorePosition.objects.filter(
                 Q(description__icontains=product, store__storeType__name='成品库', status='2') | Q(description__icontains=product, store__storeType__name='混合库', status='2')).first()
             inPosition.status = '1'
-            #inPosition.content = '%s-%s号位' % (inPosition.store.name, inPosition.number.split('-')[0])
-            inPosition.content = '%s-%s号位' % (inPosition.store.name, inPosition.number.split('-')[0])
+            inPosition.content = '%s-%s号位' % (
+                inPosition.store.name, inPosition.number)
             inPosition.save()
 
-            product.position=inPosition
-            product.inPos = inPosition.number.split('-')[0]
+            product.position = inPosition
             product.save()
         return Response('ok')
 
@@ -404,24 +401,30 @@ class StoreViewSet(viewsets.ModelViewSet):
             for i in np.ravel(np.flip(matrix, axis=0)):
                 position = StorePosition()
                 position.store = instance
-                position.number = '%s-%s' % (str(int(i)+1), instance.key)
-                position.status = '4'
+                position.number = str(int(i)+1)
+                position.status = '2'
                 position.description = ''
                 position.save()
         else:
             for i in range(counts):
                 position = StorePosition()
                 position.store = instance
-                position.number = '%s-%s' % (str(i+1), instance.key)
-                position.status = '4'
+                position.number = str(i+1)
+                position.status = '2'
                 position.description = ''
                 position.save()
-                if lineType == '灌装' and request.data['storeType']=='成品库':
+                if lineType == '灌装' and request.data['storeType'] == '成品库':
                     pallet = Pallet()
                     pallet.position = StorePosition.objects.get(
-                        number='%s-%s' % (str(i+1), instance.key))
+                        number=str(i+1), store=instance)
                     pallet.number = str(i+1)
                     pallet.save()
+
+                    for j in range(9):
+                        hole = PalletHole()
+                        hole.number = str(j+1)
+                        hole.pallet = pallet
+                        hole.save()
 
         if request.data['origin'] == '左上起点':
             if request.data['direction'] == '行优先':
@@ -430,7 +433,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 numbers = np.arange(
                     1, counts+1).reshape(columns, rows).T
             for pos, num in zip(instance.positions.all(),  np.ravel(numbers)):
-                pos.number = '%s-%s' % (num, instance.key)
+                pos.number = num
                 pos.save()
         if request.data['origin'] == '左下起点':
             if request.data['direction'] == '行优先':
@@ -441,7 +444,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                     1, counts+1).reshape(columns, rows).T
             numberFlip = np.flip(numberMatrix, axis=0)
             for pos, num in zip(instance.positions.all(), np.ravel(numberFlip)):
-                pos.number = '%s-%s' % (num, instance.key)
+                pos.number = num
                 pos.save()
 
         return Response(serializer.data)
@@ -677,18 +680,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         params = request.data
-        key = params['key']
-        counts = params['counts']
-        for filed in apps.get_model('app', 'Order')._meta.fields:
-            del params[filed.name]
-        del params['counts']
-        for i in range(counts):
+        for i in range(params['counts']):
             product = Product()
             product.name = params['product']
-            product.order = Order.objects.get(key=key)
+            product.order = Order.objects.get(key=params['key'])
             product.batch = datetime.datetime.now().strftime('%Y-%m-%d')
             product.prodType = ProductType.objects.get(name=params['product'])
-            
             product.save()
 
             standard = ProductStandard()
@@ -697,11 +694,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             standard.product = product
             standard.save()
 
-            for info in list(params.keys())[1:]:
+            for bom in BOMContent.objects.filter(Q(bom__product__name=params['product'])):
                 pi = ProductInfo()
                 pi.product = product
-                pi.name = info
-                pi.value = params[info]
+                pi.name = bom.material
+                pi.value = bom.counts if bom.counts else params[bom.material.split(
+                    '/')[1]]
                 pi.save()
 
         return Response('ok')
@@ -737,17 +735,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
                 'batch'), 合格数=Count('number', filter=Q(result='合格')), 不合格数=Count('number', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
         if params['model'] == 'materialChart':
-            kward = {}
-            boms = BOMContent.objects.filter(
-                Q(bom__product__orderType__name=params['orderType']))
-            for bom in boms:
-                if bom.counts:
-                    kward[bom.material] = Count('key', distinct=True)*bom.counts
-                else:
-                    kward[bom.material] = Sum('infos__value', filter=Q(
-                        infos__name=bom.material.split('/')[1]))
-            excel = Product.objects.filter(
-                Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), **kward).values('日期', *kward.keys())
+            material = {}
+            querySet = ProductInfo.objects.filter(
+                Q(product__order__orderType__name=params['orderType'])).values('product__batch')
+            for mat in BOMContent.objects.all().values_list('material', flat=True).distinct():
+                material[mat.split('/')[0]] = Sum('value', filter=Q(name=mat))
+            excel = querySet.annotate(日期=F('product__batch'),**material).values('日期',*material.keys())
 
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
@@ -793,3 +786,8 @@ class EventViewSet(viewsets.ModelViewSet):
 class ProductInfoViewSet(viewsets.ModelViewSet):
     queryset = ProductInfo.objects.all()
     serializer_class = ProductInfoSerializer
+
+
+class PalletHoleViewSet(viewsets.ModelViewSet):
+    queryset = PalletHole.objects.all()
+    serializer_class = PalletHoleSerializer
