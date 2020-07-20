@@ -179,17 +179,3 @@ def storeAna(order):
             Q(store__productLine__lineType__name=order)).values('name').annotate(counts=Count('size'))))}
     ]
     return data
-
-
-def selectPosition(product):
-    res = ''
-    if product.pallet:
-        return res
-    else:
-        try:
-            pos = StorePosition.objects.get(
-                Q(content='%s-%s' % (obj.name, obj.number)))
-            res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
-        except Exception as e:
-            res = ''
-    return res

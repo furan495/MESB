@@ -392,10 +392,8 @@ class Store(models.Model):
 
 class StorePosition(models.Model):
     POSITION_STATUS = (
-        ('1', '有盘'),
-        ('2', '无盘'),
-        ('3', '有料'),
-        ('4', '无料'),
+        ('1', '有料'),
+        ('2', '无料'),
     )
     key = models.AutoField(primary_key=True, verbose_name='主键')
     store = models.ForeignKey(Store, related_name='positions',
@@ -497,8 +495,8 @@ class Product(models.Model):
                               on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
     status = models.ForeignKey(ProductState, related_name='products',
                                on_delete=models.CASCADE, verbose_name='产品状态', blank=True, null=True)
-    pallet = models.ForeignKey(Pallet, related_name='products',
-                               on_delete=models.CASCADE, verbose_name='存放托盘', blank=True, null=True)
+    position = models.ForeignKey(StorePosition, related_name='products',
+                               on_delete=models.CASCADE, verbose_name='存放仓位', blank=True, null=True)
     prodType = models.ForeignKey(ProductType, related_name='products',
                                  on_delete=models.CASCADE, verbose_name='产品类型', blank=True, null=True)
     name = models.CharField(max_length=200, verbose_name='产品名称')

@@ -188,7 +188,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             products = order.products.all().values_list('name', flat=True).distinct()
             for product in products:
                 count = order.products.all().filter(Q(name=product)).count()
-                if count > StorePosition.objects.filter(Q(description__icontains=product, status='4')).count():
+                if count > StorePosition.objects.filter(Q(description__icontains=product, status='2')).count():
                     res = 'err'
                     info = '%s仓位不足，无法排产' % product
                 else:
@@ -225,11 +225,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.number = str(time.time()*1000000)[:16]
 
             inPosition = StorePosition.objects.filter(
-                Q(description__icontains=product, store__storeType__name='成品库', status='4') | Q(description__icontains=product, store__storeType__name='混合库', status='4')).first()
-            inPosition.status = '3'
-            inPosition.content = '%s-%s' % (product.name, product.number)
+                Q(description__icontains=product, store__storeType__name='成品库', status='2') | Q(description__icontains=product, store__storeType__name='混合库', status='2')).first()
+            inPosition.status = '1'
+            #inPosition.content = '%s-%s号位' % (inPosition.store.name, inPosition.number.split('-')[0])
+            inPosition.content = '%s-%s号位' % (inPosition.store.name, inPosition.number.split('-')[0])
             inPosition.save()
 
+            product.position=inPosition
             product.inPos = inPosition.number.split('-')[0]
             product.save()
         return Response('ok')
@@ -727,10 +729,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         params = request.query_params
         if params['model'] == 'product':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
-                '%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': selectPosition(obj)}, Product.objects.all())
+                '%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': obj.position.content}, Product.objects.all())
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
-                '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': selectPosition(obj)}, Product.objects.filter(result='不合格'))
+                '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': obj.position.content}, Product.objects.filter(result='不合格'))
         if params['model'] == 'qualityChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
                 'batch'), 合格数=Count('number', filter=Q(result='合格')), 不合格数=Count('number', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')

@@ -330,7 +330,7 @@ class PalletSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
-    palletStr = serializers.SerializerMethodField()
+    position = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
     order = serializers.SerializerMethodField()
 
@@ -346,22 +346,13 @@ class ProductSerializer(serializers.ModelSerializer):
                                          'description': '%s' % event.title}, Event.objects.filter(Q(workOrder__product=obj))))
         return states
 
-    def get_palletStr(self, obj):
-        res = ''
-        if obj.pallet:
-            return res
-        else:
-            try:
-                pos = StorePosition.objects.get(Q(content='%s-%s'%(obj.name,obj.number)))
-                res = '%s-%s号位' % (pos.store.name, pos.number.split('-')[0])
-            except:
-                res = ''
-        return res
+    def get_position(self, obj):
+        return obj.position.content
 
     class Meta:
         model = Product
-        fields = ('key', 'prodType', 'order', 'pallet', 'inPos', 'outPos','status',
-                  'name', 'number',  'batch', 'palletStr', 'reason', 'result', 'stateList')
+        fields = ('key', 'prodType', 'order', 'inPos', 'outPos', 'status', 'position',
+                  'name', 'number',  'batch', 'reason', 'result', 'stateList')
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
