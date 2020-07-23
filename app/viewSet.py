@@ -7,6 +7,7 @@ import pandas as pd
 from app.utils import *
 from app.models import *
 from functools import reduce
+from django.apps import apps
 from app.serializers import *
 from rest_framework import viewsets
 from django.db.models.functions import Cast
@@ -19,10 +20,17 @@ from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 # Create your views here.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 class WorkShopViewSet(viewsets.ModelViewSet):
     queryset = WorkShop.objects.all().order_by('-createTime')
     serializer_class = WorkShopSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        #{ title: '车间名称', dataIndex: 'name', inputType: 'text', editable: true, ellipsis: true, width: '10%' }
+        columns=[]
+        for field in apps.get_model('app', 'WorkShop')._meta.fields:
+            print(type(field).__name__ ,field.name,field.verbose_name)
+        return Response([])
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -230,6 +238,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition.save()
 
             product.position = inPosition
+            product.status = ProductState.objects.get(name='已排产')
             product.save()
         return Response('ok')
 
@@ -670,6 +679,13 @@ class PalletViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['position']
 
+    @action(methods=['get'], detail=False)
+    def numbers(self, request):
+        counts = Product.objects.filter(Q(status__name='已排产')).count()
+        pallets = Pallet.objects.filter(Q(rate__lte=0.33)).values_list(
+            'number', flat=True)[:np.ceil(counts/9)]
+        return Response(pallets)
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('-key')
@@ -740,7 +756,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(product__order__orderType__name=params['orderType'])).values('product__batch')
             for mat in BOMContent.objects.all().values_list('material', flat=True).distinct():
                 material[mat.split('/')[0]] = Sum('value', filter=Q(name=mat))
-            excel = querySet.annotate(日期=F('product__batch'),**material).values('日期',*material.keys())
+            excel = querySet.annotate(
+                日期=F('product__batch'), **material).values('日期', *material.keys())
 
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(

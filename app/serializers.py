@@ -333,7 +333,7 @@ class OperateSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'position', 'number')
+        fields = ('key', 'position', 'number','rate')
 
 
 class ProductSerializer(serializers.ModelSerializer):

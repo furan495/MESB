@@ -87,13 +87,13 @@ def wincc(request):
 
 @csrf_exempt
 def querySelect(request):
-    """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
+    for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status = '1'
         pos.save() 
 
     for pos in StorePosition.objects.filter(Q(store__storeType__name='成品库')):
         pos.status = '2'
-        pos.save() """
+        pos.save()
 
     params = json.loads(request.body)
     selectList = {}
@@ -253,3 +253,9 @@ def supOrder(request):
         workOrder.number = str(time.time()*1000000)[:16]
         workOrder.save()
     return JsonResponse({'ok': 'ok'})
+
+
+@csrf_exempt
+def test(request):
+    print(json.loads(request.body))
+    return JsonResponse(json.loads(request.body))

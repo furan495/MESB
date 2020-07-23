@@ -1,5 +1,6 @@
 import time
 from django.db import models
+from django.db.models import Q
 
 # Create your models here.
 
@@ -418,7 +419,7 @@ class Pallet(models.Model):
     position = models.ForeignKey(StorePosition, related_name='positions',
                                  on_delete=models.CASCADE, verbose_name='隶属仓位', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='托盘编号')
-
+    rate = models.FloatField(verbose_name='利用率', default=0.0)
 
     def __str__(self):
         return self.number
@@ -432,9 +433,16 @@ class PalletHole(models.Model):
     pallet = models.ForeignKey(Pallet, related_name='holes',
                                on_delete=models.CASCADE, verbose_name='隶属托盘')
     number = models.CharField(max_length=20, verbose_name='孔号')
-    status = models.BooleanField(verbose_name='空位状态', default=False)
+    status = models.BooleanField(verbose_name='孔位状态', default=False)
     content = models.CharField(
         max_length=20, verbose_name='存放物', blank=True, null=True)
+
+    def save(self):
+        super(PalletHole, self).save()
+        pallet = self.pallet
+        pallet.rate = round(PalletHole.objects.filter(
+            Q(pallet=pallet, status=True)).count()/9, 2)
+        pallet.save()
 
     def __str__(self):
         return self.number

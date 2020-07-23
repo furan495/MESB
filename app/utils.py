@@ -134,6 +134,23 @@ def materialChart(orderType, start, stop, all):
             data.append({'name': name, 'type': 'column', 'data': [
                         [dataX(query['product__batch']), query[name]]]})
 
+    if len(querySet) == 0:
+        one, two, three = [], [], []
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        day = datetime.datetime.now().day
+        start = '%s-%s-%s' % (str(year), str(month-1 if day <
+                                             14 else month), str(np.abs(day-14)))
+        for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000+8*60*60*1000, time.time()*1000, 24*60*60*1000):
+            one.append([day, random.randint(1, 100)])
+            two.append([day, random.randint(1, 100)])
+            three.append([day, random.randint(1, 100)])
+        data = [
+            {'name': '物料1', 'type': 'column', 'data': one},
+            {'name': '物料2', 'type': 'column', 'data': two},
+            {'name': '物料3', 'type': 'column',  'data': three},
+        ]
+
     return data
 
 
