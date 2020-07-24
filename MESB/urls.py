@@ -37,14 +37,11 @@ router.register(r'api/deviceStates', viewSet.DeviceStateViewSet)
 router.register(r'api/productLines', viewSet.ProductLineViewSet)
 router.register(r'api/productTypes', viewSet.ProductTypeViewSet)
 router.register(r'api/productInfos', viewSet.ProductInfoViewSet)
-router.register(r'api/orderStatuses', viewSet.OrderStatusViewSet)
-router.register(r'api/productStates', viewSet.ProductStateViewSet)
 router.register(r'api/organizations', viewSet.OrganizationViewSet)
 router.register(r'api/processRoutes', viewSet.ProcessRouteViewSet)
 router.register(r'api/processParams', viewSet.ProcessParamsViewSet)
 router.register(r'api/storePositions', viewSet.StorePositionViewSet)
 router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
-router.register(r'api/workOrderStatuses', viewSet.WorkOrderStatusViewSet)
 
 # API URL现在由路由器自动确定。
 # 另外，我们还要包含可浏览的API的登录URL。

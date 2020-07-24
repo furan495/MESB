@@ -17,6 +17,18 @@ class DocType(models.Model):
         verbose_name = '文档类型'
 
 
+class CommonStatus(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=10, verbose_name='状态名称', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '状态'
+
+
 class Document(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     docType = models.ForeignKey(
@@ -109,18 +121,6 @@ class User(models.Model):
         verbose_name = '用户'
 
 
-class OrderStatus(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=20, verbose_name='订单状态', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '订单状态'
-
-
 class OrderType(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
@@ -197,7 +197,7 @@ class Order(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     customer = models.ForeignKey(Customer, related_name='orders',
                                  on_delete=models.CASCADE, verbose_name='目标客户', blank=True, null=True)
-    status = models.ForeignKey(OrderStatus, related_name='status',
+    status = models.ForeignKey(CommonStatus, related_name='orders',
                                on_delete=models.CASCADE, verbose_name='订单状态', default='1', blank=True, null=True)
     route = models.ForeignKey(ProcessRoute, related_name='orders',
                               on_delete=models.CASCADE, verbose_name='选用工艺', blank=True, null=True)
@@ -223,18 +223,6 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = '订单'
-
-
-class ProductState(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=20, verbose_name='成品状态', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '成品状态'
 
 
 class Process(models.Model):
@@ -339,18 +327,6 @@ class DeviceState(models.Model):
 
     class Meta:
         verbose_name = '设备状态'
-
-
-class WorkOrderStatus(models.Model):
-    key = models.AutoField(primary_key=True, verbose_name='主键')
-    name = models.CharField(
-        max_length=20, verbose_name='工单状态', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '工单状态'
 
 
 class StoreType(models.Model):
@@ -490,7 +466,7 @@ class Product(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     order = models.ForeignKey(Order, related_name='products',
                               on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
-    status = models.ForeignKey(ProductState, related_name='products',
+    status = models.ForeignKey(CommonStatus, related_name='products',
                                on_delete=models.CASCADE, verbose_name='产品状态', blank=True, null=True)
     position = models.ForeignKey(StorePosition, related_name='products',
                                  on_delete=models.CASCADE, verbose_name='存放仓位', blank=True, null=True)
@@ -536,7 +512,7 @@ class WorkOrder(models.Model):
                                 on_delete=models.CASCADE, verbose_name='目标工位', blank=True, null=True)
     product = models.ForeignKey(Product, related_name='workOrders',
                                 on_delete=models.CASCADE, verbose_name='隶属产品', blank=True, null=True)
-    status = models.ForeignKey(WorkOrderStatus, related_name='status',
+    status = models.ForeignKey(CommonStatus, related_name='workOrders',
                                on_delete=models.CASCADE, verbose_name='工单状态', blank=True, null=True)
     number = models.CharField(max_length=20, verbose_name='工单编号')
     createTime = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')

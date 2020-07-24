@@ -100,16 +100,6 @@ class BOMContentViewSet(viewsets.ModelViewSet):
     serializer_class = BOMContentSerializer
 
 
-class OrderStatusViewSet(viewsets.ModelViewSet):
-    queryset = OrderStatus.objects.all()
-    serializer_class = OrderStatusSerializer
-
-
-class WorkOrderStatusViewSet(viewsets.ModelViewSet):
-    queryset = WorkOrderStatus.objects.all()
-    serializer_class = WorkOrderStatusSerializer
-
-
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all().order_by('-key')
     serializer_class = RoleSerializer
@@ -213,7 +203,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True)
     def scheduling(self, request, pk=None):
         order = self.get_object()
-        order.status = OrderStatus.objects.get(name='已排产')
+        order.status = CommonStatus.objects.get(name='已排产')
         order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         order.save()
@@ -224,7 +214,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 workOrder = WorkOrder()
                 workOrder.product = product
                 workOrder.process = process
-                workOrder.status = WorkOrderStatus.objects.get(name='等待中')
+                workOrder.status = CommonStatus.objects.get(name='等待中')
                 workOrder.number = str(time.time()*1000000)[:16]
                 workOrder.save()
 
@@ -238,7 +228,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             inPosition.save()
 
             product.position = inPosition
-            product.status = ProductState.objects.get(name='已排产')
+            product.status = CommonStatus.objects.get(name='已排产')
             product.save()
         return Response('ok')
 
@@ -359,9 +349,9 @@ class DeviceBaseViewSet(viewsets.ModelViewSet):
         return Response('ok')
 
 
-class ProductStateViewSet(viewsets.ModelViewSet):
-    queryset = ProductState.objects.all()
-    serializer_class = ProductStateSerializer
+class CommonStatusViewSet(viewsets.ModelViewSet):
+    queryset = CommonStatus.objects.all()
+    serializer_class = CommonStatusSerializer
 
 
 class WorkOrderViewSet(viewsets.ModelViewSet):

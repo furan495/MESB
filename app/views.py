@@ -33,17 +33,17 @@ def wincc(request):
             product.number = params[2]
             product.save()
         workOrder.startTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='加工中')
+        workOrder.status = CommonStatus.objects.get(name='加工中')
     if 'stop' in params[0]:
         workOrder.endTime = datetime.datetime.now()
-        workOrder.status = WorkOrderStatus.objects.get(name='已完成')
+        workOrder.status = CommonStatus.objects.get(name='已完成')
 
     if params[0] == 'stop-%s' % Process.objects.all().last().number:
-        product.status = ProductState.objects.get(name='入库')
+        product.status = CommonStatus.objects.get(name='已完成')
         product.save()
         order = product.order
         if order.products.all().filter(Q(status=None)).count() == 0:
-            order.status = OrderStatus.objects.get(name='已完成')
+            order.status = CommonStatus.objects.get(name='已完成')
             order.save()
     workOrder.save()
 
@@ -249,7 +249,7 @@ def supOrder(request):
         workOrder = WorkOrder()
         workOrder.product = product
         workOrder.process = Process.objects.get(number=process)
-        workOrder.status = WorkOrderStatus.objects.get(name='补单')
+        workOrder.status = CommonStatus.objects.get(name='补单')
         workOrder.number = str(time.time()*1000000)[:16]
         workOrder.save()
     return JsonResponse({'ok': 'ok'})

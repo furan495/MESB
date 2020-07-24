@@ -32,15 +32,9 @@ class DeviceBaseSerializer(serializers.ModelSerializer):
         fields = ('key', 'device', 'name', 'value')
 
 
-class OrderStatusSerializer(serializers.ModelSerializer):
+class CommonStatusSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OrderStatus
-        fields = ('key', 'name')
-
-
-class WorkOrderStatusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkOrderStatus
+        model = CommonStatus
         fields = ('key', 'name')
 
 
@@ -162,7 +156,7 @@ class UserSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
-        queryset=OrderStatus.objects.all(), label='订单状态', slug_field='name', required=False)
+        queryset=CommonStatus.objects.all(), label='订单状态', slug_field='name', required=False)
     orderType = serializers.SlugRelatedField(
         queryset=OrderType.objects.all(), label='订单类型', slug_field='name', required=False)
     customer = serializers.SlugRelatedField(
@@ -192,13 +186,6 @@ class ProductLineSerializer(serializers.ModelSerializer):
         model = ProductLine
         fields = ('key', 'workShop', 'name',
                   'number', 'description', 'lineType')
-
-
-class ProductStateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ProductState
-        fields = ('key', 'name')
 
 
 class ProcessRouteSerializer(serializers.ModelSerializer):
@@ -244,7 +231,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     process = serializers.SerializerMethodField()
     events = serializers.StringRelatedField(many=True, read_only=True)
     status = serializers.SlugRelatedField(
-        queryset=WorkOrderStatus.objects.all(), label='工单状态', slug_field='name', required=False)
+        queryset=CommonStatus.objects.all(), label='工单状态', slug_field='name', required=False)
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
