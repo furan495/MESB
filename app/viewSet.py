@@ -20,17 +20,22 @@ from django.db.models.aggregates import Count, Sum, Max, Min, Avg
 # Create your views here.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+colDict = {'ForeignKey': 'select', 'CharField': 'text',
+           'DateTimeField': 'text', 'FloatField': 'number', 'OneToOneField': 'select', 'IntegerField': 'number', 'DateField': 'text'}
+
+
 class WorkShopViewSet(viewsets.ModelViewSet):
-    queryset = WorkShop.objects.all().order_by('-createTime')
+    queryset = WorkShop.objects.all()
     serializer_class = WorkShopSerializer
 
     @action(methods=['get'], detail=False)
     def columns(self, request):
-        #{ title: '车间名称', dataIndex: 'name', inputType: 'text', editable: true, ellipsis: true, width: '10%' }
-        columns=[]
+        columns = []
         for field in apps.get_model('app', 'WorkShop')._meta.fields:
-            print(type(field).__name__ ,field.name,field.verbose_name)
-        return Response([])
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True, 'width': '10%' if field.name != 'descriptions' else None})
+        return Response(columns)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -43,8 +48,19 @@ class WorkShopViewSet(viewsets.ModelViewSet):
 
 
 class BOMViewSet(viewsets.ModelViewSet):
-    queryset = BOM.objects.all().order_by('-createTime')
+    queryset = BOM.objects.all()
     serializer_class = BOMSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'BOM')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        columns.append({'title': 'BOM描述', 'dataIndex': 'contents',
+                        'inputType': 'text', 'editable': False, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -105,6 +121,15 @@ class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Role')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True, 'width': '10%' if field.name == 'name' else None})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'角色名': obj.name,
@@ -119,6 +144,15 @@ class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerSerializer
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Customer')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'客户名称': obj.name, '客户编号': obj.number, '联系电话': obj.phone,
@@ -131,6 +165,15 @@ class CustomerViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'User')._meta.fields:
+            if field.name != 'key' and field.name != 'password':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': 'select' if field.name == 'gender' else colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['get'], detail=False)
     def login(self, request):
@@ -173,6 +216,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-key')
     serializer_class = OrderSerializer
 
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Order')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
     @action(methods=['put'], detail=True)
     def preScheduling(self, request, pk=None):
         res, info = 'ok', ''
@@ -182,9 +234,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         line = ProductLine.objects.get(name=params['line'])
         route = ProcessRoute.objects.get(name=params['route'])
         if orderType == line.lineType.name and orderType == route.routeType.name:
-            products = order.products.all().values_list('name', flat=True).distinct()
+            products = order.products.all().values_list(
+                'prodType__name', flat=True).distinct()
             for product in products:
-                count = order.products.all().filter(Q(name=product)).count()
+                count = order.products.all().filter(Q(prodType__name=product)).count()
                 if count > StorePosition.objects.filter(Q(description__icontains=product, status='2')).count():
                     res = 'err'
                     info = '%s仓位不足，无法排产' % product
@@ -247,6 +300,15 @@ class ProductLineViewSet(viewsets.ModelViewSet):
     serializer_class = ProductLineSerializer
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'ProductLine')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'产线名称': obj.name, '产线类别': obj.lineType.name, '隶属车间': obj.workShop.name,
@@ -259,6 +321,15 @@ class ProductLineViewSet(viewsets.ModelViewSet):
 class ProcessRouteViewSet(viewsets.ModelViewSet):
     queryset = ProcessRoute.objects.all().order_by('-key')
     serializer_class = ProcessRouteSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'ProcessRoute')._meta.fields:
+            if field.name != 'key' and field.name != 'data':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['post'], detail=True)
     def deviceBanding(self, request, pk=None):
@@ -318,14 +389,23 @@ class ProcessViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'route']
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Process')._meta.fields:
+            if field.name != 'key' and field.name != 'path':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def column(self, request):
         column = [{'title': '产品名称', 'dataIndex': 'name',
-                   'inputType': 'text', 'editable': True, 'ellipsis': True}]
+                   'inputType': 'text', 'editable': False, 'ellipsis': True}]
         for process in Process.objects.all():
             column.append({'title': '%s开始' % process.name,
-                           'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
+                           'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True})
             column.append({'title': '%s结束' % process.name,
-                           'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': True, 'ellipsis': True})
+                           'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True})
         return Response(column)
 
 
@@ -362,6 +442,15 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     filterset_fields = ['number', 'status']
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'WorkOrder')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'工单状态': obj.status.name, '工单编号': obj.number, '订单编号': obj.order.number, '创建时间': obj.createTime.strftime(
@@ -374,6 +463,15 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all().order_by('-key')
     serializer_class = StoreSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Store')._meta.fields:
+            if field.name != 'key' and field.name != 'path':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': 'select' if field.name == 'direction' or field.name == 'origin' else colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -493,6 +591,15 @@ class OperateViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name']
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Operate')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def interviewChart(self, request):
         data = map(lambda obj: [dataX(obj.time.date()), dataY(
             obj.time)], Operate.objects.filter(Q(name='登录系统')).order_by('time'))
@@ -502,6 +609,15 @@ class OperateViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all().order_by('-key')
     serializer_class = DeviceSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Device')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['put'], detail=True)
     def unbanding(self, request, pk):
@@ -585,8 +701,20 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Material.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Material')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': 'store__name' if field.name == 'store' else field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+                if field.name == 'unit':
+                    columns.append({'title': '现有库存', 'dataIndex': 'counts',
+                                    'inputType': 'number', 'editable': True, 'ellipsis': True})
+        return Response(columns)
 
     def update(self, request, *args, **kwargs):
         params = request.data
@@ -595,7 +723,6 @@ class MaterialViewSet(viewsets.ModelViewSet):
             material.name = params['name']
             material.size = params['size']
             material.unit = params['unit']
-            material.mateType = params['mateType']
             material.store = Store.objects.get(name=params['store__name'])
             material.save()
         Material.objects.filter(Q(name=None)).delete()
@@ -631,8 +758,20 @@ class ToolViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Tool.objects.all().values('name').annotate(
-            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store__name')
+            counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
         return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Tool')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': 'store__name' if field.name == 'store' else field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+                if field.name == 'unit':
+                    columns.append({'title': '现有库存', 'dataIndex': 'counts',
+                                    'inputType': 'number', 'editable': True, 'ellipsis': True})
+        return Response(columns)
 
     def update(self, request, *args, **kwargs):
         params = request.data
@@ -641,7 +780,6 @@ class ToolViewSet(viewsets.ModelViewSet):
             tool.name = params['name']
             tool.size = params['size']
             tool.unit = params['unit']
-            tool.toolType = params['toolType']
             tool.store = Store.objects.get(name=params['store__name'])
             tool.save()
         Tool.objects.filter(Q(name=None)).delete()
@@ -688,7 +826,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         params = request.data
         for i in range(params['counts']):
             product = Product()
-            product.name = params['product']
             product.order = Order.objects.get(key=params['key'])
             product.batch = datetime.datetime.now().strftime('%Y-%m-%d')
             product.prodType = ProductType.objects.get(name=params['product'])
@@ -709,6 +846,15 @@ class ProductViewSet(viewsets.ModelViewSet):
                 pi.save()
 
         return Response('ok')
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'Product')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['get'], detail=False)
     def powerChart(self, request):
@@ -762,6 +908,15 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
     serializer_class = ProductTypeSerializer
 
     @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'ProductType')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'产品名称': obj.name, '订单类型': obj.orderType.name,
@@ -774,6 +929,15 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
 class ProductStandardViewSet(viewsets.ModelViewSet):
     queryset = ProductStandard.objects.all().order_by('-key')
     serializer_class = ProductStandardSerializer
+
+    @action(methods=['get'], detail=False)
+    def columns(self, request):
+        columns = []
+        for field in apps.get_model('app', 'ProductStandard')._meta.fields:
+            if field.name != 'key':
+                columns.append({'title': field.verbose_name, 'dataIndex': field.name, 'inputType': colDict[type(
+                    field).__name__], 'editable': field.editable, 'ellipsis': True})
+        return Response(columns)
 
     @action(methods=['get'], detail=False)
     def export(self, request):

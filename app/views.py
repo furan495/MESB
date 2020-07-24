@@ -87,13 +87,13 @@ def wincc(request):
 
 @csrf_exempt
 def querySelect(request):
-    for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
+    """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status = '1'
         pos.save() 
 
     for pos in StorePosition.objects.filter(Q(store__storeType__name='成品库')):
         pos.status = '2'
-        pos.save()
+        pos.save() """
 
     params = json.loads(request.body)
     selectList = {}
@@ -145,12 +145,10 @@ def querySelect(request):
         }
     if params['model'] == 'material':
         selectList = {
-            'mateType': ['自制', '外采'],
             'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
         }
     if params['model'] == 'tool':
         selectList = {
-            'toolType': ['自制', '外采'],
             'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
         }
     if params['model'] == 'user':

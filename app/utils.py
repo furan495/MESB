@@ -33,7 +33,7 @@ def positionSelect(obj, position):
 
 
 def dataSource(obj):
-    data = {'key': obj.key, 'name': obj.name}
+    data = {'key': obj.key, 'name': obj.prodType.name}
     for process in Process.objects.all():
         data['start%s' % process.number] = positionSelect(
             obj, '%s开始' % process.name)

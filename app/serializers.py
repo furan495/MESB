@@ -9,8 +9,7 @@ from rest_framework import serializers
 class WorkShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkShop
-        fields = ('key', 'name', 'number',
-                  'descriptions', 'createTime')
+        fields = ('key', 'name', 'number', 'descriptions')
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -154,6 +153,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    number = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
         queryset=CommonStatus.objects.all(), label='订单状态', slug_field='name', required=False)
@@ -166,13 +166,16 @@ class OrderSerializer(serializers.ModelSerializer):
     line = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='选用产线', slug_field='name', required=False)
 
+    def get_number(self, obj):
+        return int(time.mktime(obj.number.timetuple()))
+
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = Order
-        fields = ('key', 'creator', 'number', 'batch', 'scheduling', 'route', 'line', 'customer',
-                  'createTime', 'status', 'orderType', 'description')
+        fields = ('key', 'creator', 'number', 'scheduling', 'route', 'line', 'customer',
+                  'createTime', 'status', 'orderType', 'content')
 
 
 class ProductLineSerializer(serializers.ModelSerializer):
@@ -190,13 +193,9 @@ class ProductLineSerializer(serializers.ModelSerializer):
 
 class ProcessRouteSerializer(serializers.ModelSerializer):
     devices = serializers.SerializerMethodField()
-    createTime = serializers.SerializerMethodField()
     processes = serializers.StringRelatedField(many=True, read_only=True)
     routeType = serializers.SlugRelatedField(
         queryset=OrderType.objects.all(), label='工艺类别', slug_field='name', required=False)
-
-    def get_createTime(self, obj):
-        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_devices(self, obj):
         return list(map(lambda device: {'key': device.key, 'name': device.name+'-'+device.number}, Device.objects.filter(Q(process=None))))
@@ -204,7 +203,7 @@ class ProcessRouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessRoute
         fields = ('key', 'name', 'data', 'description', 'routeType',
-                  'createTime', 'creator', 'processes', 'devices')
+                  'creator', 'processes', 'devices')
 
 
 class ProcessSerializer(serializers.ModelSerializer):
@@ -224,9 +223,10 @@ class ProcessSerializer(serializers.ModelSerializer):
 
 
 class WorkOrderSerializer(serializers.ModelSerializer):
-    orderNum = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     startTime = serializers.SerializerMethodField()
+    orderNum = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
     endTime = serializers.SerializerMethodField()
     process = serializers.SerializerMethodField()
     events = serializers.StringRelatedField(many=True, read_only=True)
@@ -248,14 +248,17 @@ class WorkOrderSerializer(serializers.ModelSerializer):
 
     def get_orderNum(self, obj):
         return obj.product.order.number
-    
+
+    def get_product(self, obj):
+        return obj.product.prodType.name
+
     def get_process(self, obj):
         return obj.process.name
 
     class Meta:
         model = WorkOrder
-        fields = ('key', 'orderNum', 'number', 'createTime','process',
-                  'startTime', 'endTime', 'status', 'events')
+        fields = ('key', 'orderNum', 'number', 'createTime', 'process',
+                  'startTime', 'endTime', 'status', 'events', 'product')
 
 
 class StoreSerializer(serializers.ModelSerializer):
@@ -320,20 +323,28 @@ class OperateSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
-        fields = ('key', 'position', 'number','rate')
+        fields = ('key', 'position', 'number', 'rate')
 
 
 class ProductSerializer(serializers.ModelSerializer):
     stateList = serializers.SerializerMethodField()
+    prodType = serializers.SerializerMethodField()
     position = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
     order = serializers.SerializerMethodField()
+
+    def get_status(self, obj):
+        return obj.status.name
 
     def get_batch(self, obj):
         return obj.batch.strftime('%Y-%m-%d')
 
+    def get_prodType(self, obj):
+        return obj.prodType.name
+
     def get_order(self, obj):
-        return obj.order.number
+        return int(time.mktime(obj.order.number.timetuple()))
 
     def get_stateList(self, obj):
         states = []
@@ -345,12 +356,12 @@ class ProductSerializer(serializers.ModelSerializer):
         try:
             return obj.position.content
         except:
-            return ''        
+            return ''
 
     class Meta:
         model = Product
         fields = ('key', 'prodType', 'order', 'outPos', 'status', 'position',
-                  'name', 'number',  'batch', 'reason', 'result', 'stateList')
+                  'number',  'batch', 'reason', 'result', 'stateList')
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
@@ -360,13 +371,15 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductType
-        fields = ('key', 'name', 'number', 'path', 'orderType', 'errorRange')
+        fields = ('key', 'name', 'number', 'orderType', 'errorRange')
 
 
 class ProductStandardSerializer(serializers.ModelSerializer):
     batch = serializers.SerializerMethodField()
-    product = serializers.SlugRelatedField(
-        queryset=Product.objects.all(), label='产品名称', slug_field='name', required=False)
+    product = serializers.SerializerMethodField()
+
+    def get_product(self, obj):
+        return obj.product.prodType.name
 
     def get_batch(self, obj):
         try:
@@ -395,7 +408,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
         fields = ('key', 'name', 'size',
-                  'unit', 'mateType', 'store')
+                  'unit', 'store')
 
 
 class ToolSerializer(serializers.ModelSerializer):
@@ -406,7 +419,7 @@ class ToolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tool
         fields = ('key', 'name', 'size',
-                  'unit', 'toolType', 'store')
+                  'unit', 'store')
 
 
 class BOMContentSerializer(serializers.ModelSerializer):
@@ -421,13 +434,9 @@ class BOMContentSerializer(serializers.ModelSerializer):
 
 class BOMSerializer(serializers.ModelSerializer):
 
-    createTime = serializers.SerializerMethodField()
     contents = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='对应产品', slug_field='name', required=False)
-
-    def get_createTime(self, obj):
-        return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_contents(self, obj):
         contentList = obj.contents.all()
@@ -439,4 +448,4 @@ class BOMSerializer(serializers.ModelSerializer):
     class Meta:
         model = BOM
         fields = ('key', 'product', 'name',
-                  'contents', 'creator', 'createTime')
+                  'contents', 'creator')
