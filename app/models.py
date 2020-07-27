@@ -111,7 +111,7 @@ class User(models.Model):
     post = models.CharField(
         max_length=20, verbose_name='职位', blank=True, null=True)
     status = models.CharField(
-        max_length=20, verbose_name='状态', blank=True, null=True, default='离线', editable=False)
+        max_length=20, verbose_name='状态', blank=True, null=True, default='离线')
 
     def __str__(self):
         return self.name
@@ -201,8 +201,8 @@ class Order(models.Model):
                              on_delete=models.CASCADE, verbose_name='选用产线', blank=True, null=True)
     customer = models.ForeignKey(Customer, related_name='orders',
                                  on_delete=models.CASCADE, verbose_name='目标客户', blank=True, null=True)
-    number = models.DateTimeField(auto_now_add=True,
-                                  verbose_name='订单编号')
+    number = models.CharField(
+        max_length=20, verbose_name='订单编号', default=str(time.time()*1000)[:10])
     creator = models.CharField(
         max_length=20, verbose_name='创建人', blank=True, null=True)
     createTime = models.DateTimeField(auto_now_add=True,
@@ -224,13 +224,13 @@ class Order(models.Model):
 class Process(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     name = models.CharField(
-        max_length=20, verbose_name='工序名称', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='工序名称', blank=True, null=True)
     route = models.ForeignKey(ProcessRoute, related_name='processes',
-                              on_delete=models.CASCADE, verbose_name='隶属工艺', blank=True, null=True, editable=False)
+                              on_delete=models.CASCADE, verbose_name='隶属工艺', blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='工序编号', blank=True, null=True)
     path = models.CharField(
-        max_length=200, verbose_name='工序图片', blank=True, null=True, editable=False)
+        max_length=200, verbose_name='工序图片', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -273,7 +273,7 @@ class DeviceType(models.Model):
 class Device(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     process = models.ForeignKey(Process, related_name='devices',
-                                on_delete=models.CASCADE, verbose_name='所在工序', blank=True, null=True, editable=False)
+                                on_delete=models.CASCADE, verbose_name='所在工序', blank=True, null=True)
     name = models.CharField(
         max_length=20, verbose_name='设备名称', blank=True, null=True)
     deviceType = models.ForeignKey(DeviceType, related_name='devices',
@@ -459,23 +459,23 @@ class ProductType(models.Model):
 class Product(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     prodType = models.ForeignKey(ProductType, related_name='products',
-                                 on_delete=models.CASCADE, verbose_name='成品名称', blank=True, null=True, editable=False)
+                                 on_delete=models.CASCADE, verbose_name='成品名称', blank=True, null=True)
     batch = models.DateField(
-        auto_now_add=True, verbose_name='成品批次', blank=True, null=True, editable=False)
+        auto_now_add=True, verbose_name='成品批次', blank=True, null=True)
     number = models.CharField(
-        max_length=20, verbose_name='成品编号', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='成品编号', blank=True, null=True)
     order = models.ForeignKey(Order, related_name='products',
-                              on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True, editable=False)
+                              on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
     outPos = models.CharField(
-        max_length=20, verbose_name='出库位', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='出库位', blank=True, null=True)
     position = models.ForeignKey(StorePosition, related_name='products',
-                                 on_delete=models.CASCADE, verbose_name='入库位', blank=True, null=True, editable=False)
+                                 on_delete=models.CASCADE, verbose_name='入库位', blank=True, null=True)
     result = models.CharField(
-        max_length=20, verbose_name='质检结果', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='质检结果', blank=True, null=True)
     reason = models.CharField(
-        max_length=200, verbose_name='不合格原因', blank=True, null=True, editable=False)
+        max_length=200, verbose_name='不合格原因', blank=True, null=True)
     status = models.ForeignKey(CommonStatus, related_name='products',
-                               on_delete=models.CASCADE, verbose_name='成品状态', blank=True, null=True, editable=False)
+                               on_delete=models.CASCADE, verbose_name='成品状态', blank=True, null=True)
 
     def __str__(self):
         return self.prodType.name
@@ -524,15 +524,15 @@ class WorkOrder(models.Model):
 class ProductStandard(models.Model):
     key = models.AutoField(primary_key=True, verbose_name='主键')
     product = models.ForeignKey(Product, related_name='standards',
-                                on_delete=models.CASCADE, verbose_name='目标产品', blank=True, null=True, editable=False)
+                                on_delete=models.CASCADE, verbose_name='目标产品', blank=True, null=True)
     name = models.CharField(
-        max_length=20, verbose_name='标准名称', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='标准名称', blank=True, null=True)
     expectValue = models.CharField(
-        max_length=20, verbose_name='预期值', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='预期值', blank=True, null=True)
     realValue = models.CharField(
-        max_length=20, verbose_name='实际值', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='实际值', blank=True, null=True)
     result = models.CharField(
-        max_length=20, verbose_name='检测结果', blank=True, null=True, editable=False)
+        max_length=20, verbose_name='检测结果', blank=True, null=True)
 
     def __str__(self):
         return self.name

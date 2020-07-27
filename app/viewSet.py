@@ -729,12 +729,14 @@ class MaterialViewSet(viewsets.ModelViewSet):
     def filters(self, request):
         params = request.query_params
         try:
-            serializers = MaterialSerializer(Material.objects.filter(
-                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+            queryset = Material.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})).values('name').annotate(
+                counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
         except:
-            serializers = MaterialSerializer(Material.objects.filter(
-                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
-        return Response(serializers.data)
+            queryset = Material.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})).values('name').annotate(
+                counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
+        return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     @action(methods=['get'], detail=False)
     def materialChart(self, request):
@@ -780,6 +782,19 @@ class ToolViewSet(viewsets.ModelViewSet):
         params = request.data
         Tool.objects.filter(Q(name=params['name'])).delete()
         return Response('ok')
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            queryset = Tool.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})).values('name').annotate(
+                counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
+        except:
+            queryset = Tool.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})).values('name').annotate(
+                counts=Count('size')).values('name', 'size', 'counts', 'unit', 'store__name')
+        return Response(list(map(lambda obj: addkey(obj, list(queryset)), list(queryset))))
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -834,6 +849,21 @@ class ProductViewSet(viewsets.ModelViewSet):
                 pi.save()
 
         return Response('ok')
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProductSerializer(Product.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            try:
+                serializers = ProductSerializer(Product.objects.filter(
+                    Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+            except:
+                serializers = ProductSerializer(Product.objects.filter(
+                    Q(**{'%s__number__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def powerChart(self, request):
@@ -912,6 +942,17 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
     serializer_class = ProductStandardSerializer
 
     @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProductStandardSerializer(ProductStandard.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = ProductStandardSerializer(ProductStandard.objects.filter(
+                Q(**{'%s__prodType__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'产品名称': obj.product.name, '标准名称': obj.name, '预期结果': obj.expectValue,
@@ -951,12 +992,12 @@ class ColumnViewSet(viewsets.ModelViewSet):
             for field in apps.get_model('app', model.capitalize())._meta.fields:
                 if field.name != 'key':
                     columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
-                        field).__name__], 'editable': field.editable, 'ellipsis': True, 'visible': True, 'width': '10%' if model == 'role' and field.name == 'name' else None})+'/'
+                        field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if model == 'role' and field.name == 'name' else None})+'/'
             if model == 'material' or model == 'tool':
                 columns += str({'title': '现有库存', 'dataIndex': 'counts', 'inputType': 'number',
                                 'editable': True, 'ellipsis': True, 'visible': True})+'/'
             if model == 'bom':
-                columns += str({'title': 'BOM描述', 'dataIndex': 'contents', 'inputType': 'text',
+                columns += str({'title': 'BOM描述', 'dataIndex': 'content', 'inputType': 'text',
                                 'editable': False, 'ellipsis': True, 'visible': True})+'/'
             col = Column()
             col.name = model

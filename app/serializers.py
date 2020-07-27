@@ -153,7 +153,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    number = serializers.SerializerMethodField()
     createTime = serializers.SerializerMethodField()
     status = serializers.SlugRelatedField(
         queryset=CommonStatus.objects.all(), label='订单状态', slug_field='name', required=False)
@@ -165,9 +164,6 @@ class OrderSerializer(serializers.ModelSerializer):
         queryset=ProcessRoute.objects.all(), label='选用工艺', slug_field='name', required=False)
     line = serializers.SlugRelatedField(
         queryset=ProductLine.objects.all(), label='选用产线', slug_field='name', required=False)
-
-    def get_number(self, obj):
-        return int(time.mktime(obj.number.timetuple()))
 
     def get_createTime(self, obj):
         return obj.createTime.strftime('%Y-%m-%d %H:%M:%S')
@@ -344,7 +340,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.prodType.name
 
     def get_order(self, obj):
-        return int(time.mktime(obj.order.number.timetuple()))
+        return obj.order.number
 
     def get_stateList(self, obj):
         states = []
@@ -441,11 +437,11 @@ class BOMContentSerializer(serializers.ModelSerializer):
 
 class BOMSerializer(serializers.ModelSerializer):
 
-    contents = serializers.SerializerMethodField()
+    content = serializers.SerializerMethodField()
     product = serializers.SlugRelatedField(
         queryset=ProductType.objects.all(), label='对应产品', slug_field='name', required=False)
 
-    def get_contents(self, obj):
+    def get_content(self, obj):
         contentList = obj.contents.all()
         if contentList.count() == 1:
             return contentList[0].material+',数量:'+str(contentList[0].counts)
@@ -455,4 +451,4 @@ class BOMSerializer(serializers.ModelSerializer):
     class Meta:
         model = BOM
         fields = ('key', 'product', 'name',
-                  'contents', 'creator')
+                  'content', 'creator')
