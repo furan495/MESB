@@ -30,6 +30,13 @@ class WorkShopViewSet(viewsets.ModelViewSet):
     serializer_class = WorkShopSerializer
 
     @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        serializers = WorkShopSerializer(WorkShop.objects.filter(
+            Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
+
+    @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'车间编号': obj.number, '车间名称': obj.name,
@@ -42,6 +49,17 @@ class WorkShopViewSet(viewsets.ModelViewSet):
 class BOMViewSet(viewsets.ModelViewSet):
     queryset = BOM.objects.all()
     serializer_class = BOMSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = BOMSerializer(BOM.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = BOMSerializer(BOM.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -98,8 +116,15 @@ class BOMContentViewSet(viewsets.ModelViewSet):
 
 
 class RoleViewSet(viewsets.ModelViewSet):
-    queryset = Role.objects.all().order_by('-key')
+    queryset = Role.objects.all()
     serializer_class = RoleSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        serializers = RoleSerializer(Role.objects.filter(
+            Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -112,8 +137,15 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
-    queryset = Customer.objects.all().order_by('-key')
+    queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        serializers = CustomerSerializer(Customer.objects.filter(
+            Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -128,6 +160,17 @@ class CustomerViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = UserSerializer(User.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = UserSerializer(User.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def login(self, request):
@@ -167,8 +210,19 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-key')
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = OrderSerializer(Order.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = OrderSerializer(Order.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['put'], detail=True)
     def preScheduling(self, request, pk=None):
@@ -241,8 +295,19 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class ProductLineViewSet(viewsets.ModelViewSet):
-    queryset = ProductLine.objects.all().order_by('-key')
+    queryset = ProductLine.objects.all()
     serializer_class = ProductLineSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProductLineSerializer(ProductLine.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = ProductLineSerializer(ProductLine.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -255,8 +320,19 @@ class ProductLineViewSet(viewsets.ModelViewSet):
 
 
 class ProcessRouteViewSet(viewsets.ModelViewSet):
-    queryset = ProcessRoute.objects.all().order_by('-key')
+    queryset = ProcessRoute.objects.all()
     serializer_class = ProcessRouteSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProcessRouteSerializer(ProcessRoute.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = ProcessRouteSerializer(ProcessRoute.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['post'], detail=True)
     def deviceBanding(self, request, pk=None):
@@ -312,8 +388,16 @@ class ProcessViewSet(viewsets.ModelViewSet):
     queryset = Process.objects.all()
     serializer_class = ProcessSerializer
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name', 'route']
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProcessSerializer(Process.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = ProcessSerializer(Process.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def column(self, request):
@@ -353,11 +437,19 @@ class CommonStatusViewSet(viewsets.ModelViewSet):
 
 
 class WorkOrderViewSet(viewsets.ModelViewSet):
-    queryset = WorkOrder.objects.all().order_by('-createTime')
+    queryset = WorkOrder.objects.all()
     serializer_class = WorkOrderSerializer
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['number', 'status']
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = WorkOrderSerializer(WorkOrder.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = WorkOrderSerializer(WorkOrder.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -370,7 +462,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
 
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all().order_by('-key')
+    queryset = Store.objects.all()
     serializer_class = StoreSerializer
 
     def update(self, request, *args, **kwargs):
@@ -446,6 +538,17 @@ class StoreViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = StoreSerializer(Store.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = StoreSerializer(Store.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
+
     @action(methods=['post'], detail=False)
     def counts(self, request):
         params = request.data
@@ -484,11 +587,19 @@ class StorePositionViewSet(viewsets.ModelViewSet):
 
 
 class OperateViewSet(viewsets.ModelViewSet):
-    queryset = Operate.objects.all().order_by('-time')
+    queryset = Operate.objects.all()
     serializer_class = OperateSerializer
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name']
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = OperateSerializer(Operate.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = OperateSerializer(Operate.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def interviewChart(self, request):
@@ -498,8 +609,19 @@ class OperateViewSet(viewsets.ModelViewSet):
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
-    queryset = Device.objects.all().order_by('-key')
+    queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = DeviceSerializer(Device.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = DeviceSerializer(Device.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['put'], detail=True)
     def unbanding(self, request, pk):
@@ -604,6 +726,17 @@ class MaterialViewSet(viewsets.ModelViewSet):
         return Response('ok')
 
     @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = MaterialSerializer(Material.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = MaterialSerializer(Material.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
+
+    @action(methods=['get'], detail=False)
     def materialChart(self, request):
         params = request.query_params
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
@@ -662,9 +795,6 @@ class PalletViewSet(viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['position']
-
     @action(methods=['get'], detail=False)
     def numbers(self, request):
         counts = Product.objects.filter(Q(status__name='已排产')).count()
@@ -674,7 +804,7 @@ class PalletViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all().order_by('-key')
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
     filter_backends = [DjangoFilterBackend]
@@ -753,8 +883,19 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class ProductTypeViewSet(viewsets.ModelViewSet):
-    queryset = ProductType.objects.all().order_by('-key')
+    queryset = ProductType.objects.all()
     serializer_class = ProductTypeSerializer
+
+    @action(methods=['get'], detail=False)
+    def filters(self, request):
+        params = request.query_params
+        try:
+            serializers = ProductTypeSerializer(ProductType.objects.filter(
+                Q(**{'%s__icontains' % params['key']: params['value']})), many=True)
+        except:
+            serializers = ProductTypeSerializer(ProductType.objects.filter(
+                Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
+        return Response(serializers.data)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -767,7 +908,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
 
 
 class ProductStandardViewSet(viewsets.ModelViewSet):
-    queryset = ProductStandard.objects.all().order_by('-key')
+    queryset = ProductStandard.objects.all()
     serializer_class = ProductStandardSerializer
 
     @action(methods=['get'], detail=False)
