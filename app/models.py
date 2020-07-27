@@ -621,3 +621,17 @@ class BOMContent(models.Model):
 
     class Meta:
         verbose_name = 'BOM内容'
+
+
+class Column(models.Model):
+    key = models.AutoField(primary_key=True, verbose_name='主键')
+    name = models.CharField(
+        max_length=20, verbose_name='模型名', blank=True, null=True)
+    column = models.CharField(
+        max_length=2000, verbose_name='展示列', blank=True, null=True)
+
+    def __str__(self):
+        return self.column
+
+    class Meta:
+        verbose_name = '展示列'

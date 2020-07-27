@@ -400,6 +400,13 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ('key', 'title', 'source', 'time', 'workOrder')
 
 
+class ColumnSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Column
+        fields = ('key', 'name', 'column')
+
+
 class MaterialSerializer(serializers.ModelSerializer):
 
     store = serializers.SlugRelatedField(
