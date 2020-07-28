@@ -12,6 +12,12 @@ def addkey(obj, objs):
     obj['key'] = objs.index(obj)
     return obj
 
+def containerChinese(chars):
+    for char in chars:
+        if '\u4e00' <= char <='\u9fa5':
+            return True
+    return False
+
 
 def loopOrganization(organization):
     def renderChildren(name):

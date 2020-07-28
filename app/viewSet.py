@@ -324,6 +324,10 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     serializer_class = ProcessRouteSerializer
 
     @action(methods=['get'], detail=False)
+    def names(self, request):
+        return Response(ProcessRoute.objects.all().values_list('name', flat=True))
+
+    @action(methods=['get'], detail=False)
     def filters(self, request):
         params = request.query_params
         try:
@@ -398,17 +402,6 @@ class ProcessViewSet(viewsets.ModelViewSet):
             serializers = ProcessSerializer(Process.objects.filter(
                 Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
         return Response(serializers.data)
-
-    @action(methods=['get'], detail=False)
-    def column(self, request):
-        column = [{'title': '产品名称', 'dataIndex': 'name',
-                   'inputType': 'text', 'editable': False, 'ellipsis': True}]
-        for process in Process.objects.all():
-            column.append({'title': '%s开始' % process.name,
-                           'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True})
-            column.append({'title': '%s结束' % process.name,
-                           'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True})
-        return Response(column)
 
 
 class DeviceBaseViewSet(viewsets.ModelViewSet):
@@ -851,6 +844,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response('ok')
 
     @action(methods=['get'], detail=False)
+    def producing(self, request):
+        params = request.query_params
+        productList = Product.objects.filter(
+            Q(workOrders__status__name='等待中', order__orderType__name=params['order']) | Q(workOrders__status__name='加工中', order__orderType__name=params['order'])).distinct()
+        producing = list(map(lambda obj: dataSource(obj), productList))
+        return Response(producing)
+
+    @action(methods=['get'], detail=False)
     def filters(self, request):
         params = request.query_params
         try:
@@ -989,16 +990,26 @@ class ColumnViewSet(viewsets.ModelViewSet):
             col = Column.objects.get(name=model)
         except Exception as e:
             columns = ''
-            for field in apps.get_model('app', model.capitalize())._meta.fields:
-                if field.name != 'key':
-                    columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
-                        field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if model == 'role' and field.name == 'name' else None})+'/'
-            if model == 'material' or model == 'tool':
-                columns += str({'title': '现有库存', 'dataIndex': 'counts', 'inputType': 'number',
-                                'editable': True, 'ellipsis': True, 'visible': True})+'/'
-            if model == 'bom':
-                columns += str({'title': 'BOM描述', 'dataIndex': 'content', 'inputType': 'text',
-                                'editable': False, 'ellipsis': True, 'visible': True})+'/'
+            if containerChinese(model):
+                columns += str({'title': '产品名称', 'dataIndex': 'name',
+                                'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                for process in Process.objects.filter(Q(route__name=model)):
+                    columns += str({'title': '%s开始' % process.name,
+                                    'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                    columns += str({'title': '%s结束' % process.name,
+                                    'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+            else:
+                for field in apps.get_model('app', model.capitalize())._meta.fields:
+                    if field.name != 'key':
+                        columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
+                            field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if model == 'role' and field.name == 'name' else None})+'/'
+                if model == 'material' or model == 'tool':
+                    columns += str({'title': '现有库存', 'dataIndex': 'counts', 'inputType': 'number',
+                                    'editable': True, 'ellipsis': True, 'visible': True})+'/'
+                if model == 'bom':
+                    columns += str({'title': 'BOM描述', 'dataIndex': 'content', 'inputType': 'text',
+                                    'editable': False, 'ellipsis': True, 'visible': True})+'/'
+
             col = Column()
             col.name = model
             col.column = columns

@@ -161,15 +161,6 @@ def querySelect(request):
 
 
 @csrf_exempt
-def queryProducing(request):
-    params = json.loads(request.body)
-    productList = Product.objects.filter(
-        Q(workOrders__status__name='等待中', order__orderType__name=params['order']) | Q(workOrders__status__name='加工中', order__orderType__name=params['order'])).distinct()
-    producing = list(map(lambda obj: dataSource(obj), productList))
-    return JsonResponse({'producing': producing})
-
-
-@csrf_exempt
 def queryCharts(request):
     params = json.loads(request.body)
     year = datetime.datetime.now().year

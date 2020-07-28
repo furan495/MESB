@@ -55,6 +55,5 @@ urlpatterns = [
     url(r'^api/deviceState/',  views.deviceState),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/querySelect/',  views.querySelect),
-    url(r'^api/queryProducing/',  views.queryProducing),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
 ]
