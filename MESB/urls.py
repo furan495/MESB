@@ -49,10 +49,7 @@ router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
 # 另外，我们还要包含可浏览的API的登录URL。
 urlpatterns = [
     url(r'^', include(router.urls)),
-    url(r'^test/',  views.test),
     url(r'^api/wincc/',  views.wincc),
-    url(r'^api/supOrder/',  views.supOrder),
-    url(r'^api/deviceState/',  views.deviceState),
     url(r'^api/queryCharts/',  views.queryCharts),
     url(r'^api/querySelect/',  views.querySelect),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),

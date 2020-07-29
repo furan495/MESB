@@ -213,38 +213,3 @@ def queryCharts(request):
 
     return JsonResponse({'progress': progress, 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
 
-
-@csrf_exempt
-def deviceState(request):
-    states = {'device': 3, 'user': 'x1,y1,z1',
-              'tool': 'x2,y2,z2', 'angle': 'J1,J2,J3,J4,J5,J6'}
-    name = ''
-    """ for key, val in zip(states.keys(), states.values()):
-        name += '%s:%s;' % (key, val)
-    state = DeviceState()
-    state.device = Device.objects.get(key=states['device'])
-    state.name = name
-    state.save() """
-    return JsonResponse({'res': 'ok'})
-
-
-@csrf_exempt
-def supOrder(request):
-    # params=json.loads(request.body)
-    params = {'pos': 'XG', 'number': '1595204249932098'}
-    product = WorkOrder.objects.get(number='1595204249932098').product
-    processes = Process.objects.all().values_list('number', flat=True)
-    for process in processes[:list(processes).index('XG')+1]:
-        workOrder = WorkOrder()
-        workOrder.product = product
-        workOrder.process = Process.objects.get(number=process)
-        workOrder.status = CommonStatus.objects.get(name='补单')
-        workOrder.number = str(time.time()*1000000)[:16]
-        workOrder.save()
-    return JsonResponse({'ok': 'ok'})
-
-
-@csrf_exempt
-def test(request):
-    print(json.loads(request.body))
-    return JsonResponse(json.loads(request.body))

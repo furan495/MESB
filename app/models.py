@@ -628,7 +628,7 @@ class Column(models.Model):
     name = models.CharField(
         max_length=20, verbose_name='模型名', blank=True, null=True)
     column = models.CharField(
-        max_length=2000, verbose_name='展示列', blank=True, null=True)
+        max_length=4000, verbose_name='展示列', blank=True, null=True)
 
     def __str__(self):
         return self.column

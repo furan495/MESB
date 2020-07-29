@@ -107,7 +107,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     def get_states(self, obj):
         stateList = []
-        for state in obj.states.all().order_by('time').values_list('name', flat=True).distinct():
+        for state in obj.states.all().values_list('name', flat=True).distinct():
             stateList.append(obj.states.all().filter(Q(name=state)).last())
         try:
             return list(map(lambda obj: {'key': obj.key, 'name': obj.name, 'value': obj.value}, stateList))

@@ -254,35 +254,45 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], detail=True)
     def scheduling(self, request, pk=None):
-        order = self.get_object()
-        order.status = CommonStatus.objects.get(name='已排产')
-        order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        order.save()
-        products = order.products.all()
-        processes = order.route.processes.all()
-        for product, index in zip(products, range(products.count())):
-            for process in processes:
-                workOrder = WorkOrder()
-                workOrder.product = product
-                workOrder.process = process
-                workOrder.status = CommonStatus.objects.get(name='等待中')
-                workOrder.number = str(time.time()*1000000)[:16]
-                workOrder.save()
+        try:
+            order = self.get_object()
+            order.status = CommonStatus.objects.get(name='已排产')
+            order.batch = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            order.scheduling = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            order.save()
+            products = order.products.all()
+            processes = order.route.processes.all()
+            for product, index in zip(products, range(products.count())):
+                for process in processes:
+                    workOrder = WorkOrder()
+                    workOrder.product = product
+                    workOrder.process = process
+                    workOrder.status = CommonStatus.objects.get(name='等待中')
+                    workOrder.number = str(time.time()*1000000)[:16]
+                    workOrder.save()
 
-            product.number = str(time.time()*1000000)[:16]
+                product.number = str(time.time()*1000000)[:16]
 
-            inPosition = StorePosition.objects.filter(
-                Q(description__icontains=product, store__storeType__name='成品库', status='2') | Q(description__icontains=product, store__storeType__name='混合库', status='2')).first()
-            inPosition.status = '1'
-            inPosition.content = '%s-%s号位' % (
-                inPosition.store.name, inPosition.number)
-            inPosition.save()
+                inPosition = StorePosition.objects.filter(
+                    Q(description__icontains=product, store__storeType__name='成品库', status='2') | Q(description__icontains=product, store__storeType__name='混合库', status='2')).first()
+                inPosition.status = '1'
+                inPosition.content = '%s-%s号位' % (
+                    inPosition.store.name, inPosition.number)
+                inPosition.save()
 
-            product.position = inPosition
-            product.status = CommonStatus.objects.get(name='已排产')
-            product.save()
-        return Response('ok')
+                outPosition = StorePosition.objects.filter(
+                    Q(store__storeType__name='原料库', status='1') & ~Q(description='')).first()
+                outPosition.status = '2'
+                outPosition.save()
+
+                product.position = inPosition
+                product.outPos = outPosition.number
+                product.status = CommonStatus.objects.get(name='已排产')
+                product.save()
+            res = 'ok'
+        except:
+            res = 'err'
+        return Response(res)
 
     @action(methods=['get'], detail=False)
     def export(self, request):
@@ -392,6 +402,9 @@ class ProcessViewSet(viewsets.ModelViewSet):
     queryset = Process.objects.all()
     serializer_class = ProcessSerializer
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'route']
+
     @action(methods=['get'], detail=False)
     def filters(self, request):
         params = request.query_params
@@ -402,6 +415,15 @@ class ProcessViewSet(viewsets.ModelViewSet):
             serializers = ProcessSerializer(Process.objects.filter(
                 Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
         return Response(serializers.data)
+
+    @action(methods=['get'], detail=False)
+    def export(self, request):
+        params = request.query_params
+        excel = map(lambda obj: {'工序名称': obj.name, '隶属工艺': obj.route.name, '工序编号': obj.number,
+                                 '工序图片': obj.path, }, Process.objects.all())
+        df = pd.DataFrame(list(excel))
+        df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
 
 
 class DeviceBaseViewSet(viewsets.ModelViewSet):
@@ -432,6 +454,20 @@ class CommonStatusViewSet(viewsets.ModelViewSet):
 class WorkOrderViewSet(viewsets.ModelViewSet):
     queryset = WorkOrder.objects.all()
     serializer_class = WorkOrderSerializer
+
+    @action(methods=['post'], detail=False)
+    def supplement(request):
+        params = request.data
+        product = WorkOrder.objects.get(number=params['number']).product
+        processes = Process.objects.all().values_list('number', flat=True)
+        for process in processes[:list(processes).index(params['pos'])+1]:
+            workOrder = WorkOrder()
+            workOrder.product = product
+            workOrder.process = Process.objects.get(number=process)
+            workOrder.status = CommonStatus.objects.get(name='补单')
+            workOrder.number = str(time.time()*1000000)[:16]
+            workOrder.save()
+        return Response('ok')
 
     @action(methods=['get'], detail=False)
     def filters(self, request):
@@ -600,10 +636,31 @@ class OperateViewSet(viewsets.ModelViewSet):
             obj.time)], Operate.objects.filter(Q(name='登录系统')).order_by('time'))
         return Response([{'type': 'areaspline', 'name': '日访问量', 'data': reduce(lambda x, y: x if y in x else x+[y], [[], ]+list(data))}])
 
+    @action(methods=['get'], detail=False)
+    def export(self, request):
+        params = request.query_params
+        excel = map(lambda obj: {'操作名称': obj.name, '操作时间': obj.time,
+                                 '操作人': obj.operator}, Operate.objects.all())
+        df = pd.DataFrame(list(excel))
+        df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+
 
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+
+    @action(methods=['post'], detail=False)
+    def states(self, request):
+        params = request.data
+        for key in params.keys():
+            if key != 'device':
+                state = DeviceState()
+                state.device = Device.objects.get(number=params['device'])
+                state.name = key
+                state.value = params[key]
+                state.save()
+        return Response('ok')
 
     @action(methods=['get'], detail=False)
     def filters(self, request):
@@ -743,8 +800,8 @@ class MaterialViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '物料类型': obj['mateType'], '现有库存': obj['counts'], '存储仓库': Store.objects.get(
-            key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'mateType', 'store'))
+        excel = map(lambda obj: {'物料名称': obj['name'], '物料规格': obj['size'], '基本单位': obj['unit'], '现有库存': obj['counts'], '存储仓库': Store.objects.get(
+            key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit',  'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -792,8 +849,8 @@ class ToolViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'], '工具类型': obj['toolType'], '现有库存': obj['counts'], '存储仓库': Store.objects.get(
-            key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit', 'toolType', 'store'))
+        excel = map(lambda obj: {'工具名称': obj['name'], '工具规格': obj['size'], '基本单位': obj['unit'],  '现有库存': obj['counts'], '存储仓库': Store.objects.get(
+            key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit',  'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -988,7 +1045,7 @@ class ColumnViewSet(viewsets.ModelViewSet):
         model = request.data['model'] if request.data['model'] != 'processe' else 'process'
         try:
             col = Column.objects.get(name=model)
-        except Exception as e:
+        except:
             columns = ''
             if containerChinese(model):
                 columns += str({'title': '产品名称', 'dataIndex': 'name',
@@ -1000,9 +1057,9 @@ class ColumnViewSet(viewsets.ModelViewSet):
                                     'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
             else:
                 for field in apps.get_model('app', model.capitalize())._meta.fields:
-                    if field.name != 'key':
+                    if field.name != 'key' and field.name != 'password':
                         columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
-                            field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if model == 'role' and field.name == 'name' else None})+'/'
+                            field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if(model == 'role' and field.name == 'name') or (model == 'bom' and field.name != 'content') else None})+'/'
                 if model == 'material' or model == 'tool':
                     columns += str({'title': '现有库存', 'dataIndex': 'counts', 'inputType': 'number',
                                     'editable': True, 'ellipsis': True, 'visible': True})+'/'
