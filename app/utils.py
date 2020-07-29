@@ -12,11 +12,21 @@ def addkey(obj, objs):
     obj['key'] = objs.index(obj)
     return obj
 
+
 def containerChinese(chars):
     for char in chars:
-        if '\u4e00' <= char <='\u9fa5':
+        if '\u4e00' <= char <= '\u9fa5':
             return True
     return False
+
+
+def width(model, field):
+    if model == 'role' and field.name != 'authority':
+        return '10%'
+    if model == 'bom' and field.name != 'content':
+        return '10%'
+    if (model == 'workShop' or model == 'productLine' or model == 'processRoute' or model == 'order') and field.name != 'description':
+        return '10%'
 
 
 def loopOrganization(organization):
@@ -133,7 +143,7 @@ def materialChart(orderType, start, stop, all):
     querySet = ProductInfo.objects.filter(Q(product__order__orderType__name=orderType, product__order__createTime__gte=start,
                                             product__order__createTime__lte=stop)).values('product__batch')
     for mat in BOMContent.objects.all().values_list('material', flat=True).distinct():
-        material[mat.split('/')[0]] = Sum('value',filter=Q(name=mat))
+        material[mat.split('/')[0]] = Sum('value', filter=Q(name=mat))
 
     for query in querySet.annotate(**material):
         for name in list(query.keys())[1:]:

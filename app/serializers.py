@@ -9,7 +9,7 @@ from rest_framework import serializers
 class WorkShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkShop
-        fields = ('key', 'name', 'number', 'descriptions')
+        fields = ('key', 'name', 'number', 'description')
 
 
 class OrganizationSerializer(serializers.ModelSerializer):

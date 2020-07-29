@@ -55,7 +55,7 @@ class WorkShop(models.Model):
         max_length=20, verbose_name='车间名称', unique=True, blank=True, null=True)
     number = models.CharField(
         max_length=20, verbose_name='车间编号', unique=True, blank=True, null=True)
-    descriptions = models.CharField(
+    description = models.CharField(
         max_length=200, verbose_name='车间描述', blank=True, null=True)
 
     def __str__(self):

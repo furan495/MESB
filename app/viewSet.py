@@ -40,7 +40,7 @@ class WorkShopViewSet(viewsets.ModelViewSet):
     def export(self, request):
         params = request.query_params
         excel = map(lambda obj: {'车间编号': obj.number, '车间名称': obj.name,
-                                 '车间描述': obj.descriptions}, WorkShop.objects.all())
+                                 '车间描述': obj.description}, WorkShop.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -466,7 +466,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             outPosition.save()
             product.outPos = outPosition.number
             product.save()
-            processes = Process.objects.all().values_list('number', flat=True)
+            processes = Process.objects.filter(Q(route=product.order.route)).values_list('number', flat=True)
             for process in processes[:list(processes).index(params['pos'])+1]:
                 workOrder = WorkOrder()
                 workOrder.product = product
@@ -1059,23 +1059,23 @@ class ColumnViewSet(viewsets.ModelViewSet):
             columns = ''
             if containerChinese(model):
                 columns += str({'title': '产品名称', 'dataIndex': 'name',
-                                'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                                'inputType': 'text', 'editable': False, 'visible': True})+'/'
                 for process in Process.objects.filter(Q(route__name=model)):
                     columns += str({'title': '%s开始' % process.name,
-                                    'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                                    'dataIndex': 'start%s' % process.number, 'inputType': 'text', 'editable': False, 'visible': True})+'/'
                     columns += str({'title': '%s结束' % process.name,
-                                    'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                                    'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'visible': True})+'/'
             else:
                 for field in apps.get_model('app', model.capitalize())._meta.fields:
                     if field.name != 'key' and field.name != 'password':
                         columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
-                            field).__name__], 'editable': True, 'ellipsis': True, 'visible': True, 'width': '10%' if(model == 'role' and field.name == 'name') or (model == 'bom' and field.name != 'content') else None})+'/'
+                            field).__name__], 'editable': True, 'visible': True, 'width': width(model, field)})+'/'
                 if model == 'material' or model == 'tool':
                     columns += str({'title': '现有库存', 'dataIndex': 'counts', 'inputType': 'number',
-                                    'editable': True, 'ellipsis': True, 'visible': True})+'/'
+                                    'editable': True, 'visible': True})+'/'
                 if model == 'bom':
                     columns += str({'title': 'BOM描述', 'dataIndex': 'content', 'inputType': 'text',
-                                    'editable': False, 'ellipsis': True, 'visible': True})+'/'
+                                    'editable': False, 'visible': True})+'/'
 
             col = Column()
             col.name = model

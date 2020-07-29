@@ -95,6 +95,7 @@ def querySelect(request):
         pos.status = '2'
         pos.save() """
 
+
     params = json.loads(request.body)
     selectList = {}
     if params['model'] == 'order' or params['model'] == 'productType':
