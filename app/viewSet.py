@@ -64,8 +64,8 @@ class BOMViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'对应产品': obj.product.name, 'bom名称': obj.name, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), 'bom内容': ','.join(
-            list(map(lambda obj: obj.material+',数量:'+str(obj.counts) if obj.counts else obj.material+',数量:若干', obj.contents.all())))}, BOM.objects.all())
+        excel = map(lambda obj: {'对应产品': obj.product.name, 'bom名称': obj.name, '创建人': obj.creator,
+                                 'bom内容': obj.contents.all().values_list('material', 'counts')}, BOM.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -391,8 +391,8 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def export(self, request):
         params = request.query_params
-        excel = map(lambda obj: {'工艺名称': obj.name, '工艺类别': obj.routeType, '工艺描述': obj.description, '创建人': obj.creator, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'),
-                                 '包含工序': ('->').join(list(map(lambda obj: obj.name, Process.objects.filter(Q(route=obj))))), '详细数据': obj.data}, ProcessRoute.objects.all())
+        excel = map(lambda obj: {'工艺名称': obj.name, '工艺类别': obj.routeType, '工艺描述': obj.description, '创建人': obj.creator,
+                                 '详细数据': obj.data}, ProcessRoute.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
@@ -456,18 +456,28 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     serializer_class = WorkOrderSerializer
 
     @action(methods=['post'], detail=False)
-    def supplement(request):
-        params = request.data
-        product = WorkOrder.objects.get(number=params['number']).product
-        processes = Process.objects.all().values_list('number', flat=True)
-        for process in processes[:list(processes).index(params['pos'])+1]:
-            workOrder = WorkOrder()
-            workOrder.product = product
-            workOrder.process = Process.objects.get(number=process)
-            workOrder.status = CommonStatus.objects.get(name='补单')
-            workOrder.number = str(time.time()*1000000)[:16]
-            workOrder.save()
-        return Response('ok')
+    def supplement(self, request):
+        try:
+            params = request.data
+            product = WorkOrder.objects.get(number=params['number']).product
+            outPosition = StorePosition.objects.filter(
+                Q(store__storeType__name='原料库', status='1') & ~Q(description='')).first()
+            outPosition.status = '2'
+            outPosition.save()
+            product.outPos = outPosition.number
+            product.save()
+            processes = Process.objects.all().values_list('number', flat=True)
+            for process in processes[:list(processes).index(params['pos'])+1]:
+                workOrder = WorkOrder()
+                workOrder.product = product
+                workOrder.process = Process.objects.get(number=process)
+                workOrder.status = CommonStatus.objects.get(name='补单')
+                workOrder.number = str(time.time()*1000000)[:16]
+                workOrder.save()
+            res = 'ok'
+        except:
+            res = 'err'
+        return Response(res)
 
     @action(methods=['get'], detail=False)
     def filters(self, request):
@@ -885,8 +895,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             product.save()
 
             standard = ProductStandard()
-            standard.name = '重量'
-            standard.expectValue = '50'
+            standard.name = '外观'
+            standard.expectValue = '完好'
             standard.product = product
             standard.save()
 
