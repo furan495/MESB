@@ -466,9 +466,9 @@ class Product(models.Model):
         max_length=20, verbose_name='成品编号', blank=True, null=True)
     order = models.ForeignKey(Order, related_name='products',
                               on_delete=models.CASCADE, verbose_name='隶属订单', blank=True, null=True)
-    outPos = models.CharField(
-        max_length=20, verbose_name='出库位', blank=True, null=True)
-    position = models.ForeignKey(StorePosition, related_name='products',
+    outPos = models.ForeignKey(StorePosition, related_name='outPositions',
+                                 on_delete=models.CASCADE, verbose_name='出库位', blank=True, null=True)
+    inPos = models.ForeignKey(StorePosition, related_name='inPositions',
                                  on_delete=models.CASCADE, verbose_name='入库位', blank=True, null=True)
     result = models.CharField(
         max_length=20, verbose_name='质检结果', blank=True, null=True)

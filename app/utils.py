@@ -25,7 +25,7 @@ def width(model, field):
         return '10%'
     if model == 'bom' and field.name != 'content':
         return '10%'
-    if (model == 'workShop' or model == 'productLine' or model == 'processRoute' or model == 'order') and field.name != 'description':
+    if (model == 'workShop' or model == 'productLine' or model == 'processRoute') and field.name != 'description':
         return '10%'
 
 
@@ -87,14 +87,14 @@ def powerChart(orderType, start, stop, all):
     else:
         for category in list(Product.objects.all().values_list('batch', flat=True).distinct()):
             data.append({'container': category, 'categories': [category], 'series': [
-                {'data': [{'y': Product.objects.filter(Q(batch=category, status__name='入库', order__createTime__gte=start, order__createTime__lte=stop)).count(), 'target': Product.objects.filter(Q(batch=category, order__createTime__gte=start, order__createTime__lte=stop)).count()}]}]})
+                {'data': [{'y': Product.objects.filter(Q(batch=category, status__name='已完成', order__createTime__gte=start, order__createTime__lte=stop)).count(), 'target': Product.objects.filter(Q(batch=category, order__createTime__gte=start, order__createTime__lte=stop)).count()}]}]})
 
     return data
 
 
 def qualityChart(orderType, start, stop, all):
     data = Product.objects.filter(Q(order__orderType__name=orderType, order__createTime__gte=start, order__createTime__lte=stop)).values('batch').annotate(good=Count(
-        'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='入库')), bad=Count('number', filter=Q(result='不合格')))
+        'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='已完成')), bad=Count('number', filter=Q(result='不合格')))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
     if data.count() == 0:

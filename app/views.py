@@ -35,10 +35,13 @@ def wincc(request):
         workOrder.startTime = datetime.datetime.now()
         workOrder.status = CommonStatus.objects.get(name='加工中')
     if 'stop' in params[0]:
+        if params[0].split('-')[1] == 'D':
+            product.status = CommonStatus.objects.get(name='半成品')
+            product.save()
         workOrder.endTime = datetime.datetime.now()
         workOrder.status = CommonStatus.objects.get(name='已完成')
 
-    if params[0] == 'stop-%s' % Process.objects.all().last().number:
+    if params[0] == 'stop-%s' % Process.objects.filter(Q(route=WorkOrder.objects.get(number=params[1]).product.order.route)).last().number:
         product.status = CommonStatus.objects.get(name='已完成')
         product.save()
         order = product.order
@@ -55,7 +58,6 @@ def wincc(request):
         else:
             product.result = '不合格'
             standard.result = '不合格'
-            product.reason = '检测不合格'
             standard.realValue = '不合格'
         product.save()
         standard.save()
@@ -68,16 +70,16 @@ def wincc(request):
         else:
             standard.result = '不合格'
             product.result = '不合格'
-            product.reason = '重量不足'
         standard.save()
         product.save()
 
     try:
         event = Event()
         event.workOrder = workOrder
-        event.source = Process.objects.get(number=params[0].split('-')[1]).name
+        event.source = Process.objects.get(number=params[0].split(
+            '-')[1], route=WorkOrder.objects.get(number=params[1]).product.order.route).name
         event.title = '%s%s' % (Process.objects.get(
-            number=params[0].split('-')[1]).name, '开始' if params[0].split('-')[0] == 'start' else '结束')
+            number=params[0].split('-')[1], route=WorkOrder.objects.get(number=params[1]).product.order.route).name, '开始' if params[0].split('-')[0] == 'start' else '结束')
         event.save()
     except Exception as e:
         print(e)
@@ -94,7 +96,6 @@ def querySelect(request):
     for pos in StorePosition.objects.filter(Q(store__storeType__name='成品库')):
         pos.status = '2'
         pos.save() """
-
 
     params = json.loads(request.body)
     selectList = {}
@@ -116,10 +117,6 @@ def querySelect(request):
         selectList = {
             'routeType': list(map(lambda obj: obj.name, OrderType.objects.all())),
         }
-    if params['model'] == 'processe':
-        selectList = {
-            'route': list(map(lambda obj: obj.name, ProcessRoute.objects.all())),
-        }
     if params['model'] == 'store':
         selectList = {
             'direction': ['行优先', '列优先'],
@@ -137,18 +134,13 @@ def querySelect(request):
         }
     if params['model'] == 'device':
         selectList = {
-            'process': list(map(lambda obj: obj.name, Process.objects.all())),
             'deviceType': list(map(lambda obj: obj.name, DeviceType.objects.all())),
         }
     if params['model'] == 'document':
         selectList = {
             'docType': list(map(lambda obj: [obj.name, obj.key], DocType.objects.all()))
         }
-    if params['model'] == 'material':
-        selectList = {
-            'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
-        }
-    if params['model'] == 'tool':
+    if params['model'] == 'material' or params['model'] == 'tool':
         selectList = {
             'store__name': list(map(lambda obj: obj.name, Store.objects.all())),
         }
@@ -213,4 +205,3 @@ def queryCharts(request):
              'series': [{'data': [{'y':  current if current != 0 else 0, 'target': target if target != 0 else 100}]}]}
 
     return JsonResponse({'progress': progress, 'categories': categories, 'mateana': storeAna(params['order']), 'quality': qualityChart(params['order'], start, stop, all=True), 'goodRate': rate, 'power': power})
-

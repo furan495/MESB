@@ -285,8 +285,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 outPosition.status = '2'
                 outPosition.save()
 
-                product.position = inPosition
-                product.outPos = outPosition.number
+                product.inPos = inPosition
+                product.outPos = outPosition
                 product.status = CommonStatus.objects.get(name='已排产')
                 product.save()
             res = 'ok'
@@ -459,14 +459,18 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     def supplement(self, request):
         try:
             params = request.data
-            product = WorkOrder.objects.get(number=params['number']).product
+            workOrder = WorkOrder.objects.get(number=params['number'])
+            workOrder.status = CommonStatus.objects.get(name='失败')
+            workOrder.save()
+            product = workOrder.product
             outPosition = StorePosition.objects.filter(
                 Q(store__storeType__name='原料库', status='1') & ~Q(description='')).first()
             outPosition.status = '2'
             outPosition.save()
             product.outPos = outPosition.number
             product.save()
-            processes = Process.objects.filter(Q(route=product.order.route)).values_list('number', flat=True)
+            processes = Process.objects.filter(
+                Q(route=product.order.route)).values_list('number', flat=True)
             for process in processes[:list(processes).index(params['pos'])+1]:
                 workOrder = WorkOrder()
                 workOrder.product = product
@@ -478,6 +482,16 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         except:
             res = 'err'
         return Response(res)
+
+    @action(methods=['post'], detail=False)
+    def unfinish(self, request):
+        params = request.data
+        for num in params:
+            workOrder = WorkOrder.objects.get(number=num)
+            if workOrder.status.name == '等待中':
+                workOrder.status = CommonStatus.objects.get(name='未完成')
+                workOrder.save()
+        return Response('ok')
 
     @action(methods=['get'], detail=False)
     def filters(self, request):
@@ -956,10 +970,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         params = request.query_params
         if params['model'] == 'product':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
-                '%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': obj.position.content}, Product.objects.all())
+                '%Y-%m-%d'), '质检结果':  obj.result, '存放仓位': obj.inPos.content}, Product.objects.all())
         if params['model'] == 'unqualified':
             excel = map(lambda obj: {'成品名称': obj.name, '成品编号': obj.number, '对应订单': obj.order.number, '成品批次': obj.batch.strftime(
-                '%Y-%m-%d'), '不合格原因': obj.reason, '存放仓位': obj.position.content}, Product.objects.filter(result='不合格'))
+                '%Y-%m-%d'), '存放仓位': obj.inPos.content}, Product.objects.filter(result='不合格'))
         if params['model'] == 'qualityChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F(
                 'batch'), 合格数=Count('number', filter=Q(result='合格')), 不合格数=Count('number', filter=Q(result='不合格'))).values('日期', '合格数', '不合格数')
@@ -1067,7 +1081,7 @@ class ColumnViewSet(viewsets.ModelViewSet):
                                     'dataIndex': 'stop%s' % process.number, 'inputType': 'text', 'editable': False, 'visible': True})+'/'
             else:
                 for field in apps.get_model('app', model.capitalize())._meta.fields:
-                    if field.name != 'key' and field.name != 'password':
+                    if field.name != 'key' and field.name != 'password' and field.name != 'reason':
                         columns += str({'title': field.verbose_name, 'dataIndex': 'store__name' if (model == 'material' or model == 'tool') and field.name == 'store' else field.name, 'inputType': 'select' if field.name == 'origin' or field.name == 'direction' else colDict[type(
                             field).__name__], 'editable': True, 'visible': True, 'width': width(model, field)})+'/'
                 if model == 'material' or model == 'tool':
