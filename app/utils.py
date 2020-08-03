@@ -77,7 +77,7 @@ def rateY(obj):
 
 def powerChart(orderType, start, stop, all):
     data = []
-    if Product.objects.all().count() == 0:
+    if Product.objects.all().count() < 20:
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
         day = datetime.datetime.now().day
@@ -97,7 +97,7 @@ def qualityChart(orderType, start, stop, all):
         'number', filter=Q(result='合格')), reals=Count('number', filter=Q(status__name='已完成')), bad=Count('number', filter=Q(result='不合格')))
     goodRate = list(map(lambda obj: [dataX(obj['batch']), rateY(obj)], data))
 
-    if data.count() == 0:
+    if data.count() < 10:
         goodData, badData = [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month
@@ -139,18 +139,23 @@ def qualityChart(orderType, start, stop, all):
 
 
 def materialChart(orderType, start, stop, all):
+    def seriesData(name, querySet, material):
+        series = []
+        for query in querySet.annotate(**material):
+            series.append([dataX(query['product__batch']), query[name]])
+        return series
+
     data, material = [], {}
     querySet = ProductInfo.objects.filter(Q(product__order__orderType__name=orderType, product__order__createTime__gte=start,
-                                            product__order__createTime__lte=stop)).values('product__batch')
+                                            product__order__createTime__lte=stop)).values('product__batch').distinct()
     for mat in BOMContent.objects.all().values_list('material', flat=True).distinct():
         material[mat.split('/')[0]] = Sum('value', filter=Q(name=mat))
 
-    for query in querySet.annotate(**material):
-        for name in list(query.keys())[1:]:
-            data.append({'name': name, 'type': 'column', 'data': [
-                        [dataX(query['product__batch']), query[name]]]})
+    for name in material.keys():
+        data.append({'name': name, 'type': 'column',
+                     'data': seriesData(name, querySet, material)})
 
-    if len(querySet) == 0:
+    if len(querySet) < 10:
         one, two, three = [], [], []
         year = datetime.datetime.now().year
         month = datetime.datetime.now().month

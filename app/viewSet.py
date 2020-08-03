@@ -952,7 +952,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         params = request.query_params
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
         stop = datetime.datetime.strptime(
-            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
+            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=48)
         data = powerChart(params['order'], start, stop, all=False)
         return Response(data)
 
@@ -961,7 +961,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         params = request.query_params
         start = datetime.datetime.strptime(params['start'], '%Y/%m/%d')
         stop = datetime.datetime.strptime(
-            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=24)
+            params['stop'], '%Y/%m/%d')+datetime.timedelta(hours=48)
         data = qualityChart(params['order'], start, stop, all=False)
         return Response(data)
 
@@ -988,7 +988,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         if params['model'] == 'powerChart':
             excel = Product.objects.filter(Q(order__orderType__name=params['orderType'])).values('batch').annotate(日期=F('batch'), 预期产量=Count('number'), 实际产量=Count('number', filter=Q(
-                status__name='入库')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='入库'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
+                status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
         return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
