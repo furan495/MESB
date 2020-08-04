@@ -43,7 +43,7 @@ class WorkShopViewSet(viewsets.ModelViewSet):
                                  '车间描述': obj.description}, WorkShop.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class BOMViewSet(viewsets.ModelViewSet):
@@ -68,7 +68,7 @@ class BOMViewSet(viewsets.ModelViewSet):
                                  'bom内容': obj.contents.all().values_list('material', 'counts')}, BOM.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -133,7 +133,7 @@ class RoleViewSet(viewsets.ModelViewSet):
                                  '权限范围': obj.authority}, Role.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -154,7 +154,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
                                  '客户等级': obj.level, '公司': obj.company}, Customer.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -172,10 +172,10 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(**{'%s__name__icontains' % params['key']: params['value']})), many=True)
         return Response(serializers.data)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['patch'], detail=False)
     def login(self, request):
         res = ''
-        params = request.query_params
+        params = request.data
         user = User.objects.get(phone=params['phone'])
         if user.password == params['password']:
             res = UserSerializer(user).data
@@ -183,9 +183,9 @@ class UserViewSet(viewsets.ModelViewSet):
             res = 'err'
         return Response({'res': res, 'count': User.objects.filter(Q(status='在线')).count()})
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['patch'], detail=False)
     def logout(self, request):
-        params = request.query_params
+        params = request.data
         user = User.objects.get(Q(phone=params['phone']))
         user.status = '离线'
         user.save()
@@ -206,7 +206,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                  '部门': obj.department.name if obj.department else '', '职位': obj.post, '代号': obj.phone}, User.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -301,7 +301,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                  '订单编号': obj.number, '创建时间': obj.createTime.strftime('%Y-%m-%d %H:%M:%S'), '排产时间': obj.scheduling, '订单批次': obj.batch, '订单描述': obj.description}, Order.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ProductLineViewSet(viewsets.ModelViewSet):
@@ -326,7 +326,7 @@ class ProductLineViewSet(viewsets.ModelViewSet):
                                  '产线编号': obj.number, '产线描述': obj.description}, ProductLine.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ProcessRouteViewSet(viewsets.ModelViewSet):
@@ -395,7 +395,7 @@ class ProcessRouteViewSet(viewsets.ModelViewSet):
                                  '详细数据': obj.data}, ProcessRoute.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ProcessViewSet(viewsets.ModelViewSet):
@@ -423,7 +423,7 @@ class ProcessViewSet(viewsets.ModelViewSet):
                                  '工序图片': obj.path, }, Process.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class DeviceBaseViewSet(viewsets.ModelViewSet):
@@ -511,7 +511,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             '%Y-%m-%d %H:%M:%S'), '开始时间': obj.startTime, '结束时间': obj.endTime, '工单描述': obj.description}, WorkOrder.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class StoreViewSet(viewsets.ModelViewSet):
@@ -626,7 +626,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                                  '仓库编号': obj.number, '仓库类型': obj.storeType.name, '仓库行数': obj.rows, '仓库列数': obj.columns, '排向优先': obj.direction}, Store.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class StoreTypeViewSet(viewsets.ModelViewSet):
@@ -667,7 +667,7 @@ class OperateViewSet(viewsets.ModelViewSet):
                                  '操作人': obj.operator}, Operate.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
@@ -716,7 +716,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
                                  '设备编号': obj.number, '设备厂家': obj.factory, '设备型号': obj.typeNumber}, Device.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
@@ -828,7 +828,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
             key=obj['store']).name}, Material.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit',  'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ToolViewSet(viewsets.ModelViewSet):
@@ -877,7 +877,7 @@ class ToolViewSet(viewsets.ModelViewSet):
             key=obj['store']).name}, Tool.objects.all().values('name').annotate(counts=Count('size')).values('name', 'size', 'counts', 'unit',  'store'))
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class PalletViewSet(viewsets.ModelViewSet):
@@ -991,7 +991,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status__name='已完成')), 合格率=Cast(Count('number', filter=Q(result='合格')), output_field=FloatField()) / Count('number', filter=Q(status__name='已完成'), output_field=FloatField())).values('日期', '预期产量', '实际产量', '合格率')
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ProductTypeViewSet(viewsets.ModelViewSet):
@@ -1016,7 +1016,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
                                  '产品编号': obj.number, '产品容差': obj.errorRange}, ProductType.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class ProductStandardViewSet(viewsets.ModelViewSet):
@@ -1041,7 +1041,7 @@ class ProductStandardViewSet(viewsets.ModelViewSet):
                                  '实际结果': obj.realValue, '检测结果': obj.result}, ProductStandard.objects.all())
         df = pd.DataFrame(list(excel))
         df.to_excel(BASE_DIR+'/upload/export/export.xlsx')
-        return Response('http://%s:8899/upload/export/export.xlsx' % params['url'])
+        return Response('http://%s:8899/upload/export/export.xlsx' % params['host'])
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -1114,7 +1114,10 @@ class ColumnViewSet(viewsets.ModelViewSet):
             columns += str(column)+'/'
         col.column = columns
         col.save()
-        return Response('ok')
+        columnsList=[]
+        for column in col.column.split('/')[:-1]:
+            columnsList.append(ast.literal_eval(column))
+        return Response(list(filter(lambda obj: obj['visible'], columnsList)))
 
     @action(methods=['put'], detail=False)
     def all(self, request):
@@ -1129,4 +1132,7 @@ class ColumnViewSet(viewsets.ModelViewSet):
             columns += str(column)+'/'
         col.column = columns
         col.save()
-        return Response('ok')
+        columnsList=[]
+        for column in col.column.split('/')[:-1]:
+            columnsList.append(ast.literal_eval(column))
+        return Response(list(filter(lambda obj: obj['visible'], columnsList)))

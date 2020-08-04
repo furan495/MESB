@@ -9,7 +9,7 @@ from django.db.models.aggregates import Count, Sum
 
 
 def addkey(obj, objs):
-    obj['key'] = objs.index(obj)
+    obj['key'] = objs.index(obj)+1
     return obj
 
 

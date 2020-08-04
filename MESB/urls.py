@@ -50,7 +50,7 @@ router.register(r'api/productStandards', viewSet.ProductStandardViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api/wincc/',  views.wincc),
+    url(r'^api/selects/',  views.selects),
     url(r'^api/queryCharts/',  views.queryCharts),
-    url(r'^api/querySelect/',  views.querySelect),
     url(r'^upload/(?P<path>.*)$', serve,{'document_root': BASE_DIR+'/upload'}),
 ]

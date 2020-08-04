@@ -88,7 +88,7 @@ def wincc(request):
 
 
 @csrf_exempt
-def querySelect(request):
+def selects(request):
     """ for pos in StorePosition.objects.filter(Q(store__storeType__name='原料库')):
         pos.status = '1'
         pos.save() 
