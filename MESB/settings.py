@@ -31,7 +31,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
-""" log_path = os.path.join(BASE_DIR, "logs")
+'''log_path = os.path.join(BASE_DIR, "logs")
 if not os.path.exists(log_path):
     os.makedirs("logs")
 # DJANGO_LOG_LEVEL=DEBUG
@@ -121,7 +121,7 @@ LOGGING = {
             'propagate': False
         },
     },
-} """
+} '''
 
 
 # Application definition

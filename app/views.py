@@ -173,7 +173,7 @@ def queryCharts(request):
 
     if Product.objects.all().count() == 0:
         start = '%s-%s-%s' % (str(year), str(month-1 if day <
-                                             14 else month), str(np.abs(day-14)))
+                                             14 else month), str(np.abs(day-15)))
         for day in np.arange(int(time.mktime(time.strptime(start, '%Y-%m-%d')))*1000, time.time()*1000, 24*60*60*1000):
             goodRate.append([day+8*60*60*1000, round(random.random(), 2)])
             categories.append(time.strftime(
